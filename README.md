@@ -4,7 +4,7 @@ A secure, cross-platform AI-to-Database gateway bridging WhatsApp (via Semantic 
 
 This system utilizes Retrieval-Augmented Generation (RAG) principles to handle complex enterprise data with row-level security and high-accuracy fuzzy searching.
 
-🚀 Key Features
+**🚀 Key Features**
 Semantic Kernel Orchestration: Manages the flow between user intent and plugin execution.
 
 Vector DB Integration (ChromaDB): Performed via a dedicated VectorDBSync utility to handle fuzzy searches for Customers and Products.
