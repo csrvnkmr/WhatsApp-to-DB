@@ -1,0 +1,49 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36915.13
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VectorDBSync", "VectorDBSync\VectorDBSync.csproj", "{1BD6315B-0EAF-4F87-ACB9-17833E180B1F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DBSearchHelperPlugin", "DBSearchHelperPlugin\DBSearchHelperPlugin.csproj", "{B4B01CCC-2507-45D3-AB0D-EB64FD8A4D0D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WhatsAppToDB", "WhatsAppToDB\WhatsAppToDB.csproj", "{03E7A8DB-605C-1361-A057-453F7040EB16}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WhatsAppToDB.Abstractions", "WhatsAppToDB.Abstractions\WhatsAppToDB.Abstractions.csproj", "{4B33204E-DD43-4665-AF8B-BEF779F5988B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SecurityPlugin", "SecurityPlugin\SecurityPlugin.csproj", "{EBC15AF0-925F-4E37-A449-83AC1ABEEC4A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1BD6315B-0EAF-4F87-ACB9-17833E180B1F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1BD6315B-0EAF-4F87-ACB9-17833E180B1F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1BD6315B-0EAF-4F87-ACB9-17833E180B1F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1BD6315B-0EAF-4F87-ACB9-17833E180B1F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B4B01CCC-2507-45D3-AB0D-EB64FD8A4D0D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B4B01CCC-2507-45D3-AB0D-EB64FD8A4D0D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B4B01CCC-2507-45D3-AB0D-EB64FD8A4D0D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B4B01CCC-2507-45D3-AB0D-EB64FD8A4D0D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{03E7A8DB-605C-1361-A057-453F7040EB16}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{03E7A8DB-605C-1361-A057-453F7040EB16}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{03E7A8DB-605C-1361-A057-453F7040EB16}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{03E7A8DB-605C-1361-A057-453F7040EB16}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4B33204E-DD43-4665-AF8B-BEF779F5988B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4B33204E-DD43-4665-AF8B-BEF779F5988B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4B33204E-DD43-4665-AF8B-BEF779F5988B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4B33204E-DD43-4665-AF8B-BEF779F5988B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EBC15AF0-925F-4E37-A449-83AC1ABEEC4A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EBC15AF0-925F-4E37-A449-83AC1ABEEC4A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EBC15AF0-925F-4E37-A449-83AC1ABEEC4A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EBC15AF0-925F-4E37-A449-83AC1ABEEC4A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {46ACABAD-F549-4DC9-A60A-C759FFAD7E85}
+	EndGlobalSection
+EndGlobal

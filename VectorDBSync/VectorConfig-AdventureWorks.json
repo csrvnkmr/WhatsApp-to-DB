@@ -1,0 +1,19 @@
+﻿{
+  "SyncCollections": [
+    {
+      "CollectionName": "AW-Person",
+      "SyncSql": "SELECT BusinessEntityID as Id, a.FirstName + coalesce(' ' + a.middlename,'')+coalesce(' ' + a.lastname,'')  as Content, a.PersonType FROM person.Person a WHERE a.ModifiedDate >= coalesce((select max(convert(date, LastSyncTime)) from Vector_SyncTracker where CollectionName='AW-Person'),'20000101')",
+      "MetadataFields": [ "PersonType" ]
+    },
+    {
+      "CollectionName": "AW-Store",
+      "SyncSql": "SELECT BusinessEntityID as Id, a.Name as Content FROM Sales.Store a WHERE a.ModifiedDate >= coalesce((select max(convert(date, LastSyncTime)) from Vector_SyncTracker where CollectionName='AW-Store'),'20000101')",
+      "MetadataFields": []
+    },
+    {
+      "CollectionName": "AW-Product",
+      "SyncSql": "select a.ProductID, a.Name, a.Color, a.ProductNumber From Production.Product a WHERE a.ModifiedDate >= coalesce((select max(convert(date, LastSyncTime)) from Vector_SyncTracker where CollectionName='AW-Product'),'20000101')",
+      "MetadataFields": []
+    }
+  ]
+}

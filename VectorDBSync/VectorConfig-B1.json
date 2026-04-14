@@ -1,0 +1,16 @@
+﻿{
+  "SyncCollections": [
+    {
+      "CollectionName": "OCRD",
+      "SyncSql": "SELECT CardCode as Id, CardName as Content, CardType FROM OCRD WHERE UpdateDate >= (select convert(date, LastSyncTime) from Vector_SyncTracker where CollectionName='OCRD')",
+      "UpdateTrackerSql": "NOT USED NOW - UPDATE Vector_SyncTracker SET LastSyncTime = @currentSync WHERE CollectionName='OCRD'",
+      "MetadataFields": [ "CardType" ]
+    },
+    {
+      "CollectionName": "OITM",
+      "SyncSql": "SELECT ItemCode as Id, ItemName as Content FROM OITM WHERE UpdateDate >= (select convert(date, LastSyncTime) from Vector_SyncTracker where CollectionName='OITM')",
+      "UpdateTrackerSql": "NOT USED NOW - UPDATE Vector_SyncTracker SET LastSyncTime = @currentSync WHERE CollectionName='OITM'",
+      "MetadataFields": []
+    }
+  ]
+}
