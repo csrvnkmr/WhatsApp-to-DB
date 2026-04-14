@@ -59,3 +59,16 @@ Provide your OpenAI and ChromaDB endpoints.
 Specify the paths to your Schema and Prompt files for optimal SQL generation.
 
 Security DLL: Implement the IModulePrompt interface in a separate DLL to enforce your specific business rules.
+
+graph TD
+    A[WhatsApp Message] --> B[Semantic Kernel]
+    B --> C{Intent Logic}
+    C -->|Fuzzy Search| D[ChromaDB / Vector Search]
+    D -->|Return IDs| B
+    B --> E[Abstractions / Security DLL]
+    E -->|Inject Constraints| B
+    B --> F[DatabaseQueryPlugin]
+    F --> G[(SQL Database)]
+    G -->|Result Set| F
+    F --> H[SQL Interceptor]
+    H -->|Validated SQL| I[Final Response]
