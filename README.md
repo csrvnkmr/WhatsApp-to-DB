@@ -18,7 +18,8 @@ SQL Interception: A final guardrail that validates generated T-SQL before execut
 
 **🛠 How It Works**
 
-1. Vector DB Sync (VectorDBSync)
+**1. Vector DB Sync (VectorDBSync)**
+   
 Before the chat begins, we must "teach" the AI about our specific data (names that are hard to spell or have multiple variations).
 
 Process: Extracts Customer and Product names/IDs from the SQL Database.
