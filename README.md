@@ -16,7 +16,8 @@ Multilingual Support: Handles queries in English, Hindi, and Gujarati.
 
 SQL Interception: A final guardrail that validates generated T-SQL before execution.
 
-🛠 How It Works
+**🛠 How It Works**
+
 1. Vector DB Sync (VectorDBSync)
 Before the chat begins, we must "teach" the AI about our specific data (names that are hard to spell or have multiple variations).
 
@@ -26,14 +27,16 @@ Storage: Generates embeddings and stores them in ChromaDB.
 
 Benefit: Enables the AI to find CustomerID: 354 even if the user types "Serius Cycle" instead of "Serious Cycle".
 
-2. The Plugin System
+**2. The Plugin System**
+
 The AI uses specialized tools to gather context before writing SQL:
 
 DBSearchHelperPlugin: Queries ChromaDB. When the AI sees a name, it calls this plugin first to get the exact primary key.
 
 DatabaseQueryPlugin: The core engine that loads the module schema and executes the final validated SQL.
 
-3. Execution Flow
+**3. Execution Flow**
+   
 WhatsApp Message: User asks: "Total sales for Serious Cycle"
 
 Context Injection: System injects WhatsAppNumber into Kernel.Data.
@@ -46,7 +49,8 @@ SQL Interception: The ISqlInterceptor verifies the WHERE clause is present.
 
 Results: Dapper executes the query and returns JSON to the AI for a natural language response.
 
-⚙️ Setup & Configuration
+**⚙️ Setup & Configuration**
+
 Schema Prompts: Found in the /prompts folder. These map your database views to natural language descriptions.
 
 appsettings.json:
