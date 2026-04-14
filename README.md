@@ -4,7 +4,7 @@ A secure, cross-platform AI-to-Database gateway bridging WhatsApp (via Semantic 
 
 This system utilizes Retrieval-Augmented Generation (RAG) principles to handle complex enterprise data with row-level security and high-accuracy fuzzy searching.
 
-# 🚀 Key Features
+## 🚀 Key Features
 
 Semantic Kernel Orchestration: Manages the flow between user intent and plugin execution.
 
@@ -36,7 +36,7 @@ DBSearchHelperPlugin: Queries ChromaDB. When the AI sees a name, it calls this p
 
 DatabaseQueryPlugin: The core engine that loads the module schema and executes the final validated SQL.
 
-**3. Execution Flow**
+### 3. Execution Flow
    
 WhatsApp Message: User asks: "Total sales for Serious Cycle"
 
@@ -50,7 +50,7 @@ SQL Interception: The ISqlInterceptor verifies the WHERE clause is present.
 
 Results: Dapper executes the query and returns JSON to the AI for a natural language response.
 
-**⚙️ Setup & Configuration**
+## ⚙️ Setup & Configuration
 
 Schema Prompts: Found in the /prompts folder. These map your database views to natural language descriptions.
 
