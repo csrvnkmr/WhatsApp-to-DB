@@ -1,8 +1,8 @@
 # WhatsApp-to-DB
 
-A secure, cross-platform AI-to-Database gateway bridging WhatsApp (via Semantic Kernel) to SQL databases (SAP Business One, AdventureWorks).
+A secure AI-to-Database gateway (via Semantic Kernel), bridging WhatsApp to relational databases.
 
-This system utilizes Retrieval-Augmented Generation (RAG) principles to handle complex enterprise data with row-level security and high-accuracy fuzzy searching.
+This system utilizes Retrieval-Augmented Generation (RAG) principles to handle data with row-level security and high-accuracy fuzzy searching.
 
 ## 🚀 Key Features
 
@@ -10,9 +10,7 @@ Semantic Kernel Orchestration: Manages the flow between user intent and plugin e
 
 Vector DB Integration (ChromaDB): Performed via a dedicated VectorDBSync utility to handle fuzzy searches for Customers and Products.
 
-Pluggable Security: A decoupled Abstractions layer for mandatory row-level security (e.g., SalesPersonID filtering).
-
-Multilingual Support: Handles queries in English, Hindi, and Gujarati.
+Pluggable Security: A decoupled Abstractions layer for mandatory row-level security, when needed (e.g., SalesPersonID filtering).
 
 SQL Interception: A final guardrail that validates generated T-SQL before execution.
 
@@ -26,7 +24,7 @@ Process: Extracts Customer and Product names/IDs from the SQL Database.
 
 Storage: Generates embeddings and stores them in ChromaDB.
 
-Benefit: Enables the AI to find CustomerID: 354 even if the user types "Serius Cycle" instead of "Serious Cycle".
+Benefit: Enables the AI to find CustomerID: 354 even if the user types "Serius Cycle" instead of "Serious Cycle", using Fuzzy search.
 
 ### 2. The Plugin System
 
@@ -46,13 +44,13 @@ Fuzzy Search: AI calls SearchHelper -> ChromaDB returns ID 354.
 
 Schema & Security: AI calls GetSchemaForModule. The system appends a Mandatory Filter (e.g., WHERE SalesPersonID = 277).
 
-SQL Interception: The ISqlInterceptor verifies the WHERE clause is present.
+SQL Interception: The ISqlInterceptor can be used for final verification of SQL.
 
 Results: Dapper executes the query and returns JSON to the AI for a natural language response.
 
 ## ⚙️ Setup & Configuration
 
-Schema Prompts: Found in the /prompts folder. These map your database views to natural language descriptions.
+Schema Prompts: Found in the /prompts folder. These map your database schema to natural language descriptions.
 
 appsettings.json:
 
