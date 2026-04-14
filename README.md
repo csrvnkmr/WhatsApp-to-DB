@@ -60,6 +60,7 @@ Specify the paths to your Schema and Prompt files for optimal SQL generation.
 
 Security DLL: Implement the IModulePrompt interface in a separate DLL to enforce your specific business rules.
 
+```mermaid
 graph TD
     A[WhatsApp Message] --> B[Semantic Kernel]
     B --> C{Intent Logic}
