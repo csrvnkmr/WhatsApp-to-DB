@@ -6,11 +6,15 @@ namespace WhatsAppToDB
     {
         Task LogAsync(string phoneNumber, string message);
         Task LogAsync(string message);
+
+        bool WriteToConsole { get; set; } 
     }
 
     public class WhatsAppLogger : IWhatsAppLogger
     {
         private readonly string _logFolder = Path.Combine(AppContext.BaseDirectory, "Logs");
+
+        public bool WriteToConsole { get; set; }=false;
 
         public WhatsAppLogger()
         {
@@ -23,6 +27,10 @@ namespace WhatsAppToDB
             {
                 string filePath = Path.Combine(_logFolder, fileName);
                 string logEntry = $"[{DateTime.Now:HH:mm:ss}] {message}{Environment.NewLine}";
+                if (WriteToConsole)
+                {
+                    Console.WriteLine(logEntry);
+                }
                 await File.AppendAllTextAsync(filePath, logEntry);
             }
             catch (Exception ex) { 

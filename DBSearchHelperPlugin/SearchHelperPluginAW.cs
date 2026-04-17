@@ -64,6 +64,18 @@ namespace DBSearchHelperPlugin
             return await FuzzySearchCode(CollectionNamePerson, salespersonname, metadata);
         }
 
+        [KernelFunction]
+        [Description("Gets the EmployeeId from employee name using Vector DB")]
+        public async Task<string> GetEmployeeId([Description("Employee Name")] string employeename)
+        {
+            if (string.IsNullOrWhiteSpace(employeename))
+                return "Error: employeename cannot be blank";
+
+            Console.WriteLine($"[GetEmployeeId]: {employeename}");
+            var metadata = new Dictionary<string, object> { { "PersonType", "EM" } };
+            return await FuzzySearchCode(CollectionNamePerson, employeename, metadata);
+        }
+
 
         [KernelFunction]
         [Description("Gets the CustomerId for a retail or corporate customer. Use this before querying SalesOrderHeader.")]

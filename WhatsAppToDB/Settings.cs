@@ -32,5 +32,31 @@
         public string PluginClassName { get; set; } = string.Empty;
     }
 
-    public class PluginMetadata { public Type PluginType { get; set; } }
+    // Root myDeserializedClass = JsonConvert.DeserializeObject<Root>(myJsonResponse);
+    public class ConnectionStrings
+    {
+        public string AdminConnection { get; set; }
+        public string SalesPersonConnection { get; set; }
+        public string EmployeeConnection { get; set; }
+        public string FinanceConnection { get; set; }
+        public string GuestConnection { get; set; }
+    }
+
+
+    public class RoleSettings
+    {
+        public string DefaultRole { get; set; }
+        public string MappingSource { get; set; }
+        public string RoleMappingJsonFile { get; set; }
+        public string RoleMappingSqlQuery { get; set; }
+        
+    }
+
+
+
+    public class PluginMetadata
+    {
+        // Now stores all loaded plugin types
+        public List<Type> PluginTypes { get; set; } = new();
+    }
 }

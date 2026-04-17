@@ -5,12 +5,7 @@ namespace WhatsAppToDB
     public class WhatsAppService
     {
         public async Task SendWhatsAppResponse(string to, string text, WhatsAppSettings waSettings, IWhatsAppLogger waLogger)
-        {
-            if (to != "000" || to=="000")
-            {
-                Console.WriteLine($"not sending WhatsApp {to} {text}");
-                return ;
-            }
+        {            
             try
             {
                 using var client = new HttpClient();

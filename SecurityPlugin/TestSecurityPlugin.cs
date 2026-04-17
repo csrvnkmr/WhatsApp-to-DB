@@ -13,9 +13,12 @@ namespace SecurityPlugin
         {
             Console.WriteLine($"[TestSecurityPlugin] GetModuleConstraintAsync called with WhatsAppNumber: " +
                 $"{whatsAppNumber}, ModuleName: {moduleName}, UserQuestion: {userQuestion}");
+            return Task.FromResult($"");
+            /*
             var securityConstraint = $"### MANDATORY FILTER: For table 'Sales.SalesOrderHeader', you ARE PROHIBITED " +
                 $"from returning any rows where 'SalesPersonID' is not 277. Every SELECT must include 'WHERE SalesPersonID = 277'";
             return Task.FromResult($"{securityConstraint}");
+            */
         }
 
         public Task<string> OnBeforeExecuteAsync(string whatsAppNumber, string sql)
