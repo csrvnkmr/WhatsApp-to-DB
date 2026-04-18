@@ -14,75 +14,48 @@ var apikey = config["OpenAiSettings:ApiKey"];
 var chromaUrl = config["DatabaseSettings:ChromaUrl"];
 var connectionString = config["DatabaseSettings:ConnectionString"];
 
-var vss = new VectorDBSync.ChromaSyncService(apikey, chromaUrl, connectionString);
-/*
-Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} Deleting BP Collection from vector db...");
-await vss.DeleteBPCollection();
-
-Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} Deleting Item Collection from vector db...");
-await vss.DeleteItemCollection();
-
-Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} Syncing item master to vector db...");
-await vss.SyncItemWithDB();
-Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} Syncing business partner to vector db...");
-await vss.SyncBusinessPartnerWithDB();
-Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} Syncing to vector db completed.");
- 
-*/
-
 var json = await File.ReadAllTextAsync("vectorConfig.json");
 var configs = JsonSerializer.Deserialize<VectorSyncRoot>(json);
 DynamicVectorSyncService dvss = new DynamicVectorSyncService(apikey, chromaUrl, connectionString);
 await dvss.SyncAllCollections(configs.SyncCollections);
+//await TestSearch(dvss);
+Console.WriteLine("Press Enter to close");
+Console.ReadLine();
 
-/*
-
-var rec = new VectorDBSync.VectorRecord
+async static Task TestSearch(DynamicVectorSyncService dvss)
 {
-    Id = "C001",
-    Content = "Contoso Ltd.",
-    Metadata = new Dictionary<string, object>
+    var searchText = "Patrik Wedge";
+    Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} searching Person for {searchText}.");
+    //var searchResults = await vss.SearchBusinessPartners(searchText);
+    var searchResults = await dvss.SearchCollection("AW-Person", searchText);
+
+    Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} searching Person completed.");
+    if (searchResults.Count > 0)
     {
-        { "Type", "Customer" },
-        { "Country", "USA" }
+        foreach (var res in searchResults)
+        {
+            Console.WriteLine($"Match Found! ID: {res.Id} | Similarity Distance: {res.Distance}");
+            Console.WriteLine($"Content: {res.Document}");
+        }
     }
-};
-*/
-//await vss.SyncBusinessPartners(new List<VectorDBSync.VectorRecord> { rec });
+    else
+    {
+        Console.WriteLine("No matches found.");
+    }
 
-//await vss.PeekBusinessPartners();
-var searchText = "Patrik Wedge";
-Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} searching Person for {searchText}.");
-//var searchResults = await vss.SearchBusinessPartners(searchText);
-var searchResults = await dvss.SearchCollection("AW-Person", searchText);
-
-Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} searching Person completed.");
-if (searchResults.Count > 0)
-{
-    foreach (var res in searchResults)
+    var searchItemText = "Road 650 Red 44";
+    Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} searching for Product {searchItemText}.");
+    //var searchItemResults = await vss.SearchItems(searchItemText);
+    var searchItemResults = await dvss.SearchCollection("AW-Product", searchItemText);
+    Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} searching for Product completed.");
+    if (searchItemResults.Count == 0)
+    {
+        Console.WriteLine("No matches found.");
+    }
+    foreach (var res in searchItemResults)
     {
         Console.WriteLine($"Match Found! ID: {res.Id} | Similarity Distance: {res.Distance}");
         Console.WriteLine($"Content: {res.Document}");
     }
-} else
-{
-    Console.WriteLine("No matches found.");
-}
 
-var searchItemText = "Road 650 Red 44";
-Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} searching for Product {searchItemText}.");
-//var searchItemResults = await vss.SearchItems(searchItemText);
-var searchItemResults = await dvss.SearchCollection("AW-Product", searchItemText);
-Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} searching for Product completed.");
-if (searchItemResults.Count == 0)
-{
-    Console.WriteLine("No matches found.");
 }
-foreach (var res in searchItemResults)
-{
-    Console.WriteLine($"Match Found! ID: {res.Id} | Similarity Distance: {res.Distance}");
-    Console.WriteLine($"Content: {res.Document}");
-}
-
-
-Console.ReadLine();

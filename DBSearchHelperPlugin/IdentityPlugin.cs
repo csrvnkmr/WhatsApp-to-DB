@@ -11,40 +11,7 @@ using Microsoft.SemanticKernel;
 namespace Persona.Plugin
 {
     public class IdentityPersonaPlugin
-    {
-        /*[KernelFunction]
-        [Description("Retrieves the current user's session metadata, role, and navigation path to their profile data.")]
-        public string GetMyActiveIdentity(Kernel kernel)
-        {
-            // We use the Kernel.Data dictionary as the 'Bridge' 
-            // The Host app (WhatsAppToDB) will put the IdentityContext here.
-            if (!kernel.Data.TryGetValue("UserIdentity", out var identityObj))
-            {
-                return "No identity context available in the current session.";
-            }
-
-            // Using reflection/dynamic to avoid a hard project reference to your Abstractions DLL
-            // This keeps the DLLs truly decoupled.
-            dynamic identity = identityObj;
-
-            var sb = new StringBuilder();
-            sb.AppendLine("### IDENTITY_MANIFEST");
-            sb.AppendLine($"- **Role**: {identity.Role}");
-            sb.AppendLine($"- **ID**: {identity.InternalUserId}");
-
-            // Map the navigation logic based on the role string
-            string hint = identity.Role.ToString().ToLower() switch
-            {
-                "salesperson" => "Query 'Person.Person' joined with 'Sales.SalesPerson' using BusinessEntityID.",
-                "employee" => "Query 'Person.Person' where BusinessEntityID matches your ID.",
-                "customer" => "Query 'Sales.Customer' joined with 'Person.Person' on PersonID.",
-                _ => "Check the master data tables for your specific Role and ID."
-            };
-
-            sb.AppendLine($"- **Navigation_Path**: {hint}");
-            return sb.ToString();
-        }
-        */
+    {        
         private static readonly string[] FirstPersonTriggers =
                 ["my ", "i ", "i'", " me ", "mine", "myself", "i am", "i have", "i need", "i want", "do i", "am i", "can i"];
 

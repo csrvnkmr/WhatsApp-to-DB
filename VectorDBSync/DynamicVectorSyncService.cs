@@ -233,52 +233,7 @@ namespace VectorDBSync
                 Distance = entry.Distance,
                 Metadata = entry.Metadata
             }).ToList() ?? new List<SearchResult>();
-        }
-
-
-        public async Task<List<SearchResult>> SearchCollectionOld(string collectionName, string queryText, int limit = 5, Dictionary<string, object>? filter = null)
-        {
-            var collection = await _adminClient.GetOrCreateCollection(collectionName);
-            var collectionClient = new ChromaCollectionClient(collection, _config, _httpClient);
-
-            var queryVector = await GetVector(queryText);
-
-            var queryEmbeddings = new List<ReadOnlyMemory<float>> { queryVector };
-
-            ChromaWhereOperator? whereFilter = null;
-            if (filter != null && filter.Count > 0)
-            {
-                if (filter.Count == 1)
-                {
-                    var kvp = filter.First();
-                    whereFilter = ChromaWhereOperator.Equal(kvp.Key, kvp.Value);
-                }
-                else
-                {
-                    // If you have multiple filters, use the dictionary-based constructor
-                    // which ChromaDB.Client uses internally for $and operations
-                    var kvp = filter.First();
-                    whereFilter = ChromaWhereOperator.Equal(kvp.Key, kvp.Value);
-                    kvp = filter.Skip(1).FirstOrDefault();
-                    whereFilter &= ChromaWhereOperator.Equal(kvp.Key, kvp.Value);
-                }
-            }
-
-            var results = await collectionClient.Query(
-                queryEmbeddings: queryEmbeddings, // Pass the vector here
-                nResults: limit,
-                include: ChromaQueryInclude.Metadatas | ChromaQueryInclude.Distances | ChromaQueryInclude.Documents,
-                where: whereFilter
-            );
-
-            return results.FirstOrDefault()?.Select(entry => new SearchResult
-            {
-                Id = entry.Id,
-                Document = entry.Document,
-                Distance = entry.Distance,
-                Metadata = entry.Metadata
-            }).ToList() ?? new List<SearchResult>();
-        }
+        }      
 
     }
     public class VectorSyncRoot
@@ -292,5 +247,20 @@ namespace VectorDBSync
         public string SyncSql { get; set; }
         public string UpdateTrackerSql { get; set; }
         public List<string> MetadataFields { get; set; }
+    }
+
+    public class SearchResult
+    {
+        public string Id { get; set; }
+        public string Document { get; set; }
+        public float? Distance { get; set; } // Lower is better (more similar)
+        public Dictionary<string, object> Metadata { get; set; }
+    }
+
+    public class VectorRecord
+    {
+        public string Id { get; set; }        // SAP ItemCode or CardCode
+        public string Content { get; set; }   // Text for embedding
+        public Dictionary<string, object> Metadata { get; set; }
     }
 }
