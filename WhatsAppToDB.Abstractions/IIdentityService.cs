@@ -9,5 +9,6 @@ namespace WhatsAppToDB.Abstractions
     public interface IIdentityService
     {
         Task<IdentityContext> GetIdentityAsync(string mobileNumber);
+        void HydrateRolePermissions(IdentityContext identity);
     }
 }

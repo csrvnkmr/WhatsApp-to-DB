@@ -36,7 +36,7 @@ namespace WhatsAppToDB
             return identity;
         }
 
-        private void HydrateRolePermissions(IdentityContext identity)
+        public void HydrateRolePermissions(IdentityContext identity)
         {
             // 1. Map Modules: RoleModules: { "SalesPerson": "Sales,Inventory" }
             var moduleMapping = _config.GetSection("RoleSettings:RoleModules").Get<Dictionary<string, string>>();

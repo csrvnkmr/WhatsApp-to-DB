@@ -28,9 +28,10 @@ OpenAIPromptExecutionSettings openAIPromptExecutionSettings = new()
 
 //await AdventureWorksTestHarness.RunTestMessages(builder);
 
-await AdventureWorksTestHarness.RunSecurityTests(builder);
+//await AdventureWorksTestHarness.RunSecurityTests(builder);
 
 var app = builder.Build();
+app.UseCors("AllowAll");
 
 app.MapGet("/webhook", (HttpContext context,
     IOptions<WhatsAppSettings> waOptions) => {
@@ -46,9 +47,12 @@ app.MapGet("/webhook", (HttpContext context,
 app.MapPost("/webhook", async (
     HttpContext context,
     IServiceScopeFactory scopeFactory, // Inject the Singleton Factory
-    IWhatsAppLogger waLogger) =>
+    IWhatsAppLogger waLogger,
+    IOptions<WhatsAppSettings> waOptions) =>
 {
+
     Console.WriteLine("Webhook received a message at " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+    var waSettings = waOptions.Value;
     using var reader = new StreamReader(context.Request.Body);
     var body = await reader.ReadToEndAsync();
 
@@ -63,19 +67,59 @@ app.MapPost("/webhook", async (
     var senderPhone = result.to;
     var messageText = result.message;
 
+    var scope = scopeFactory.CreateScope();
+    var sp = scope.ServiceProvider;
+    var identityService = sp.GetRequiredService<IIdentityService>();
+    var identity = await identityService.GetIdentityAsync(senderPhone);
+
     _ = Task.Run(async () =>
     {
-        await ExecuteQuery(scopeFactory, senderPhone, messageText, openAIPromptExecutionSettings, waLogger, waService);
+        await waService.SendWhatsAppResponse(senderPhone, "_Analyzing your request and querying SAP... Please wait a moment._ 🔍", waSettings, waLogger);
+        var response = await ExecuteQuery(scopeFactory, identity, messageText, openAIPromptExecutionSettings, waLogger);
+        await waService.SendWhatsAppResponse(senderPhone, response, waSettings, waLogger);
     });
 
     return Results.Ok();
 
 });
 
+app.MapPost("/login", async (LoginRequest request) =>
+{
+    var result = UserService.ValidateLogin(request.Username, request.Password);
+    if (!result.isSuccess)
+    {
+        return Results.Unauthorized();
+    }
+    return Results.Ok(new { Token = result.session.Token, Message = "Login Successful" });
+});
+
+app.MapPost("/ask", async (
+    AskRequest request,
+    IServiceScopeFactory scopeFactory,
+    IWhatsAppLogger waLogger) =>
+{
+    var scope = scopeFactory.CreateScope();
+    var sp = scope.ServiceProvider;
+    var identityService = sp.GetRequiredService<IIdentityService>();    
+
+    var result = UserService.ValidateToken(request.Token);
+    if (!result.isSuccess) { return Results.Unauthorized(); }
+
+    var identity = result.identity;
+    identityService.HydrateRolePermissions(identity);
+
+    // We run this and wait for result for the Web API response
+    var aiResponse = await ExecuteQuery(scopeFactory, identity, request.Question, openAIPromptExecutionSettings, waLogger);
+
+    return Results.Ok(new { Response = aiResponse });
+});
+
 app.Run();
 
-async static Task ExecuteQuery(IServiceScopeFactory scopeFactory,
-    string senderPhone, string messageText, PromptExecutionSettings? pes, IWhatsAppLogger waLogger, WhatsAppService waService)
+
+
+async static Task<string> ExecuteQuery(IServiceScopeFactory scopeFactory,
+    IdentityContext identity, string messageText, PromptExecutionSettings? pes, IWhatsAppLogger waLogger)
 {
     WhatsAppSettings? waSettings = null;
     try
@@ -87,14 +131,12 @@ async static Task ExecuteQuery(IServiceScopeFactory scopeFactory,
             waSettings = waOptions.Value; // Capture the actual settings object
 
             var identityService = sp.GetRequiredService<IIdentityService>();
-            var identity = await identityService.GetIdentityAsync(senderPhone);
-
-            await waService.SendWhatsAppResponse(senderPhone, "_Analyzing your request and querying SAP... Please wait a moment._ 🔍", waSettings, waLogger);
+            //var identity = await identityService.GetIdentityAsync(usernameorphonenumber);
             var kernel = sp.GetRequiredService<Kernel>();
             var aiOptions = sp.GetRequiredService<IOptions<OpenAiSettings>>();
 
             kernel.Data["UserIdentity"] = identity;
-            kernel.Data["WhatsAppNumber"] = senderPhone;
+            kernel.Data["WhatsAppNumber"] = identity.WhatsAppNumber;
             kernel.Data["UserQuestion"] = messageText;
 
             var history = new ChatHistory();
@@ -118,17 +160,18 @@ async static Task ExecuteQuery(IServiceScopeFactory scopeFactory,
                         kernel: kernel
                         );
             history.Add(aiResponse);
-            await waLogger.LogAsync(senderPhone, $"Sending response to {senderPhone} {aiResponse.Content}");
+            await waLogger.LogAsync(identity.WhatsAppNumber, $"Sending response to {identity.WhatsAppNumber} {aiResponse.Content}");
 
-            await waService.SendWhatsAppResponse(senderPhone, aiResponse.Content, waSettings, waLogger);
+            return aiResponse.Content;
 
         }
     }
     catch (Exception ex)
     {
-        await waLogger.LogAsync(senderPhone, "Exception when querying and sending message " + ex.ToString());
+        await waLogger.LogAsync(identity.WhatsAppNumber, "Exception when querying and sending message " + ex.ToString());
         Console.WriteLine($"Background Error: {ex}");
-        await waService.SendWhatsAppResponse(senderPhone, "Sorry, I encountered an error while accessing SAP. Please try again.", waSettings, waLogger);
+        var errmsg = "Sorry, I encountered an error while accessing Database. Please try again.";
+        return errmsg;
     }
 }
 

@@ -36,4 +36,10 @@
     <ProjectReference Include="..\WhatsAppToDB.Abstractions\WhatsAppToDB.Abstractions.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Update="Users.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>

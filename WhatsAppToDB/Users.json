@@ -1,0 +1,16 @@
+[
+  {
+    "Username": "csrvn",
+    "Password": "password123",
+    "Role": "SalesPerson",
+    "InternalUserId": "277",
+    "SessionContextKey": "SalesPersonID"
+  },
+  {
+    "Username": "admin",
+    "Password": "adminpassword",
+    "Role": "Admin",
+    "InternalUserId": "1",
+    "SessionContextKey": "EmployeeID"
+  }
+]

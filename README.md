@@ -14,6 +14,8 @@ Pluggable Security: A decoupled Abstractions layer for mandatory row-level secur
 
 SQL Interception: A final guardrail that validates generated T-SQL before execution.
 
+Refer the doc folder for the technical information for the configuration, classes, and other details
+
 ## 🛠 How It Works
 
 ### 1. Vector DB Sync (VectorDBSync)

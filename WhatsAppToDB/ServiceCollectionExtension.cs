@@ -71,6 +71,16 @@ namespace WhatsAppToDB
 
         public static void ConfigureAllServices(this IServiceCollection services, IConfiguration config, PluginMetadata metadata)
         {
+            services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll", policy =>
+                {
+                    policy.SetIsOriginAllowed(_ => true) // This allows 'null' origins from local files
+                          .AllowAnyHeader()
+                          .AllowAnyMethod();
+                });
+            });
+
             services.AddSingleton<IWhatsAppLogger, WhatsAppLogger>();
 
             services.Configure<WhatsAppSettings>(config.GetSection("WhatsAppSettings"));
