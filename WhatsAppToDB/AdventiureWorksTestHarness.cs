@@ -27,7 +27,8 @@ public class AdventureWorksTestHarness
         {
             // 1. Resolve the Kernel
             var kernel = sp.GetRequiredService<Kernel>();
-            var aiOptions = sp.GetRequiredService<IOptions<OpenAiSettings>>();
+            var openaiOptions = sp.GetRequiredService<IOptions<OpenAiSettings>>();
+            var aiOptions = sp.GetRequiredService<IOptions<CommonAiSettings>>();
 
             // 2. Setup Chat History with your AdventureWorks System Prompt
             var history = new Microsoft.SemanticKernel.ChatCompletion.ChatHistory();
@@ -77,7 +78,7 @@ public class AdventureWorksTestHarness
                 {
                     kernel.FunctionInvocationFilters.Add(new FunctionCallLogger());
                 }
-                var aiOptions = sp.GetRequiredService<IOptions<OpenAiSettings>>();
+                var aiOptions = sp.GetRequiredService<IOptions<CommonAiSettings>>();
                 var history = new ChatHistory();
                 var chatService = kernel.GetRequiredService<IChatCompletionService>();
                 var systemPrompt = aiOptions.Value.FullSystemPrompt;

@@ -21,11 +21,33 @@ namespace DBSearchHelperPlugin
         private const string CollectionNameStore = "AW-Store";
 
         private VectorDBSync.DynamicVectorSyncService dvss;
-
+        private VectorDBSync.VectorSyncService vss;
+        private VectorDBSync.ISyncService syncService;
         private string chromaUrl, connectionString, apiKey;
+
+        private void LoadChromaDBService(IConfiguration config)
+        {
+
+            apiKey = config["OpenAiSettings:ApiKey"] ?? "";
+            chromaUrl = config["DatabaseSettings:ChromaUrl"] ?? "";
+            connectionString = config["DatabaseSettings:ConnectionString"] ?? "";
+            Console.WriteLine($"[SearchHelperPluginAW] Initialized with ChromaUrl: {chromaUrl}, ConnectionString: {connectionString}, " +
+                $"ApiKey: {(string.IsNullOrEmpty(apiKey) ? "Not Set" : "Set")}");
+            dvss = new VectorDBSync.DynamicVectorSyncService(apiKey, chromaUrl, connectionString);
+            syncService = dvss;
+
+        }
+        private void LoadSqLiteDBService(IConfiguration config)
+        {
+            connectionString = config["DatabaseSettings:ConnectionString"] ?? "";
+            vss = new VectorDBSync.VectorSyncService(connectionString);
+            syncService = vss;
+            Console.WriteLine($"[SearchHelperPluginAW] Initialized with SQLite Vector Sync Service. ConnectionString: {connectionString}");
+        }
 
         public AWSearchHelperPlugin()
         {
+            /*
             Console.WriteLine($"In [AWSearchHelperPlugin] Constructor");
             IConfiguration config = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
@@ -39,6 +61,15 @@ namespace DBSearchHelperPlugin
             Console.WriteLine($"[SearchHelperPlugin] Initialized with ChromaUrl: {chromaUrl}, ConnectionString: {connectionString}, " +
                 $"ApiKey: {(string.IsNullOrEmpty(apiKey) ? "Not Set" : "Set")}");
             dvss = new VectorDBSync.DynamicVectorSyncService(apiKey, chromaUrl, connectionString);
+            vss = new VectorDBSync.VectorSyncService(connectionString);
+            */
+            IConfiguration config = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", optional: true)
+                .Build();
+            //LoadChromaDBService(config);
+            LoadSqLiteDBService(config);
         }
 
         [KernelFunction]
@@ -142,7 +173,8 @@ namespace DBSearchHelperPlugin
             try
             {
 
-                var results = await dvss.SearchCollection(collectionName, fuzzyName, 1, metadata);
+                //var results = await dvss.SearchCollection(collectionName, fuzzyName, 1, metadata);
+                var results = await syncService.SearchCollection(collectionName, fuzzyName, 1, metadata);
                 var match = results.FirstOrDefault();
 
                 if (match != null && match.Distance < 0.6) // Distance < 0.6 is a good match in Chroma

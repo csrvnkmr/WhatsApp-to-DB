@@ -16,14 +16,26 @@
         public string SchemaDefinitionFile { get; set; } = string.Empty;
     }
 
+    public class CommonAiSettings
+    {
+        public string SystemPromptFile { get; set; } = string.Empty;
+        public string Provider { get; set; } = string.Empty;
+        // Helper property to get the full prompt
+        public string FullSystemPrompt => File.ReadAllText(SystemPromptFile);// string.Join(" ", SystemPromptParts);
+
+    }
+    public class LocalAiSettings
+    {
+        public string Model { get; set; } = string.Empty;
+        public string ApiKey { get; set; } = string.Empty;
+        public string HttpEndPoint { get; set; } = string.Empty;
+    }
+
     public class OpenAiSettings
     {
         public string Model { get; set; } = string.Empty;
         public string ApiKey { get; set; } = string.Empty;
-        public string SystemPromptFile { get; set; } = string.Empty;
 
-        // Helper property to get the full prompt
-        public string FullSystemPrompt => File.ReadAllText(SystemPromptFile);// string.Join(" ", SystemPromptParts);
     }
 
     public class PluginSettings

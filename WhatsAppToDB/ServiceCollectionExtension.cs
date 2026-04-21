@@ -1,4 +1,9 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.AI.Foundry.Local;
+using Microsoft.SemanticKernel.Connectors.OpenAI;
+
+using Microsoft.SemanticKernel.ChatCompletion;
+using Microsoft.Extensions.AI;
+using Microsoft.Extensions.Options;
 using Microsoft.SemanticKernel;
 using System.Runtime.Loader;
 using WhatsAppToDB.Abstractions;
@@ -86,6 +91,8 @@ namespace WhatsAppToDB
             services.Configure<WhatsAppSettings>(config.GetSection("WhatsAppSettings"));
             services.Configure<DatabaseSettings>(config.GetSection("DatabaseSettings"));
             services.Configure<OpenAiSettings>(config.GetSection("OpenAiSettings"));
+            services.Configure<CommonAiSettings>(config.GetSection("CommonAiSettings"));
+            services.Configure<LocalAiSettings>(config.GetSection("LocalAiSettings"));
             services.Configure<RoleSettings>(config.GetSection("RoleSettings"));
             services.AddDynamicExtensions(config);
 
@@ -114,31 +121,56 @@ namespace WhatsAppToDB
                     var assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(Path.GetFullPath(pluginSettings.AssemblyPath));
 
                     var pluginDir = Path.GetDirectoryName(pluginSettings.AssemblyPath);
-
                     AssemblyLoadContext.Default.Resolving += (context, assemblyName) =>
                     {
-                        // 1. Force use of Host's version for ANY Infrastructure DLLs
-                        if (assemblyName.Name.StartsWith("System.") ||
-                            assemblyName.Name.StartsWith("Microsoft.") ||
-                            assemblyName.Name == "Newtonsoft.Json")
-                        {
-                            return null; // Returning null tells .NET "Look in the Host's bin folder instead"
-                        }
-
-                        // 2. Check if already loaded (The Bridge)
+                        // 1. Check if already loaded in the AppDomain
                         var alreadyLoaded = AppDomain.CurrentDomain.GetAssemblies()
                             .FirstOrDefault(a => a.GetName().Name == assemblyName.Name);
                         if (alreadyLoaded != null) return alreadyLoaded;
 
-                        // 3. Only load your custom logic from the Plugins folder
-                        string path = Path.Combine(pluginDir!, $"{assemblyName.Name}.dll");
-                        if (File.Exists(path))
+                        // 2. SEARCH STRATEGY: Look in the EXE folder AND the Plugins folder
+                        string[] searchPaths = {
+                            AppDomain.CurrentDomain.BaseDirectory, // Current EXE folder
+                            pluginDir!                             // Your Plugins folder
+                        };
+
+                        foreach (var dir in searchPaths)
                         {
-                            return context.LoadFromAssemblyPath(path);
+                            string path = Path.Combine(dir, $"{assemblyName.Name}.dll");
+                            if (File.Exists(path))
+                            {
+                                // IMPORTANT: Using LoadFromAssemblyPath FORCES the runtime 
+                                // to use this file, even if the version isn't an exact match.
+                                return context.LoadFromAssemblyPath(path);
+                            }
                         }
 
                         return null;
                     };
+                    //AssemblyLoadContext.Default.Resolving += (context, assemblyName) =>
+                    //{
+                    //    // 1. Force use of Host's version for ANY Infrastructure DLLs
+                    //    if (assemblyName.Name.StartsWith("System.") ||
+                    //        assemblyName.Name.StartsWith("Microsoft.") ||
+                    //        assemblyName.Name == "Newtonsoft.Json")
+                    //    {
+                    //        return null; // Returning null tells .NET "Look in the Host's bin folder instead"
+                    //    }
+
+                    //    // 2. Check if already loaded (The Bridge)
+                    //    var alreadyLoaded = AppDomain.CurrentDomain.GetAssemblies()
+                    //        .FirstOrDefault(a => a.GetName().Name == assemblyName.Name);
+                    //    if (alreadyLoaded != null) return alreadyLoaded;
+
+                    //    // 3. Only load your custom logic from the Plugins folder
+                    //    string path = Path.Combine(pluginDir!, $"{assemblyName.Name}.dll");
+                    //    if (File.Exists(path))
+                    //    {
+                    //        return context.LoadFromAssemblyPath(path);
+                    //    }
+
+                    //    return null;
+                    //};
 
                     var pluginType = assembly.GetType(pluginSettings.PluginClassName);
 
@@ -172,10 +204,32 @@ namespace WhatsAppToDB
                 var requestId = Guid.NewGuid().ToString().Substring(0, 4);
                 Console.WriteLine($"[WhatsAppToDB] [{requestId}] Building Kernel...");
 
-                var aiSettings = sp.GetRequiredService<IOptions<OpenAiSettings>>().Value;
+                var aiSettings = sp.GetRequiredService<IOptions<CommonAiSettings>>().Value;
                 var kernelBuilder = Kernel.CreateBuilder();
 
-                kernelBuilder.AddOpenAIChatCompletion(aiSettings.Model, aiSettings.ApiKey);
+                if (aiSettings.Provider.Equals("Local", StringComparison.OrdinalIgnoreCase))
+                {
+                    // USE THE STABLE OPENAI CONNECTOR FOR LOCAL
+                    var localaiSettings = sp.GetRequiredService<IOptions<LocalAiSettings>>().Value;
+                    kernelBuilder.AddOpenAIChatCompletion(
+                        modelId: localaiSettings.Model,
+                        apiKey: localaiSettings.ApiKey,
+                        httpClient: new HttpClient { 
+                            BaseAddress = new Uri(localaiSettings.HttpEndPoint),
+                            Timeout = TimeSpan.FromMinutes(2) // Give the 7530U time to think
+                        }
+                    );
+                    Console.WriteLine("[Kernel] Local AI connected via OpenAI-Compatible HTTP Endpoint.");
+                }
+                else
+                {
+                    var openaiSettings = sp.GetRequiredService<IOptions<OpenAiSettings>>().Value;
+                    kernelBuilder.AddOpenAIChatCompletion(openaiSettings.Model, openaiSettings.ApiKey);
+                }
+
+
+                //kernelBuilder.AddOpenAIChatCompletion(aiSettings.Model, aiSettings.ApiKey);
+                
 
                 var dbPlugin = sp.GetRequiredService<DatabaseQueryPlugin>();
                 kernelBuilder.Plugins.AddFromObject(dbPlugin);

@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace VectorDBSync
 {
-    public class DynamicVectorSyncService
+    public class DynamicVectorSyncService : ISyncService
     {
         private readonly ChromaConfigurationOptions _config;
         private readonly HttpClient _httpClient;

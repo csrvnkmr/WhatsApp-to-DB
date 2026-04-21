@@ -29,9 +29,10 @@ OpenAIPromptExecutionSettings openAIPromptExecutionSettings = new()
 //await AdventureWorksTestHarness.RunTestMessages(builder);
 
 //await AdventureWorksTestHarness.RunSecurityTests(builder);
-
 var app = builder.Build();
 app.UseCors("AllowAll");
+app.UseStaticFiles(); // This will serve index.html if it's in a folder named wwwroot
+
 
 app.MapGet("/webhook", (HttpContext context,
     IOptions<WhatsAppSettings> waOptions) => {
@@ -74,7 +75,7 @@ app.MapPost("/webhook", async (
 
     _ = Task.Run(async () =>
     {
-        await waService.SendWhatsAppResponse(senderPhone, "_Analyzing your request and querying SAP... Please wait a moment._ 🔍", waSettings, waLogger);
+        await waService.SendWhatsAppResponse(senderPhone, "_Analyzing your request and querying database... Please wait a moment._ 🔍", waSettings, waLogger);
         var response = await ExecuteQuery(scopeFactory, identity, messageText, openAIPromptExecutionSettings, waLogger);
         await waService.SendWhatsAppResponse(senderPhone, response, waSettings, waLogger);
     });
@@ -133,7 +134,7 @@ async static Task<string> ExecuteQuery(IServiceScopeFactory scopeFactory,
             var identityService = sp.GetRequiredService<IIdentityService>();
             //var identity = await identityService.GetIdentityAsync(usernameorphonenumber);
             var kernel = sp.GetRequiredService<Kernel>();
-            var aiOptions = sp.GetRequiredService<IOptions<OpenAiSettings>>();
+            var aiOptions = sp.GetRequiredService<IOptions<CommonAiSettings>>();
 
             kernel.Data["UserIdentity"] = identity;
             kernel.Data["WhatsAppNumber"] = identity.WhatsAppNumber;

@@ -7,7 +7,8 @@
     },
     {
       "CollectionName": "AW-Person",
-      "SyncSql": "SELECT BusinessEntityID as Id, a.FirstName + coalesce(' ' + a.middlename,'')+coalesce(' ' + a.lastname,'')  as Content, a.PersonType FROM person.Person a WHERE a.ModifiedDate >= coalesce((select max(convert(date, LastSyncTime)) from Vector_SyncTracker where CollectionName='AW-Person'),'20000101')",
+      "SyncSql": "SELECT BusinessEntityID as Id, a.FirstName + coalesce(' ' + a.middlename,'')+coalesce(' ' + a.lastname,'')  as Content, a.PersonType FROM person.Person a WHERE a.ModifiedDate >= coalesce((select max(convert(date, LastSyncTime)) from Vector_SyncTracker where CollectionName='AW-Person'),'20000101') order by a.ModifiedDate",
+      "SyncSqlID": "SELECT BusinessEntityID as Id, a.FirstName + coalesce(' ' + a.middlename,'')+coalesce(' ' + a.lastname,'')  as Content, a.PersonType FROM person.Person a order by Id offset 2000 rows fetch next 2000 rows only",
       "MetadataFields": [ "PersonType" ]
     },
     {

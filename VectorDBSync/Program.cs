@@ -7,22 +7,54 @@ using VectorDBSync;
 IConfiguration config = new ConfigurationBuilder()
     .SetBasePath(Directory.GetCurrentDirectory())
     .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-    .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", optional: true)
+    .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", optional: true)    
     .Build();
 
-var apikey = config["OpenAiSettings:ApiKey"];
-var chromaUrl = config["DatabaseSettings:ChromaUrl"];
-var connectionString = config["DatabaseSettings:ConnectionString"];
+//var apikey = config["OpenAiSettings:ApiKey"];
+//var chromaUrl = config["DatabaseSettings:ChromaUrl"];
+//var connectionString = config["DatabaseSettings:ConnectionString"];
 
 var json = await File.ReadAllTextAsync("vectorConfig.json");
-var configs = JsonSerializer.Deserialize<VectorSyncRoot>(json);
-DynamicVectorSyncService dvss = new DynamicVectorSyncService(apikey, chromaUrl, connectionString);
-await dvss.SyncAllCollections(configs.SyncCollections);
+var vectorConfigs = JsonSerializer.Deserialize<VectorSyncRoot>(json);
+//DynamicVectorSyncService dvss = new DynamicVectorSyncService(apikey, chromaUrl, connectionString);
+//await dvss.SyncAllCollections(configs.SyncCollections);
+
+ISyncService vss= new VectorSyncService(config);
+
+await vss.SyncAllCollections(vectorConfigs.SyncCollections);
+await TestSearch(vss);
+
 //await TestSearch(dvss);
 Console.WriteLine("Press Enter to close");
 Console.ReadLine();
 
-async static Task TestSearch(DynamicVectorSyncService dvss)
+
+async static Task TestSearchCollection(ISyncService syncService, string collectionName, string searchText)
+{
+    Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} searching for {searchText} in collection {collectionName}.");
+    //var searchItemResults = await vss.SearchItems(searchItemText);
+    var searchItemResults = await syncService.SearchCollection(collectionName, searchText);
+    Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} searching for {searchText} in collection {collectionName} completed.");
+    if (searchItemResults.Count == 0)
+    {
+        Console.WriteLine("No matches found.");
+    }
+    foreach (var res in searchItemResults)
+    {
+        Console.WriteLine($"Match Found! ID: {res.Id} | Similarity Distance: {res.Distance}");
+        Console.WriteLine($"Content: {res.Document}");
+    }
+
+}
+
+async static Task TestSearch(ISyncService vss)
+{
+    await TestSearchCollection(vss, "AW-Store", "Bike Mechanic");
+    await TestSearchCollection(vss, "AW-Person", "Patrik Wedge");
+    await TestSearchCollection(vss, "AW-Product", "Road 650 Red 44");
+}
+
+async static Task TestChromaSearch(DynamicVectorSyncService dvss)
 {
     var searchText = "Patrik Wedge";
     Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} searching Person for {searchText}.");
