@@ -1,12 +1,13 @@
 ﻿using Microsoft.AI.Foundry.Local;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
-
-using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Options;
 using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.ChatCompletion;
+using Microsoft.SemanticKernel.Connectors.OpenAI;
 using System.Runtime.Loader;
 using WhatsAppToDB.Abstractions;
+using WhatsAppToDB.Data;
+using WhatsAppToDB.Models;
 
 namespace WhatsAppToDB
 {
@@ -86,7 +87,10 @@ namespace WhatsAppToDB
                 });
             });
 
+            services.AddScoped<AiRequestContext>();
+
             services.AddSingleton<IWhatsAppLogger, WhatsAppLogger>();
+            services.AddSingleton<ChatDbRepository>();
 
             services.Configure<WhatsAppSettings>(config.GetSection("WhatsAppSettings"));
             services.Configure<DatabaseSettings>(config.GetSection("DatabaseSettings"));
@@ -94,6 +98,7 @@ namespace WhatsAppToDB
             services.Configure<CommonAiSettings>(config.GetSection("CommonAiSettings"));
             services.Configure<LocalAiSettings>(config.GetSection("LocalAiSettings"));
             services.Configure<RoleSettings>(config.GetSection("RoleSettings"));
+            services.Configure<MailSettings>(config.GetSection("MailSettings"));
             services.AddDynamicExtensions(config);
 
             services.AddPlugin(config, metadata);
@@ -101,6 +106,7 @@ namespace WhatsAppToDB
             
             services.AddScoped<IIdentityService, IdentityService>();
             services.AddScoped<DatabaseQueryPlugin>();
+            services.AddScoped<SchemaPlugin>();
 
             services.AddKernel(metadata);
 
@@ -146,31 +152,7 @@ namespace WhatsAppToDB
                         }
 
                         return null;
-                    };
-                    //AssemblyLoadContext.Default.Resolving += (context, assemblyName) =>
-                    //{
-                    //    // 1. Force use of Host's version for ANY Infrastructure DLLs
-                    //    if (assemblyName.Name.StartsWith("System.") ||
-                    //        assemblyName.Name.StartsWith("Microsoft.") ||
-                    //        assemblyName.Name == "Newtonsoft.Json")
-                    //    {
-                    //        return null; // Returning null tells .NET "Look in the Host's bin folder instead"
-                    //    }
-
-                    //    // 2. Check if already loaded (The Bridge)
-                    //    var alreadyLoaded = AppDomain.CurrentDomain.GetAssemblies()
-                    //        .FirstOrDefault(a => a.GetName().Name == assemblyName.Name);
-                    //    if (alreadyLoaded != null) return alreadyLoaded;
-
-                    //    // 3. Only load your custom logic from the Plugins folder
-                    //    string path = Path.Combine(pluginDir!, $"{assemblyName.Name}.dll");
-                    //    if (File.Exists(path))
-                    //    {
-                    //        return context.LoadFromAssemblyPath(path);
-                    //    }
-
-                    //    return null;
-                    //};
+                    };                    
 
                     var pluginType = assembly.GetType(pluginSettings.PluginClassName);
 
@@ -232,7 +214,9 @@ namespace WhatsAppToDB
                 
 
                 var dbPlugin = sp.GetRequiredService<DatabaseQueryPlugin>();
+                var schemaPlugin = sp.GetRequiredService<SchemaPlugin>();
                 kernelBuilder.Plugins.AddFromObject(dbPlugin);
+                kernelBuilder.Plugins.AddFromObject(schemaPlugin);
 
                 // Add all dynamic plugins loaded from DLLs
                 foreach (var pluginType in metadata.PluginTypes)

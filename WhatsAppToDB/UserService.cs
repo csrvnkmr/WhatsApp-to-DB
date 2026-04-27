@@ -33,23 +33,34 @@ namespace WhatsAppToDB
             return (true, session);
         }
 
+        private static (bool isSuccess, Abstractions.IdentityContext? identity) GetIdentity(UserSession session)
+        {
+            if (session == null) return (false, null);
+            Abstractions.IdentityContext ic = new Abstractions.IdentityContext();
+            ic.InternalUserId = session.InternalUserId;
+            ic.Role = session.Role;
+            ic.SessionContextKey = session.SessionContextKey;
+            ic.WhatsAppNumber = session.Username;            
+
+            return (true, ic);
+        }
+
+        public static (bool isSuccess, Abstractions.IdentityContext? identity) ValidateUserName(string username)
+        {
+            var sessions = JsonSerializer.Deserialize<List<UserSession>>(File.ReadAllText("tokens.json"));
+            var session = sessions.FirstOrDefault(s => s.Username == username);
+            return GetIdentity(session);
+        }
+
         public static (bool isSuccess, Abstractions.IdentityContext? identity) ValidateToken(string token)
         {
             var sessions = JsonSerializer.Deserialize<List<UserSession>>(File.ReadAllText("tokens.json"));
             var session = sessions.FirstOrDefault(s => s.Token == token);
-
-            if (session == null) return (false, null);
-            Abstractions.IdentityContext ic = new Abstractions.IdentityContext();
-            ic.InternalUserId=session.InternalUserId;
-            ic.Role=session.Role;
-            ic.SessionContextKey = session.SessionContextKey;
-            ic.WhatsAppNumber = session.Username;
-
-            return (true, ic);
+            return GetIdentity(session);
         }
     }
 
         public record LoginRequest(string Username, string Password);
-    public record AskRequest(string Token, string Question);
+    public record AskRequest(string Question, long? SessionId);
     public record UserSession(string Token, string Username, string Role, string InternalUserId, string SessionContextKey);
 }

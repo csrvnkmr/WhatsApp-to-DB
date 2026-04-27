@@ -10,7 +10,6 @@
 
   <ItemGroup>
     <Compile Remove="AppModules.cs" />
-    <Compile Remove="SchemaPlugin.cs" />
     <Compile Remove="SearchHelperPlugin.cs" />
     <Compile Remove="TestVectorSearch.cs" />
     <Compile Remove="VectorSearchService.cs" />
@@ -32,8 +31,12 @@
     <PackageReference Include="Microsoft.SemanticKernel" Version="1.74.0" />
     <PackageReference Include="Microsoft.SemanticKernel.Connectors.InMemory" Version="1.74.0-preview" />
     <PackageReference Include="Microsoft.SemanticKernel.Connectors.OpenAI" Version="1.74.0" />
+    <PackageReference Include="NPOI" Version="2.8.0" />
     <PackageReference Include="System.Linq.Async" Version="7.0.0" />
     <PackageReference Include="System.Text.Json" Version="10.0.5" />
+    <PackageReference Include="xunit.abstractions" Version="2.0.3" />
+    <PackageReference Include="xunit.assert" Version="2.9.3" />
+    <PackageReference Include="xunit.extensibility.core" Version="2.9.3" />
   </ItemGroup>
 
   <ItemGroup>

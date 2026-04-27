@@ -1,0 +1,28 @@
+@import "tailwindcss";
+
+:root[data-theme='light'] {
+    --bg: #ffffff;
+    --text: #0f172a;
+    --panel: #f8fafc;
+}
+
+:root[data-theme='dark'] {
+    --bg: #0f172a;
+    --text: #f8fafc;
+    --panel: #111827;
+}
+
+:root[data-theme='corporate'] {
+    --bg: #eef4ff;
+    --text: #0f172a;
+    --panel: #dbeafe;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+}
+
+.panel {
+    background: var(--panel);
+}
