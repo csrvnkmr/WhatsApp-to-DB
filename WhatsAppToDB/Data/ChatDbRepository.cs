@@ -52,8 +52,12 @@ namespace WhatsAppToDB.Data
     {
         private readonly string _connectionString;
 
-        public ChatDbRepository(string filename="chathistory.db")
+        private readonly ILogger logger;
+
+        public ChatDbRepository(ILogger? logger = null, string filename="chathistory.db")
         {
+            this.logger = logger ?? new AppLogger();
+
             var folder = FolderUtls.GetDataFolder() ;
 
             if (!Directory.Exists(folder))
@@ -66,7 +70,7 @@ namespace WhatsAppToDB.Data
             }
 
             _connectionString = $"Data Source={dbPath}";
-            
+            this.logger.LogInfoAsync($"Database initialized at {dbPath}");
         }
 
         private SqliteConnection GetConnection()
@@ -82,7 +86,7 @@ namespace WhatsAppToDB.Data
             using var conn = GetConnection();
             await conn.OpenAsync();
             await conn.ExecuteAsync(SqliteSqls.CreateTables);
-            await SqliteMigration.ApplyMigrationsAsync(conn);
+            await SqliteMigration.ApplyMigrationsAsync(conn, logger);
 
         }
 

@@ -11,6 +11,6 @@ namespace WhatsAppToDB.Abstractions
         /// <summary>
         /// Injected after schema retrieval to add user-specific constraints.
         /// </summary>
-        Task<string> GetModuleConstraintAsync(string whatsAppNumber, string moduleName, string userQuestion);
+        Task<string> GetModuleConstraintAsync(IdentityContext identity, string moduleName, string userQuestion);
     }
 }

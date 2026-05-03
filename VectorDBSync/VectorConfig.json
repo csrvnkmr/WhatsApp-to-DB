@@ -1,20 +1,32 @@
 ﻿{
   "SyncCollections": [
     {
-      "CollectionName": "AW-Store",
-      "SyncSql": "SELECT BusinessEntityID as Id, a.Name as Content FROM Sales.Store a WHERE a.ModifiedDate >= coalesce((select max(convert(date, LastSyncTime)) from Vector_SyncTracker where CollectionName='AW-Store'),'20000101')",
+      "CollectionName": "OCRD",
+      "SyncSql": "SELECT CardCode as Id, CardName as Content, CardType FROM OCRD WHERE UpdateDate >= coalesce((select convert(date, LastSyncTime) from Vector_SyncTracker where CollectionName='OCRD'), '19990101')",
+      "MetadataFields": [ "CardType" ]
+    },
+    {
+      "CollectionName": "FEWSHOTQUERIES",
+      "SyncSql": "SELECT Id, QueryDescription as Content, QueryText FROM FewShotQueries ",
+      "MetadataFields": [ "QueryText" ],
+      "DeleteAndCreate": true
+    },
+    {
+      "CollectionName": "OSLP",
+      "SyncSql": "SELECT SlpCode Id, SlpName as Content FROM OSLP ",
+      "MetadataFields": [],
+      "DeleteAndCreate": true
+    },
+    {
+      "CollectionName": "OITB",
+      "SyncSql": "SELECT ItmsGrpCod Id, ItmsGrpNam as Content FROM OITB ",
+      "MetadataFields": [],
+      "DeleteAndCreate": true
+    },
+    {
+      "CollectionName": "OITM",
+      "SyncSql": "SELECT ItemCode as Id, ItemName as Content FROM OITM WHERE UpdateDate >= coalesce((select convert(date, LastSyncTime) from Vector_SyncTracker where CollectionName='OITM'), '19990101')",
       "MetadataFields": []
-    },
-    {
-      "CollectionName": "AW-Person",
-      "SyncSql": "SELECT BusinessEntityID as Id, a.FirstName + coalesce(' ' + a.middlename,'')+coalesce(' ' + a.lastname,'')  as Content, a.PersonType FROM person.Person a WHERE a.ModifiedDate >= coalesce((select max(convert(date, LastSyncTime)) from Vector_SyncTracker where CollectionName='AW-Person'),'20000101') order by a.ModifiedDate",
-      "SyncSqlID": "SELECT BusinessEntityID as Id, a.FirstName + coalesce(' ' + a.middlename,'')+coalesce(' ' + a.lastname,'')  as Content, a.PersonType FROM person.Person a order by Id offset 2000 rows fetch next 2000 rows only",
-      "MetadataFields": [ "PersonType" ]
-    },
-    {
-      "CollectionName": "AW-Product",
-      "SyncSql": "select a.ProductID as Id, a.Name as Content, a.Color, a.ProductNumber From Production.Product a WHERE a.ModifiedDate >= coalesce((select max(convert(date, LastSyncTime)) from Vector_SyncTracker where CollectionName='AW-Product'),'20000101')",
-      "MetadataFields": ["Color","ProductNumber"]
     }
   ]
-}
+} 

@@ -52,6 +52,10 @@ namespace VectorDBSync
                 Console.WriteLine($"Syncing {config.CollectionName} - {results.Count()} records to sync. Preparing vector data.." );
                 var recordsToSync = new List<VectorRecord>();
                 var count = 0;
+                if (config.DeleteAndCreate)
+                {
+                    await _adminClient.DeleteCollection(config.CollectionName);
+                }
                 foreach (var item in results)
                 {
                     if (count%100==0 && count>0)                     
@@ -247,6 +251,7 @@ namespace VectorDBSync
         public string SyncSql { get; set; }
         public string UpdateTrackerSql { get; set; }
         public List<string> MetadataFields { get; set; }
+        public bool DeleteAndCreate { get; set; } = false;
     }
 
     public class SearchResult

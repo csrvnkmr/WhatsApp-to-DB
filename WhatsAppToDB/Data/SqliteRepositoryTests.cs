@@ -30,7 +30,7 @@ namespace WhatsAppToDB.Tests
 
             var dbname = Path.GetFileName(_dbPath);
 
-            var repo = new ChatDbRepository(dbname);
+            var repo = new ChatDbRepository(null, dbname);
 
             // ---------------------------------------------
             // Create DB + Tables

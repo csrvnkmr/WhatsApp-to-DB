@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WhatsAppToDB.Abstractions",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SecurityPlugin", "SecurityPlugin\SecurityPlugin.csproj", "{EBC15AF0-925F-4E37-A449-83AC1ABEEC4A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalyzeBills", "AnalyzeBills\AnalyzeBills.csproj", "{FD53F678-24EB-451A-BB6E-B740534F7BB7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -61,6 +63,14 @@ Global
 		{EBC15AF0-925F-4E37-A449-83AC1ABEEC4A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{EBC15AF0-925F-4E37-A449-83AC1ABEEC4A}.Release|x64.ActiveCfg = Release|x64
 		{EBC15AF0-925F-4E37-A449-83AC1ABEEC4A}.Release|x64.Build.0 = Release|x64
+		{FD53F678-24EB-451A-BB6E-B740534F7BB7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FD53F678-24EB-451A-BB6E-B740534F7BB7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FD53F678-24EB-451A-BB6E-B740534F7BB7}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{FD53F678-24EB-451A-BB6E-B740534F7BB7}.Debug|x64.Build.0 = Debug|Any CPU
+		{FD53F678-24EB-451A-BB6E-B740534F7BB7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FD53F678-24EB-451A-BB6E-B740534F7BB7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FD53F678-24EB-451A-BB6E-B740534F7BB7}.Release|x64.ActiveCfg = Release|Any CPU
+		{FD53F678-24EB-451A-BB6E-B740534F7BB7}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

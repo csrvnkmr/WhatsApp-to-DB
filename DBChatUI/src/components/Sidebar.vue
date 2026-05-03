@@ -81,6 +81,7 @@
 import { computed, onMounted, ref } from "vue";
 import { useChatStore } from "@/stores/chat";
 import { useAuthStore } from "@/stores/auth";
+const emit = defineEmits(["closeMobile"]);
 
 const chat = useChatStore();
 const auth = useAuthStore();
@@ -124,7 +125,7 @@ const filteredSessions = computed(() => {
 // ==========================================
 // SAME as ChatWindow New Chat
 // ==========================================
-function newChat() {
+function newChatold() {
 
     if (chat.loading)
         return;
@@ -136,12 +137,35 @@ function newChat() {
 // ==========================================
 // Open Session
 // ==========================================
+async function openSessionold(id: number) {
+
+    if (chat.loading)
+        return;
+
+    await chat.loadMessages(id);
+}
+
 async function openSession(id: number) {
 
     if (chat.loading)
         return;
 
     await chat.loadMessages(id);
+
+    // auto hide mobile menu
+    emit("closeMobile");
+}
+
+function newChat() {
+
+    if (chat.loading)
+        return;
+
+    chat.messages = [];
+    chat.selectedSessionId = null;
+
+    // close mobile menu
+    emit("closeMobile");
 }
 
 // ==========================================

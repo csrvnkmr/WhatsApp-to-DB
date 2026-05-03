@@ -12,6 +12,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\DBSearchHelperPlugin\DBSearchHelperPlugin.csproj" />
+    <ProjectReference Include="..\VectorDBSync\VectorDBSync.csproj" />
     <ProjectReference Include="..\WhatsAppToDB.Abstractions\WhatsAppToDB.Abstractions.csproj" />
   </ItemGroup>
 

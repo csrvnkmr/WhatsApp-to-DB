@@ -9,11 +9,21 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using VectorDBSync.EmbeddingService;
+using VectorDBSync.VectorDBService;
 
 namespace VectorDBSync
 {
     public class VectorSyncService : ISyncService
     {
+
+        public static ISyncService LoadSyncServiceFrom(string settingsFile)
+        {
+            var settings = Settings.LoadFromFile(settingsFile);
+            ISyncService vss = new VectorSyncService(settings);
+            return vss;
+        }
+
         private readonly string connectionString;
         private  IVectorDBService _vectorDBService;
 
@@ -23,21 +33,10 @@ namespace VectorDBSync
             ELSE
                 INSERT INTO Vector_SyncTracker (CollectionName, LastSyncTime) VALUES (@name, @now)";
 
-        private void SetVectorDBService(string dataFolder="Data")
+        public VectorSyncService(Settings settings)
         {
-            _vectorDBService = new SQLiteVectorDBService(new LocalEmbeddingService(), dataFolder); 
-        }
-
-        public VectorSyncService(IConfiguration config)
-        {
-            SetVectorDBService();
-            this.connectionString = config["DatabaseSettings:ConnectionString"];             
-        }
-
-        public VectorSyncService(string connectionString)
-        {
-            SetVectorDBService("C:\\Development\\AiAgents\\git\\WhatsAppToDB\\VectorDBSync\\bin\\Debug\\net9.0\\Data\\");
-            this.connectionString = connectionString;
+            _vectorDBService = VectorDBServiceFactory.CreateVectorDBService(settings);
+            this.connectionString = settings.DatabaseSettings.ConnectionString ?? "";
         }
 
         public async Task SyncAllCollections(List<VectorSyncConfig> configs)
@@ -46,6 +45,11 @@ namespace VectorDBSync
 
             foreach (var config in configs)
             {
+                if (config.DeleteAndCreate)
+                {
+                    Console.WriteLine($"Deleting and recreating collection {config.CollectionName} in Vector DB");
+                    await _vectorDBService.Delete(config.CollectionName);
+                }
                 Console.WriteLine($"Syncing {config.CollectionName} starts");
                 // 1. Fetch data dynamically
                 // Note: You'd pass the actual last sync date here from your tracker table
@@ -65,7 +69,7 @@ namespace VectorDBSync
                     var record = new VectorRecord
                     {
                         Id = row["Id"].ToString(),
-                        Content = row["Content"].ToString(),
+                        Content = row["Content"]?.ToString() + "",
                         Metadata = new Dictionary<string, object>()
                     };
 
@@ -82,8 +86,6 @@ namespace VectorDBSync
                 if (recordsToSync.Any())
                 {
                     Console.WriteLine($"Syncing {config.CollectionName} - Calling sync");
-                    // 3. Sync to Chroma
-                    //await SyncToCollection(config.CollectionName, recordsToSync);
                     await SyncToCollectionByBatch(config.CollectionName, recordsToSync);
                     var newHighWaterMark = DateTime.Now;
                     Console.WriteLine($"Completed Syncing {config.CollectionName} -  updating Highwatermark to {newHighWaterMark.ToString("yyyy-MM-dd HH:mm:ss")}");
@@ -106,7 +108,8 @@ namespace VectorDBSync
                 var ids = currentBatch.Select(r => r.Id).ToList();
                 var documents = currentBatch.Select(r => r.Content).ToList();
 
-                Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} [Sync] Generating embeddings for batch {i / batchSize + 1} ({documents.Count} records)...");
+                Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} [Sync] Generating embeddings for " +
+                    $"{i+1} to {i + currentBatch.Count} of ({records.Count} records)...");
 
                 // 2. Bulk fetch embeddings for the entire batch
 
@@ -116,7 +119,6 @@ namespace VectorDBSync
                               .ToDictionary(m => m.Key, m => m.Value)
                 ).ToList();
 
-                // 3. Perform the Bulk Add to Chroma
                 await _vectorDBService.Add(
                     collectionName,
                     ids,
@@ -125,7 +127,7 @@ namespace VectorDBSync
                 );
 
                 totalProcessed += currentBatch.Count;
-                Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} [Sync] Successfully pushed {totalProcessed}/{records.Count} to Chroma.");
+                Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} [Sync] Successfully pushed {totalProcessed}/{records.Count} to Vector DB.");
             }
         }
 

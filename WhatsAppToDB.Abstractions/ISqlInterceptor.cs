@@ -11,6 +11,6 @@ namespace WhatsAppToDB.Abstractions
         /// <summary>
         /// Final gatekeeper to modify or validate SQL before it hits the database.
         /// </summary>
-        Task<string> OnBeforeExecuteAsync(string whatsAppNumber, string generatedSql);
+        Task<string> OnBeforeExecuteAsync(IdentityContext identity, string whatsAppNumber, string generatedSql);
     }
 }

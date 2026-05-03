@@ -9,6 +9,8 @@ namespace VectorDBSync
     public interface ISyncService
     {
         Task SyncAllCollections(List<VectorSyncConfig> configs);
+
+        
         Task<List<SearchResult>> SearchCollection(string collectionName,
                 string queryText,
                 int limit = 5,

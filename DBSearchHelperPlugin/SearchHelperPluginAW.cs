@@ -22,7 +22,7 @@ namespace DBSearchHelperPlugin
 
         private VectorDBSync.DynamicVectorSyncService dvss;
         private VectorDBSync.VectorSyncService vss;
-        private VectorDBSync.ISyncService syncService;
+        private VectorDBSync.ISyncService syncService; 
         private string chromaUrl, connectionString, apiKey;
 
         private void LoadChromaDBService(IConfiguration config)
@@ -40,8 +40,9 @@ namespace DBSearchHelperPlugin
         private void LoadSqLiteDBService(IConfiguration config)
         {
             connectionString = config["DatabaseSettings:ConnectionString"] ?? "";
-            vss = new VectorDBSync.VectorSyncService(connectionString);
-            syncService = vss;
+            //vss = new VectorDBSync.VectorSyncService(connectionString);
+            syncService = VectorDBSync.VectorSyncService.LoadSyncServiceFrom("vectordbsettings.json");
+            //syncService = vss;
             Console.WriteLine($"[SearchHelperPluginAW] Initialized with SQLite Vector Sync Service. ConnectionString: {connectionString}");
         }
 

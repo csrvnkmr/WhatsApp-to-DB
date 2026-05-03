@@ -6,7 +6,9 @@ UPDATED:
 3. Auto-scroll to latest message
 -->
 <template>
-<div class="flex-1 h-screen flex flex-col">
+<!--<div class="flex-1 h-screen flex flex-col">-->
+    
+<div class="h-full flex flex-col bg-white">
 
     <!-- HEADER -->
     <div class="p-4 flex items-center justify-between">
@@ -121,7 +123,7 @@ UPDATED:
 
     </div>
 
-    <!-- INPUT -->
+    <!-- INPUT 
     <div class="border-t p-4 flex gap-3">
 
         <input
@@ -143,7 +145,36 @@ UPDATED:
 
         </button>
 
+    </div> -->
+    <div
+        class="shrink-0 border-t bg-white p-3 pb-[max(12px,env(safe-area-inset-bottom))]">
+
+        <div class="flex gap-2">
+
+            <input
+                ref="questionInput"
+                v-model="question"
+                @keyup.enter="sendQuestion"
+                :disabled="loading"
+                :placeholder="loading
+                    ? 'Please wait. Fetching the answer...'
+                    : 'Ask anything'"
+                class="flex-1 border rounded-2xl px-4 py-3 outline-none disabled:bg-gray-100" />
+
+            <button
+                @click="sendQuestion"
+                :disabled="loading"
+                class="px-4 rounded-2xl bg-black text-white disabled:opacity-50">
+
+                {{ loading ? "..." : "Send" }}
+
+            </button>
+
+        </div>
+
     </div>
+
+
 
 </div>
 <!-- =============================================

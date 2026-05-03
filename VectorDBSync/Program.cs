@@ -1,30 +1,23 @@
-﻿using ChromaDB.Client;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using System.IO;
 using System.Text.Json;
 using VectorDBSync;
-//var vss = new VectorDBSync.ChromaSyncService("", "", "");
-IConfiguration config = new ConfigurationBuilder()
-    .SetBasePath(Directory.GetCurrentDirectory())
-    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-    .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", optional: true)    
-    .Build();
-
-//var apikey = config["OpenAiSettings:ApiKey"];
-//var chromaUrl = config["DatabaseSettings:ChromaUrl"];
-//var connectionString = config["DatabaseSettings:ConnectionString"];
+////var vss = new VectorDBSync.ChromaSyncService("", "", "");
+//IConfiguration config = new ConfigurationBuilder()
+//    .SetBasePath(Directory.GetCurrentDirectory())
+//    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+//    .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", optional: true)    
+//    .Build();
 
 var json = await File.ReadAllTextAsync("vectorConfig.json");
 var vectorConfigs = JsonSerializer.Deserialize<VectorSyncRoot>(json);
-//DynamicVectorSyncService dvss = new DynamicVectorSyncService(apikey, chromaUrl, connectionString);
-//await dvss.SyncAllCollections(configs.SyncCollections);
 
-ISyncService vss= new VectorSyncService(config);
+var settings = Settings.LoadFromFile("appsettings.json");
+ISyncService vss = new VectorSyncService(settings);
 
 await vss.SyncAllCollections(vectorConfigs.SyncCollections);
-await TestSearch(vss);
+await TestSearchB1(vss);
 
-//await TestSearch(dvss);
 Console.WriteLine("Press Enter to close");
 Console.ReadLine();
 
@@ -47,12 +40,22 @@ async static Task TestSearchCollection(ISyncService syncService, string collecti
 
 }
 
-async static Task TestSearch(ISyncService vss)
+async static Task TestSearchAW(ISyncService vss)
 {
     await TestSearchCollection(vss, "AW-Store", "Bike Mechanic");
     await TestSearchCollection(vss, "AW-Person", "Patrik Wedge");
     await TestSearchCollection(vss, "AW-Product", "Road 650 Red 44");
 }
+
+async static Task TestSearchB1(ISyncService vss)
+{
+    await TestSearchCollection(vss, "OCRD", "Lumarks");
+    await TestSearchCollection(vss, "OITM", "JB Officeprint 1186");
+    await TestSearchCollection(vss, "OITB", "JB Printer");
+    await TestSearchCollection(vss, "OSLP", "Bhaskar Lakshman");
+    await TestSearchCollection(vss, "FEWSHOTQUERIES", "Itemgroupwise sales");
+}
+
 
 async static Task TestChromaSearch(DynamicVectorSyncService dvss)
 {

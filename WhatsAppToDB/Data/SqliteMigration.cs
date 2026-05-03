@@ -9,14 +9,14 @@ namespace WhatsAppToDB.Data
         // =====================================================
         // CALL THIS DURING APP STARTUP
         // =====================================================
-        public static async Task ApplyMigrationsAsync(string connectionString)
+        public static async Task ApplyMigrationsAsync(string connectionString, ILogger logger)
         {
             using var conn = new SqliteConnection(connectionString);
             await conn.OpenAsync();
-            await ApplyMigrationsAsync(conn);
+            await ApplyMigrationsAsync(conn, logger);
         }
 
-        public static async Task ApplyMigrationsAsync(SqliteConnection conn)
+        public static async Task ApplyMigrationsAsync(SqliteConnection conn, ILogger logger)
         {
 
             await AddColumnIfMissing(

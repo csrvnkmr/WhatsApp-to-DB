@@ -5,6 +5,7 @@ using Microsoft.SemanticKernel.ChatCompletion;
 using System.Text.Json;
 using WhatsAppToDB;
 using WhatsAppToDB.Abstractions;
+using WhatsAppToDB.Services;
 
 public class AdventureWorksTestHarness
 {
@@ -65,7 +66,7 @@ public class AdventureWorksTestHarness
         try
         {
             var sp = _serviceProvider;
-            var logger = sp.GetService<IWhatsAppLogger>();
+            var logger = sp.GetService<WhatsAppToDB.ILogger>();
             {
                 var waOptions = sp.GetRequiredService<IOptions<WhatsAppSettings>>();
                 waSettings = waOptions.Value; // Capture the actual settings object
