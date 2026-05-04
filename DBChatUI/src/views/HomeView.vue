@@ -7,7 +7,7 @@ FIXES:
 ============================================= -->
 
 <template>
-<div class="h-[100dvh] bg-white flex overflow-hidden">
+<div class="h-[100dvh] bg-base flex overflow-hidden">
 
     <!-- MOBILE OVERLAY -->
     <div
@@ -36,7 +36,7 @@ FIXES:
 
         <!-- MOBILE HEADER ALWAYS VISIBLE -->
         <header
-            class="md:hidden shrink-0 h-14 border-b bg-white flex items-center justify-between px-4">
+            class="md:hidden shrink-0 h-14 border-b bg-base flex items-center justify-between px-4">
 
             <button
                 @click="sidebarOpen = true"

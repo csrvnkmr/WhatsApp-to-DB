@@ -4,7 +4,7 @@
     <div class="text-2xl font-bold">InsightChat Login</div>
     <input v-model="username" class="w-full border p-3 rounded-xl" placeholder="Username" />
     <input v-model="password" type="password" class="w-full border p-3 rounded-xl" placeholder="Password" />
-    <button @click="submit" class="w-full bg-black text-white p-3 rounded-xl">Login</button>
+    <button @click="submit" class="w-full bg-user p-3 rounded-xl">Login</button>
     <div class="text-red-500 text-sm">{{ auth.message }}</div>
   </div>
 </div>

@@ -7,21 +7,48 @@ UPDATED:
 -->
 <template>
 <!--<div class="flex-1 h-screen flex flex-col">-->
-    
-<div class="h-full flex flex-col bg-white">
+
+<div class="h-full flex flex-col bg-base">
 
     <!-- HEADER -->
     <div class="p-4 flex items-center justify-between">
+
+        <!-- Title -->
         <div class="font-bold text-xl">
-            InsightChat
+            Insight Chat
         </div>
 
+        <!-- Theme Toggle -->
+        <div class="flex items-center gap-2 bg-gray-200/60 rounded-xl p-1">
+
+            <button
+                @click="theme.currentTheme = 'light'"
+                :class="themeBtnClass('light')">
+                ☀️
+            </button>
+
+            <button
+                @click="theme.currentTheme = 'dark'"
+                :class="themeBtnClass('dark')">
+                🌙
+            </button>
+
+            <button
+                @click="theme.currentTheme = 'corporate'"
+                :class="themeBtnClass('corporate')">
+                🏢
+            </button>
+
+        </div>
+
+        <!-- New Chat -->
         <button
             @click="newChat"
             :disabled="loading"
-            class="bg-black text-white px-4 py-2 rounded-xl text-sm disabled:opacity-50">
+            class="bg-user px-4 py-2 rounded-xl text-sm disabled:opacity-50 hover:opacity-90 transition">
             + New Chat
         </button>
+
     </div>
 
     <!-- CHAT BODY -->
@@ -35,30 +62,60 @@ UPDATED:
             Start a new conversation or select chat history.
         </div>
 
-        <div
+        <div  :id="`msg-${msg.id}`"
             v-for="msg in chat.messages"
-            :key="msg.id">
+            :key="`${msg.role}-${msg.id}`">
 
             <!-- USER -->
-            <div
-                v-if="isUser(msg.role)"
-                class="flex justify-end">
+           <div
+              v-if="isUser(msg.role)"
+              class="flex justify-end">
 
-                <div class="bg-black text-white px-4 py-3 rounded-2xl max-w-[85%] md:max-w-[70%] lg:max-w-[60%]">
-                    <div>{{ msg.messageText }}</div>
-                    <div class="text-xs opacity-70 mt-1">
-                        {{ msg.createdOn }}
-                    </div>
-                </div>
-            </div>
+              <!-- COLUMN WRAPPER -->
+              <div class="flex flex-col items-end max-w-[85%] md:max-w-[70%] lg:max-w-[60%]">
+
+                  <!-- MESSAGE BUBBLE -->
+                  <div class="bg-user px-4 py-3 rounded-2xl w-full">
+
+                      <!-- BOOKMARK MODE -->
+                      <div
+                          v-if="msg.isBookmarkView"
+                          @click="startFromBookmark(msg.messageText)"
+                          class="cursor-pointer hover:opacity-90 transition">
+
+                          <span class="hover:underline">
+                              {{ msg.messageText }}
+                          </span>
+
+                          <span class="ml-2 text-xs opacity-70">
+                              ↺
+                          </span>
+
+                      </div>
+
+                      <!-- NORMAL CHAT -->
+                      <div v-else>
+                          {{ msg.messageText }}
+                      </div>
+
+                  </div>
+
+                  <!-- TIMESTAMP (ALWAYS BELOW) -->
+                  <div class="text-xs opacity-70 mt-1">
+                      {{ msg.createdOn }}
+                  </div>
+
+              </div>
+
+          </div>
             <!-- AI -->
             <div
                 v-else
                 class="flex justify-start">
 
-                <div class="bg-gray-100 px-4 py-3 rounded-2xl max-w-[90%] md:max-w-[75%] lg:max-w-[75%] whitespace-pre-wrap break-words">
+                <div class="bg-panel px-4 py-3 rounded-2xl max-w-[90%] md:max-w-[75%] lg:max-w-[75%] whitespace-pre-wrap break-words">
+                    {{ msg.messageText }}
 
-                    <div>{{ msg.messageText }}</div>
 
                     <!-- Footer -->
                     <div class="mt-2 flex flex-wrap items-center text-xs text-gray-500 gap-y-1">
@@ -88,6 +145,14 @@ UPDATED:
                                 class="text-blue-600 hover:text-blue-700 hover:underline transition-colors">
                                 Data
                             </a>
+                            <span class="mx-2 text-gray-300">·</span>
+
+                            <a
+                                href="#"
+                                @click.prevent="exportExcel(msg)"
+                                class="text-blue-600 hover:text-blue-700 hover:underline transition-colors">
+                                Excel
+                            </a>
                         </template>
 
                         <!-- CHART -->
@@ -112,9 +177,62 @@ UPDATED:
                             Email
                         </a>
 
+                        <span class="mx-2 text-gray-300">·</span>
+
+
+
+                            <!-- Bookmark icon -->
+                            <a
+                                v-if="!msg.isBookmarked"
+                                href="#"
+                                @click.prevent="openBookmarkModal(msg)"
+                                class="text-blue-600 hover:text-blue-700 hover:underline transition-colors">
+                                Bookmark
+                            </a>
+
+                            <a
+                                v-if="msg.isBookmarked"
+                                href="#"
+                                @click.prevent="removeBookmark(msg)"
+                                class="text-red-600 hover:text-red-700 hover:underline transition-colors">
+                                Remove Bookmark
+                            </a>
+
+                        <div v-if="showBookmarkModal"
+                          class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+
+                          <div class="bg-base w-full max-w-md rounded-2xl shadow-xl p-5">
+
+                              <!-- Title -->
+                              <div class="text-lg font-semibold mb-3">
+                                  Save Bookmark
+                              </div>
+
+                              <!-- Input -->
+                              <input
+                                  v-model="bookmarkText"
+                                  placeholder="Enter bookmark name"
+                                  class="w-full border rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-black mb-4" />
+
+                              <!-- Buttons -->
+                              <div class="flex justify-end gap-2">
+
+                                  <button
+                                      @click="showBookmarkModal = false"
+                                      class="px-4 py-2 rounded-xl border text-gray-600 hover:bg-panel">
+                                      Cancel
+                                  </button>
+
+                                  <button
+                                      @click="saveBookmark"
+                                      class="px-4 py-2 rounded-xl bg-user hover:opacity-90">
+                                      Save
+                                  </button>
+                              </div>
+                          </div>
+                        </div>
                     </div>
                 </div>
-
             </div>
         </div>
 
@@ -122,11 +240,12 @@ UPDATED:
         <div ref="bottomRef"></div>
 
     </div>
+<div class="shrink-0 border-t border-soft bg-base p-3 pb-[max(12px,env(safe-area-inset-bottom))]">
 
-    <!-- INPUT 
-    <div class="border-t p-4 flex gap-3">
+    <div class="flex gap-2">
 
-        <input
+        <!-- INPUT -->
+        <input v-if="chat.viewMode === 'chat'"
             ref="questionInput"
             v-model="question"
             @keyup.enter="sendQuestion"
@@ -134,45 +253,21 @@ UPDATED:
             :placeholder="loading
                 ? 'Please wait. Fetching the answer...'
                 : 'Ask anything'"
-            class="flex-1 border rounded-2xl px-4 py-3 outline-none disabled:bg-gray-100 disabled:text-gray-500" />
+            class="flex-1 border-soft rounded-2xl px-4 py-3 outline-none bg-panel focus:ring-1 focus:ring-[var(--border)] disabled:bg-panel transition" />
 
-        <button
+        <!-- BUTTON -->
+        <button v-if="chat.viewMode === 'chat'"
             @click="sendQuestion"
             :disabled="loading"
-            class="bg-black text-white px-5 rounded-2xl disabled:opacity-50">
+            class="px-4 py-3 rounded-2xl bg-user text-white disabled:opacity-50 transition whitespace-nowrap">
 
             {{ loading ? "..." : "Send" }}
 
         </button>
 
-    </div> -->
-    <div
-        class="shrink-0 border-t bg-white p-3 pb-[max(12px,env(safe-area-inset-bottom))]">
-
-        <div class="flex gap-2">
-
-            <input
-                ref="questionInput"
-                v-model="question"
-                @keyup.enter="sendQuestion"
-                :disabled="loading"
-                :placeholder="loading
-                    ? 'Please wait. Fetching the answer...'
-                    : 'Ask anything'"
-                class="flex-1 border rounded-2xl px-4 py-3 outline-none disabled:bg-gray-100" />
-
-            <button
-                @click="sendQuestion"
-                :disabled="loading"
-                class="px-4 rounded-2xl bg-black text-white disabled:opacity-50">
-
-                {{ loading ? "..." : "Send" }}
-
-            </button>
-
-        </div>
-
     </div>
+
+</div>
 
 
 
@@ -188,7 +283,7 @@ Actions moved to bottom as premium links
     class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
 
     <div
-        class="bg-white rounded-2xl shadow-xl w-full max-w-5xl max-h-[88vh] flex flex-col">
+        class="bg-base rounded-2xl shadow-xl w-full max-w-5xl max-h-[88vh] flex flex-col">
 
         <!-- HEADER -->
         <div
@@ -258,7 +353,7 @@ Actions moved to bottom as premium links
             <!-- RIGHT BUTTON -->
             <button
                 @click="modalVisible = false"
-                class="px-4 py-2 rounded-xl bg-black text-white">
+                class="px-4 py-2 rounded-xl bg-user">
                 Close
             </button>
 
@@ -278,7 +373,7 @@ Place below existing SQL/Data modal
     class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
 
     <div
-        class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+        class="bg-base rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
 
         <!-- HEADER -->
         <div
@@ -382,7 +477,7 @@ Place below existing SQL/Data modal
 
                 <button
                     @click="sendEmail"
-                    class="px-4 py-2 rounded-xl bg-black text-white">
+                    class="px-4 py-2 rounded-xl bg-user">
                     <span v-if="!emailSending">
                         Send
                     </span>
@@ -454,6 +549,38 @@ const bottomRef = ref<HTMLElement | null>(null);
 const questionInput = ref<HTMLInputElement | null>(null);
 
 const BASE_URL = "http://localhost:3000";
+
+const bookmarkText = ref("")
+const bookmarkMessageId = ref<number | null>(null)
+const showBookmarkModal = ref(false)
+
+import { useThemeStore } from '@/stores/theme'
+
+const theme = useThemeStore()
+
+function openBookmarkModal(msg:any) {
+  console.log("Opening bookmark modal")
+    bookmarkMessageId.value = msg.id
+    bookmarkText.value = getQuestion(msg) // msg.messageText   // default question
+    showBookmarkModal.value = true
+}
+
+async function saveBookmark() {
+    await fetch(
+        `${BASE_URL}/addbookmark/${bookmarkMessageId.value}?text=${encodeURIComponent(bookmarkText.value)}`,
+        { headers: authHeader() }
+    )
+    chat.messages.find((m:any)=>m.id===bookmarkMessageId.value).isBookmarked=true;
+    showBookmarkModal.value = false
+}
+
+async function removeBookmark(msg:any) {
+    await fetch(
+        `${BASE_URL}/removebookmark/${msg.id}`,
+        { headers: authHeader() }
+    )
+    msg.isBookmarked=false
+}
 
 // ==========================================
 // Auto Scroll
@@ -551,7 +678,7 @@ async function sendQuestion() {
                     raw;
             }
             catch {
-                text = raw;    
+                text = raw;
             }
             if (json.sessionId) {
                 chat.selectedSessionId = json.sessionId;
@@ -577,7 +704,7 @@ async function sendQuestion() {
         }
         catch {
             text = raw;
-        }        
+        }
 
         await scrollToBottom();
     }
@@ -766,6 +893,14 @@ function showChart(msg: any) {
     alert(`Load Chart for Message Id: ${msg.id}`);
 }
 
+const themeBtnClass = (name: string) => {
+    return [
+        "px-3 py-1 rounded-lg text-sm transition",
+        theme.currentTheme === name
+            ? "bg-white shadow text-black"
+            : "text-gray-600 hover:bg-white/50"
+    ]
+}
 
 const emailModalVisible = ref(false);
 
@@ -778,12 +913,33 @@ const emailBody = ref("");
 
 const emailMessageId = ref(0);
 const emailSending = ref(false);
+
+function getQuestion(msg: any):string {
+    const index =
+        chat.messages.findIndex(
+            (x: any) => x.id === msg.id
+        );
+
+    if (index > 0) {
+
+        for (let i = index - 1; i >= 0; i--) {
+
+            if (
+                chat.messages[i].role.toLowerCase() === "user"
+            ) {
+                return chat.messages[i].messageText;
+            }
+        }
+    }
+    return "InsightChat Result";
+}
+
 // ------------------------------------------
 // Open Email Modal
 // msg = assistant message clicked
 // ------------------------------------------
 function emailResult(msg: any) {
-    
+
 
     emailMessageId.value = msg.id;
 
@@ -795,27 +951,7 @@ function emailResult(msg: any) {
     emailCc.value = "";
 
     // Find previous user question in chat
-    let question = "InsightChat Result";
-
-    const index =
-        chat.messages.findIndex(
-            (x: any) => x.id === msg.id
-        );
-
-    if (index > 0) {
-
-        for (let i = index - 1; i >= 0; i--) {
-
-            if (
-                (chat.messages[i].role || "")
-                    .toLowerCase() === "user"
-            ) {
-                question =
-                    chat.messages[i].messageText;
-                break;
-            }
-        }
-    }
+    const question = getQuestion(msg); //"InsightChat Result";
 
     emailSubject.value = question;
 
@@ -841,8 +977,8 @@ async function sendEmail() {
         return;
     try {
         emailSending.value = true;
-        
-        var result = await fetch(`${BASE_URL}/emailresult`, {
+
+        const result = await fetch(`${BASE_URL}/emailresult`, {
             method: "POST",
             headers: {
                 "Content-Type":"application/json",
@@ -857,13 +993,13 @@ async function sendEmail() {
                 body: emailBody.value
             })
         });
-        
+
         console.log(result);
         alert("Email sent successfully.");
 
         emailModalVisible.value = false;
     }
-    
+
     catch (err: any) {
 
         alert(
@@ -874,5 +1010,55 @@ async function sendEmail() {
     finally {
         emailSending.value = false;
     }
+}
+
+function startFromBookmark(questionText: string) {
+
+    chat.viewMode = 'chat'
+    chat.messages = []
+    chat.selectedSessionId = null
+
+    question.value = questionText
+
+    nextTick(() => {
+        questionInput.value?.focus()
+    })
+}
+
+
+async function exportExcel(msg: any) {
+
+    const token =
+        localStorage.getItem("token") || "";
+console.log("Exporting Excel for Message Id: ", msg.id)
+    const res =
+        await fetch(
+            `${BASE_URL}/exportdata/${msg.id}`,
+            {
+                headers: {
+                    "Authorization": `Bearer ${token}`
+                }
+            });
+
+    if (!res.ok) {
+        alert("Unable to export Excel");
+        return;
+    }
+
+    const blob =
+        await res.blob();
+
+    const url =
+        window.URL.createObjectURL(blob);
+
+    const a =
+        document.createElement("a");
+
+    a.href = url;
+    a.download = `export_${msg.id}.xlsx`;
+
+    a.click();
+
+    window.URL.revokeObjectURL(url);
 }
 </script>

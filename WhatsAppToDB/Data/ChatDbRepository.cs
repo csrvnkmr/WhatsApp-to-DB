@@ -29,6 +29,7 @@ namespace WhatsAppToDB.Data
         public bool CanShowSql { get; set; } = false;
         public bool CanShowChart { get; set; } = false;
         public bool CanShowData { get; set; } = false;
+        public bool isBookmarked { get; set; } = false;
 
     }
 
@@ -197,6 +198,63 @@ namespace WhatsAppToDB.Data
                 new { SessionId = sessionId });
 
             return rows.AsList();
+        }
+
+        public async Task AddBookmarkAsync(
+    string userName,
+    long messageId,
+    string text)
+        {
+            using var con = GetConnection();
+
+            await con.ExecuteAsync(
+                SqliteSqls.AddBookmark,
+                new
+                {
+                    UserName = userName,
+                    MessageId = messageId,
+                    BookmarkText = text,
+                    CreatedOn = DateTime.UtcNow.ToString("s")
+                });
+        }
+
+        public async Task RemoveBookmarkAsync(
+            string userName,
+            long messageId)
+        {
+            using var con = GetConnection();
+
+            await con.ExecuteAsync(
+                SqliteSqls.RemoveBookmark,
+                new
+                {
+                    UserName = userName,
+                    MessageId = messageId
+                });
+        }
+
+        public async Task<IEnumerable<dynamic>> GetBookmarksAsync(
+            string userName)
+        {
+            using var con = GetConnection();
+
+            return await con.QueryAsync(
+                SqliteSqls.GetBookmarks,
+                new { UserName = userName });
+        }
+
+        public async Task<IEnumerable<dynamic>> SearchMessagesAsync(
+            string userName, string text)
+        {
+            using var con = GetConnection();
+
+            return await con.QueryAsync(
+                SqliteSqls.SearchMessages,
+                new
+                {
+                    UserName = userName,
+                    Text = text
+                });
         }
     }
 }

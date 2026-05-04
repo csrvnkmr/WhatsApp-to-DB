@@ -1,28 +1,104 @@
 @import "tailwindcss";
 
 :root[data-theme='light'] {
-    --bg: #ffffff;
-    --text: #0f172a;
-    --panel: #f8fafc;
+  --bg: #ffffff;
+  --text: #0f172a;
+  --panel: #f8fafc;
+  --hover: #e5e7eb;
+
+  --user-bg: #111827;
+  --user-text: #ffffff;
+
+  --selected: #dbeafe;
+  --border: #e5e7eb;
+  /* soft gray */
+
 }
 
 :root[data-theme='dark'] {
-    --bg: #0f172a;
-    --text: #f8fafc;
-    --panel: #111827;
+  --bg: #020617;
+  /* darker base */
+  --text: #e2e8f0;
+
+  --panel: #0f172a;
+  /* clearly lighter than bg */
+  --hover: #1e293b;
+  /* lighter hover */
+
+  --selected: #1d4ed8;
+  /* brighter blue for visibility */
+
+  --user-bg: #2563eb;
+  /* more visible user bubble */
+  --user-text: #ffffff;
+  --border: rgba(255, 255, 255, 0.08);
+  /* subtle glow */
 }
 
 :root[data-theme='corporate'] {
-    --bg: #eef4ff;
-    --text: #0f172a;
-    --panel: #dbeafe;
+  --bg: #eef4ff;
+  --text: #0f172a;
+  --panel: #dbeafe;
+  --hover: #c7dbff;
+
+  --selected: #bfdbfe;
+  --user-bg: #3e538d;
+  --user-text: #ffffff;
+  --border: #c7d2fe;
+}
+
+.border-soft {
+  border: 1px solid var(--border);
+}
+
+.bg-selected {
+  background: var(--selected);
+}
+
+.bg-hover:hover {
+  background: var(--hover);
+}
+
+.bg-base {
+  background: var(--bg);
 }
 
 body {
-    background: var(--bg);
-    color: var(--text);
+  background: var(--bg);
+  color: var(--text);
 }
 
 .panel {
-    background: var(--panel);
+  background: var(--panel);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Base */
+body {
+  background: var(--bg);
+  color: var(--text);
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+/* Panels (AI messages, sidebar, etc.) */
+.bg-panel {
+  background: var(--panel);
+}
+
+.bg-user {
+  background: var(--user-bg);
+  color: var(--user-text);
+}
+
+/* Text */
+.text-main {
+  color: var(--text);
+}
+
+.sidebar {
+  background: var(--panel);
+}
+
+.chat {
+  background: var(--bg);
 }

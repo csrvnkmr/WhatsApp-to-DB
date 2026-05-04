@@ -3,14 +3,14 @@
     public class SqliteSqls
     {
         public const string GetChatMessagesBySessionId = @"
-SELECT Id,
-       SessionId,
-       Role,
-       MessageText,
-       CreatedOn, CanShowSql, CanShowData, CanShowChart
-FROM ChatMessage
-WHERE SessionId = $SessionId
-ORDER BY Id;
+SELECT cm.Id,
+       cm.SessionId,
+       cm.Role,
+       cm.MessageText,
+       cm.CreatedOn, cm.CanShowSql, cm.CanShowData, cm.CanShowChart, case when cb.id is not null then true else false end as isBookmarked
+FROM ChatMessage cm left join ChatBookmark cb on cm.Id=cb.MessageId and cb.isActive=1
+WHERE cm.SessionId = $SessionId
+ORDER BY cm.Id;
 ";
         public const string GetChatSessionsByUserName = @"
 SELECT Id,
@@ -81,6 +81,75 @@ ON ChatSession(UserName);
 
 CREATE INDEX IF NOT EXISTS IX_ChatMessage_SessionId
 ON ChatMessage(SessionId);
+
+CREATE TABLE IF NOT EXISTS ChatBookmark
+(
+    Id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    UserName      TEXT NOT NULL,
+    MessageId     INTEGER NOT NULL,
+    BookmarkText  TEXT NOT NULL,
+    CreatedOn     TEXT NOT NULL,
+    IsActive      INTEGER NOT NULL DEFAULT 1
+);
+
+CREATE INDEX IF NOT EXISTS IX_ChatBookmark_User
+ON ChatBookmark(UserName);
+
+CREATE INDEX IF NOT EXISTS IX_ChatBookmark_Message
+ON ChatBookmark(MessageId);
+
+";
+        public const string AddBookmark = @"
+INSERT INTO ChatBookmark
+(UserName, MessageId, BookmarkText, CreatedOn, IsActive)
+SELECT $UserName, $MessageId, $BookmarkText, $CreatedOn, 1
+WHERE NOT EXISTS (
+    SELECT 1 FROM ChatBookmark
+    WHERE UserName = $UserName
+      AND MessageId = $MessageId
+      AND IsActive = 1
+);
+";
+
+        public const string RemoveBookmark = @"
+UPDATE ChatBookmark
+SET IsActive = 0
+WHERE UserName = $UserName
+  AND MessageId = $MessageId;
+";
+
+        public const string GetBookmarks = @"
+SELECT m.Id,
+       m.SessionId,
+       m.Role,
+       m.MessageText,
+       m.CreatedOn,
+       m.CanShowSql,
+       m.CanShowData,
+       m.CanShowChart,
+       b.BookmarkText
+FROM ChatBookmark b
+JOIN ChatMessage m ON m.Id = b.MessageId
+WHERE b.UserName = $UserName
+  AND b.IsActive = 1
+ORDER BY b.CreatedOn DESC;
+";
+        public const string SearchMessages = @"
+SELECT s.Id          AS SessionId,
+       s.Title       AS SessionTitle,
+       m.Id          AS MessageId,
+       m.MessageText,
+       m.Role,
+       m.CreatedOn
+FROM ChatSession s
+LEFT JOIN ChatMessage m
+    ON m.SessionId = s.Id
+WHERE s.UserName = $UserName and m.Role= 'User'
+  AND (
+        s.Title LIKE '%' || $Text || '%'
+     OR m.MessageText LIKE '%' || $Text || '%'
+  )
+ORDER BY s.UpdatedOn DESC, m.Id;
 ";
     }
 }
