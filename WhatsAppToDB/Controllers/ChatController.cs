@@ -4,14 +4,19 @@
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using Microsoft.JSInterop;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
+using Microsoft.Win32;
 using System.Net;
 using System.Net.Mail;
 using WhatsAppToDB.Abstractions;
+using WhatsAppToDB.Audit;
 using WhatsAppToDB.Data;
+using WhatsAppToDB.LlmProviders;
 using WhatsAppToDB.Models;
 using WhatsAppToDB.Services;
+using WhatsAppToDB.Settings;
 
 namespace WhatsAppToDB.Controllers
 {
@@ -24,19 +29,25 @@ namespace WhatsAppToDB.Controllers
         private readonly IOptions<MailSettings> _mailOptions;
         private readonly PromptExecutionSettings _promptSettings;
         private readonly IQueryService _queryService;
+        private readonly Database.DatabaseRegistry _registry;
+        private readonly LlmRegistry _llmRegistry;
+        private readonly DefaultSettings _defaultSettings;
+        private readonly IUserAuditService _auditService;
 
         public ChatController(
             IServiceScopeFactory scopeFactory,
-            ILogger waLogger,
-            ChatDbRepository repo,
-            IOptions<MailSettings> mailOptions,
-            IQueryService queryService)
+            ILogger waLogger, ChatDbRepository repo, IOptions<MailSettings> mailOptions,
+            IQueryService queryService, Database.DatabaseRegistry registry, 
+            LlmRegistry llmRegistry, IOptions<DefaultSettings> defaultSettings, IUserAuditService auditService)
         {
             _scopeFactory = scopeFactory;
             _waLogger = waLogger;
             _repo = repo;
+            _auditService = auditService;
             _mailOptions = mailOptions;
-
+            _defaultSettings = defaultSettings.Value;
+            _registry = registry;
+            _llmRegistry = llmRegistry;
             _promptSettings =
                 new OpenAIPromptExecutionSettings
                 {
@@ -46,6 +57,16 @@ namespace WhatsAppToDB.Controllers
             _queryService = queryService;
         }
 
+        [HttpPost("/logout")]
+        public async Task<IActionResult> Logout()
+        {
+            var userName = HttpContext.Items["UserName"]?.ToString() ?? "";
+            HttpContext.Session.Clear();
+            await _auditService.LogAsync(userName, AuditActions.Logout, "Successful");
+            return Ok(new { Message = "Logout Successful" });
+        }
+
+
         [HttpPost("/login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request) 
         {
@@ -54,6 +75,36 @@ namespace WhatsAppToDB.Controllers
             {
                 return Unauthorized();
             }
+            HttpContext.Session.Clear();
+
+            var latestDb =
+                await _auditService.GetLatestValueAsync(
+                    request.Username,
+                    AuditActions.DatabaseChanged);
+            var latestProvider =
+                await _auditService.GetLatestValueAsync(
+                    request.Username,
+                    AuditActions.ProviderChanged);
+            var latestModel =
+                await _auditService.GetLatestValueAsync(
+                    request.Username,
+                    AuditActions.ModelChanged);
+            latestDb ??= _defaultSettings.DefaultDatabase;
+            latestProvider ??= _defaultSettings.DefaultLlmProvider;
+            latestModel ??= _defaultSettings.DefaultLlmModel;
+
+            if (latestModel.Split(',').Length > 1)
+            {
+                latestProvider = latestModel.Split(',')[0].Trim();
+                latestModel = latestModel.Split(',')[1].Trim();
+            }
+
+            HttpContext.Session.SetString("activeDb",latestDb);
+            HttpContext.Session.SetString("activeLlmProvider", latestProvider);
+            HttpContext.Session.SetString("activeLlmModel", latestModel);
+
+            await _auditService.LogAsync(request.Username, AuditActions.Login, "Successful");
+
             return Ok(new { Token = result.session.Token, Message = "Login Successful" });
         }
 
@@ -433,5 +484,107 @@ namespace WhatsAppToDB.Controllers
 
             return Ok(rows);
         }
+        [HttpGet("databases")]
+        public IActionResult GetDatabases()
+        {
+            var databases = _registry.GetAll().Select(d => new
+            {
+                d.Name,
+                d.Description
+            });
+
+            var activeDb =
+                HttpContext.Session.GetString("activeDb")
+                ?? _defaultSettings.DefaultDatabase;
+            var activeDbDescription = activeDb ;
+            var dbConfig = _registry.GetDatabaseConfig(activeDb); // validate active db exists, will throw if not
+            if (dbConfig != null)
+            {
+                Console.WriteLine($"[DB GET] Active DB = {activeDb}");
+                activeDbDescription = dbConfig.Description;
+            }
+
+            return Ok(new
+            {
+                databases,
+                activeDb,
+                activeDbDescription
+            });
+        }
+
+        [HttpPost("databases/select")]
+        public async Task<IActionResult> SelectDatabase([FromBody] string name)
+        {
+            HttpContext.Session.SetString("activeDb", name);
+            var saved = HttpContext.Session.GetString("activeDb");
+            var userName = HttpContext.Items["UserName"]?.ToString() ?? "";
+            await _auditService.LogAsync(userName, AuditActions.DatabaseChanged, name);
+            Console.WriteLine($"[DB SELECT] Saved DB = {saved}");
+            Console.WriteLine($"[DB SELECT] Session={HttpContext.Session.Id}");
+            return Ok();
+        }
+
+        [HttpGet("llms")]
+        public IActionResult GetLlms()
+        {
+            var provider =
+                HttpContext.Session.GetString("activeLlmProvider")
+                ?? _defaultSettings.DefaultLlmProvider;
+
+            var model =
+                HttpContext.Session.GetString("activeLlmModel")
+                ?? _defaultSettings.DefaultLlmModel;
+
+            var lstProviders = _llmRegistry.GetAll();
+            if (model.Split(',').Length > 1)
+            {
+                provider = model.Split(',')[0].Trim();
+                model = model.Split(',')[1].Trim();
+            }
+
+            return Ok(new
+            {
+                selectedProvider = provider,
+                selectedModel = model,
+                providers = lstProviders
+            });
+        }
+
+        [HttpPost("llms/select")]
+        public async Task<IActionResult> SelectLlm([FromBody] SelectLlmRequest request)
+        {
+            HttpContext.Session.SetString("activeLlmProvider", request.Provider);
+            HttpContext.Session.SetString("activeLlmModel", request.Model);
+            var userName = HttpContext.Items["UserName"]?.ToString() ?? "";
+            await _auditService.LogAsync(userName, AuditActions.ModelChanged, $"{request.Provider}, {request.Model}");
+            Console.WriteLine($"[Llm SELECT] {request.Provider}, {request.Model}");
+
+            return Ok();
+        }
+
+        [HttpPost("sessions/filter")]
+        public async Task<IActionResult> FilterSessions([FromBody] SessionFilterRequest request)
+        {
+            var userName = HttpContext.Items["UserName"]?.ToString() ?? "";
+            var result =
+                await _repo.GetSessionsByDatabasesAsync(
+                    userName, request.Databases);
+
+            return Ok(result);
+        }
+
+        // ==================================================
+        // GET /message/{sessionId}
+        // ==================================================
+        [HttpPost("message/filter/{sessionId}")]
+        public async Task<IActionResult> GetMessagesFilter(
+            long sessionId, [FromBody] SessionFilterRequest request)
+        {
+            var userName = HttpContext.Items["UserName"]?.ToString() ?? "";
+            var rows =
+                await _repo.GetMessagesAsync(sessionId, request.Databases);
+            return Ok(rows);
+        }
     }
+
 }

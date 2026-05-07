@@ -4,7 +4,10 @@ using Microsoft.SemanticKernel;
 using System.ComponentModel;
 using System.Text;
 using WhatsAppToDB.Abstractions;
+using WhatsAppToDB.Data;
+using WhatsAppToDB.Database;
 using WhatsAppToDB.Services;
+using WhatsAppToDB.Settings;
 
 namespace WhatsAppToDB.Plugin
 {
@@ -18,18 +21,27 @@ namespace WhatsAppToDB.Plugin
         private readonly ISqlTemplateExtension? _sqlTemplateExtension;
         private readonly DatabaseSettings _dbSettings;
         private readonly ILogger _logger;
+
+        private readonly DatabaseContextService _databaseContextService;
+
+        private readonly string dbName;
+        private readonly DatabaseConfig _dbConfig;
+
         public SchemaPlugin(IOptions<DatabaseSettings> dbSettings,
            IModulePrompt? promptExtension = null,
            ISqlInterceptor? sqlExtension = null,
            ISqlTemplateExtension? sqlTemplateExtension = null,
-           ILogger? logger = null)
+           ILogger? logger = null, DatabaseContextService databaseContextService = null)
         {
-            _schemaService = new SchemaService(dbSettings.Value.SchemaDefinitionFile);
             _promptExtension = promptExtension;
             _sqlExtension = sqlExtension;
             _sqlTemplateExtension = sqlTemplateExtension;
             _logger = logger ?? new AppLogger();
             _dbSettings = dbSettings.Value;
+            _databaseContextService = databaseContextService;
+            dbName = _databaseContextService.GetCurrentDatabaseName();
+            _dbConfig = _databaseContextService.GetCurrentConfig();
+            _schemaService = new SchemaService(_dbConfig.SchemaFile);
         }
 
         [KernelFunction]
@@ -61,12 +73,13 @@ namespace WhatsAppToDB.Plugin
             var userQuestion = kernel.Data["UserQuestion"]?.ToString();
 
             var isFirstModule = true;
-            var connString = _dbSettings.ConnectionString;
-            if (!string.IsNullOrEmpty(identity.ConnectionString))
-            {
-                connString = identity.ConnectionString;
-            }
-            var templService = new TemplateService(connString, this._logger);
+            //var connString = _dbSettings.ConnectionString;
+            //if (!string.IsNullOrEmpty(identity.ConnectionString))
+            //{
+            //    connString = identity.ConnectionString;
+            //}
+            
+            var templService = new TemplateService(_databaseContextService, this._logger);
             foreach (var module in requestedModules)
             {
                 if (!isFirstModule)

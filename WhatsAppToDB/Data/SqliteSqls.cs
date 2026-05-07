@@ -12,6 +12,18 @@ FROM ChatMessage cm left join ChatBookmark cb on cm.Id=cb.MessageId and cb.isAct
 WHERE cm.SessionId = $SessionId
 ORDER BY cm.Id;
 ";
+
+        public const string GetChatMessagesBySessionIdDatabases = @"
+SELECT cm.Id,
+       cm.SessionId,
+       cm.Role,
+       cm.MessageText,
+       cm.CreatedOn, cm.CanShowSql, cm.CanShowData, cm.CanShowChart, case when cb.id is not null then true else false end as isBookmarked
+FROM ChatMessage cm left join ChatBookmark cb on cm.Id=cb.MessageId and cb.isActive=1
+WHERE cm.SessionId = $SessionId and cm.DatabaseName IN @Databases
+ORDER BY cm.Id;
+";
+
         public const string GetChatSessionsByUserName = @"
 SELECT Id,
        UserName,
@@ -22,11 +34,28 @@ FROM ChatSession
 WHERE UserName = $UserName
 ORDER BY UpdatedOn DESC;
 ";
+
+        public const string GetChatSessionsByUserNameAndDatabases = @"
+SELECT distinct s.Id,
+       s.UserName,
+       s.Title,
+       s.CreatedOn,
+       s.UpdatedOn
+FROM ChatSession s
+INNER JOIN ChatMessage m
+    ON s.Id = m.SessionId
+WHERE s.UserName = $UserName
+and m.DatabaseName IN @Databases
+ORDER BY UpdatedOn DESC;
+";
+
         public const string InsertChatMessage = @"
 INSERT INTO ChatMessage
-(SessionId, Role, MessageText, CreatedOn, SqlText, DataFileName, ChartFileName, CanShowSql, CanShowData, CanShowChart)
+(SessionId, Role, MessageText, CreatedOn, SqlText, DataFileName, ChartFileName, CanShowSql, CanShowData, CanShowChart, 
+DatabaseName, LlmProvider, LlmModel, ModuleName)
 VALUES
-($SessionId, $Role, $MessageText, $CreatedOn, $SqlText, $DataFileName, null, $CanShowSql, $CanShowData, $CanShowChart);
+($SessionId, $Role, $MessageText, $CreatedOn, $SqlText, $DataFileName, null, $CanShowSql, $CanShowData, $CanShowChart, 
+$DatabaseName, $LlmProvider, $LlmModel, $ModuleName);
 SELECT last_insert_rowid();
 UPDATE ChatSession SET UpdatedOn = $UpdatedOn WHERE Id = $SessionId;
 ";
@@ -97,6 +126,19 @@ ON ChatBookmark(UserName);
 
 CREATE INDEX IF NOT EXISTS IX_ChatBookmark_Message
 ON ChatBookmark(MessageId);
+
+CREATE TABLE IF NOT EXISTS UserAudit
+(
+    Id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    UserId TEXT NOT NULL,
+
+    ActionType TEXT NOT NULL,
+
+    ActionValue TEXT NULL,
+
+    CreatedOn DATETIME NOT NULL
+);
 
 ";
         public const string AddBookmark = @"

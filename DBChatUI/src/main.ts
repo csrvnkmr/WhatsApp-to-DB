@@ -4,6 +4,7 @@ import { useThemeStore } from '@/stores/theme'
 import App from './App.vue'
 import './main.css'
 import router from './router'
+import '@/styles/components.css'
 
 const app = createApp(App)
 

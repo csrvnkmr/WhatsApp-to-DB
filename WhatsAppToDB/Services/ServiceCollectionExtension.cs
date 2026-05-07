@@ -8,11 +8,17 @@ using Microsoft.OpenApi.MicrosoftExtensions;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
-using System.Runtime.Loader;
-using WhatsAppToDB.Abstractions;
-using WhatsAppToDB.Data;
-using WhatsAppToDB.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using System.Reflection;
+using System.Runtime.Loader;
+using System.Text.Json;
+using WhatsAppToDB.Abstractions;
+using WhatsAppToDB.Audit;
+using WhatsAppToDB.Data;
+using WhatsAppToDB.Database;
+using WhatsAppToDB.LlmProviders;
+using WhatsAppToDB.Models;
+using WhatsAppToDB.Settings;
 
 namespace WhatsAppToDB.Services
 {
@@ -94,6 +100,7 @@ namespace WhatsAppToDB.Services
 
             services.AddSingleton<ILogger, AppLogger>();
             services.AddSingleton<ChatDbRepository>();
+            services.AddSingleton<IUserAuditService, UserAuditService>();
             services.AddControllers();
 
             services.Configure<WhatsAppSettings>(config.GetSection("WhatsAppSettings"));
@@ -103,20 +110,58 @@ namespace WhatsAppToDB.Services
             services.Configure<LocalAiSettings>(config.GetSection("LocalAiSettings"));
             services.Configure<RoleSettings>(config.GetSection("RoleSettings"));
             services.Configure<MailSettings>(config.GetSection("MailSettings"));
+            services.Configure<DefaultSettings>(config.GetSection("DefaultSettings"));
             services.AddDynamicExtensions(config);
 
             services.AddPlugin(config, metadata);
 
-            
+
+
             services.AddScoped<IIdentityService, IdentityService>();
             services.AddScoped<Plugin.DatabaseQueryPlugin>();
             services.AddScoped<Plugin.SchemaPlugin>();
-            services.AddScoped<IQueryService, QueryService>();
             services.AddEndpointsApiExplorer();
             //services.AddSwaggerGen();
             AddSwaggerGen(services);
+
+            var llmConfigPath = config.GetValue<string>("LlmSettings:LlmConfigFile");
+            LoadLlmConfigs(services, llmConfigPath);
+            services.AddScoped<LlmContextService>();
+            
+            services.AddScoped<LlmProviderFactory>();
+            var llmPluginsPath = config.GetValue<string>("LlmSettings:LlmPluginsFolder");
+            services.RegisterLlmProviders(llmPluginsPath);
+
+            var dbConfigPath = config.GetValue<string>("DatabaseSettings:DatabaseConfigFile");
+
+            LoadDatabaseConfigs(services, dbConfigPath);
+            services.AddScoped<DatabaseContextService>();
+            services.AddSingleton<DatabaseRegistry>();
+            services.AddScoped<DbProviderFactory>();
+            services.AddDistributedMemoryCache();
+            services.AddScoped<IQueryService, QueryService>();
+            
+
+            var dbPluginsPath = config.GetValue<string>("DatabaseSettings:DatabasePluginsFolder");
+            services.RegisterDatabaseProviders(dbPluginsPath);
+            
             services.AddKernel(metadata);
 
+            services.AddHttpContextAccessor();
+            services.AddSession();
+
+        }
+
+        private static void LoadDatabaseConfigs(IServiceCollection services, string configPath)
+        {
+            if (!File.Exists(configPath))
+            {
+                Console.WriteLine($"[DatabaseRegistry] Config file not found at {configPath}");
+                return;
+            }
+            List<DatabaseConfig> lstDbConfigs = 
+                System.Text.Json.JsonSerializer.Deserialize<List<DatabaseConfig>>(File.ReadAllText(configPath)) ?? new List<DatabaseConfig>();
+            services.AddSingleton<List<DatabaseConfig>>(lstDbConfigs);
         }
 
 
@@ -147,8 +192,8 @@ namespace WhatsAppToDB.Services
                 });
             });
         }
-        
 
+        
 
         public static void AddPlugin(this IServiceCollection services, IConfiguration config, PluginMetadata metadata)
         {
@@ -216,6 +261,112 @@ namespace WhatsAppToDB.Services
             }
         }
 
+        public static void RegisterDatabaseProviders(this IServiceCollection services, string folderName)
+        {
+            services.AddScoped<DatabaseContextService>();
+            services.AddScoped<IDbProvider, Database.MsSqlDbProvider>();
+            services.AddScoped<IDbProvider, Database.SqliteDbProvider>();
+            LoadPlugins<IDbProvider>(services, folderName);            
+            services.AddScoped<Database.DbProviderFactory>();
+        }
+
+        private static void LoadLlmConfigs(IServiceCollection services, string configPath)
+        {
+            if (!File.Exists(configPath))
+                return;
+
+            var configs =
+                JsonSerializer.Deserialize<List<LlmConfig>>(
+                    File.ReadAllText(configPath))
+                ?? new();
+
+            services.AddSingleton(configs);
+            services.AddSingleton<LlmRegistry>();
+        }
+
+        public static void RegisterLlmProviders(this IServiceCollection services, string configPath)
+        {
+            services.AddScoped<LlmContextService>();
+            services.AddScoped<ILlmProvider, OpenAiProvider>();
+            services.AddScoped<ILlmProvider, LocalAiProvider>();
+            //LoadLlmPlugins(services);
+            LoadPlugins<ILlmProvider>(services, configPath);
+            services.AddScoped<LlmProviderFactory>();            
+        }
+
+        //static void LoadLlmPlugins(IServiceCollection services)
+        //{
+        //    var pluginPath = Path.Combine(AppContext.BaseDirectory, "plugins/llm");
+
+        //    if (!Directory.Exists(pluginPath))
+        //        return;
+
+        //    var dlls = Directory.GetFiles(pluginPath, "*.dll");
+
+        //    foreach (var file in dlls)
+        //    {
+        //        try
+        //        {
+
+        //            var asm = Assembly.LoadFrom(file);
+
+        //            var types = asm.GetTypes()
+        //                .Where(t =>
+        //                    typeof(ILlmProvider).IsAssignableFrom(t) &&
+        //                    !t.IsInterface &&
+        //                    !t.IsAbstract);
+
+        //            foreach (var type in types)
+        //            {
+        //                services.AddScoped(typeof(ILlmProvider), type);
+        //                Console.WriteLine($"[LLM Plugin] Loaded: {type.Name}");
+        //            }
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            Console.WriteLine($"[LLM Plugin] Failed to load from {file}: {ex.Message}");
+        //            Console.WriteLine(ex.ToString());
+        //        }
+        //    }
+        //}
+
+        static void LoadPlugins<TInterface>(IServiceCollection services, string pluginFolder, 
+            ServiceLifetime lifetime = ServiceLifetime.Scoped)
+        {
+            
+
+            if (!Directory.Exists(pluginFolder))
+                return;
+
+            var dlls = Directory.GetFiles(pluginFolder, "*llmplugin.dll");
+
+            foreach (var file in dlls)
+            {
+                try
+                {
+                    var asm = Assembly.LoadFrom(file);
+
+                    var types = asm.GetTypes()
+                        .Where(t =>
+                            typeof(TInterface).IsAssignableFrom(t) &&
+                            !t.IsInterface &&
+                            !t.IsAbstract);
+
+                    foreach (var type in types)
+                    {
+                        services.Add(new ServiceDescriptor(typeof(TInterface), type, lifetime));
+
+                        Console.WriteLine($"[Plugin:{typeof(TInterface).Name}] Loaded: {type.Name}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[Plugin:{typeof(TInterface).Name}] Failed: {file}");
+                    Console.WriteLine(ex.Message);
+                }
+            }
+        }
+
         public static void AddKernel(this IServiceCollection services, PluginMetadata metadata)
         {
             services.AddScoped(sp =>
@@ -224,32 +375,20 @@ namespace WhatsAppToDB.Services
                 var requestId = Guid.NewGuid().ToString().Substring(0, 4);
                 Console.WriteLine($"[WhatsAppToDB] [{requestId}] Building Kernel...");
 
-                var aiSettings = sp.GetRequiredService<IOptions<CommonAiSettings>>().Value;
+
                 var kernelBuilder = Kernel.CreateBuilder();
+                var llmContext = sp.GetRequiredService<LlmContextService>();
 
-                if (aiSettings.Provider.Equals("Local", StringComparison.OrdinalIgnoreCase))
-                {
-                    // USE THE STABLE OPENAI CONNECTOR FOR LOCAL
-                    var localaiSettings = sp.GetRequiredService<IOptions<LocalAiSettings>>().Value;
-                    kernelBuilder.AddOpenAIChatCompletion(
-                        modelId: localaiSettings.Model,
-                        apiKey: localaiSettings.ApiKey,
-                        httpClient: new HttpClient { 
-                            BaseAddress = new Uri(localaiSettings.HttpEndPoint),
-                            Timeout = TimeSpan.FromMinutes(2) // Give the 7530U time to think
-                        }
-                    );
-                    Console.WriteLine("[Kernel] Local AI connected via OpenAI-Compatible HTTP Endpoint.");
-                }
-                else
-                {
-                    var openaiSettings = sp.GetRequiredService<IOptions<OpenAiSettings>>().Value;
-                    kernelBuilder.AddOpenAIChatCompletion(openaiSettings.Model, openaiSettings.ApiKey);
-                }
+                var provider = llmContext.GetProvider();
 
+                var model = llmContext.GetModel();
 
-                //kernelBuilder.AddOpenAIChatCompletion(aiSettings.Model, aiSettings.ApiKey);
-                
+                provider.Register(kernelBuilder, sp, model);
+
+                //var aiSettings = sp.GetRequiredService<IOptions<CommonAiSettings>>().Value;
+                //var llmfactory = sp.GetRequiredService<LlmProviderFactory>();
+                //var provider = llmfactory.Get(aiSettings.Provider);
+                //provider.Register(kernelBuilder, sp, aiSettings.Model);
 
                 var dbPlugin = sp.GetRequiredService<Plugin.DatabaseQueryPlugin>();
                 var schemaPlugin = sp.GetRequiredService<Plugin.SchemaPlugin>();

@@ -3,7 +3,7 @@
 // ================================================
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import { getSessions, getMessages } from "@/services/api";
+import { getSessions, getMessagesDatabases } from "@/services/api";
 
 export const useChatStore = defineStore("chat", () => {
   const sessions = ref<any[]>([]);
@@ -12,6 +12,7 @@ export const useChatStore = defineStore("chat", () => {
   const loading = ref(false);
   const viewMode = ref<'chat' | 'bookmarks'>('chat')
   const bookmarks = ref<any[]>([])
+  const selectedDatabases = ref<string[]>([])
 
   async function loadSessions() {
     loading.value = true;
@@ -28,12 +29,20 @@ export const useChatStore = defineStore("chat", () => {
     loading.value = true;
 
     try {
+
+      console.log("Loading messages for session", sessionId);
       selectedSessionId.value = sessionId;
-      messages.value = await getMessages(sessionId);
+      //messages.value = await getMessages(sessionId);
+      messages.value = await getMessagesDatabases(sessionId, selectedDatabases.value);
     }
     finally {
       loading.value = false;
     }
+  }
+
+  function setSelectedDatabases(items: string[]) {
+    console.log("Setting DB filter", items)
+    selectedDatabases.value = items
   }
 
   return {
@@ -44,6 +53,8 @@ export const useChatStore = defineStore("chat", () => {
     loadSessions,
     loadMessages,
     bookmarks,
-    viewMode
+    viewMode,
+    selectedDatabases,
+    setSelectedDatabases
   };
 });

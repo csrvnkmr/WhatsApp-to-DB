@@ -54,6 +54,30 @@ namespace WhatsAppToDB.Data
                 "ChatMessage",
                 "CanShowChart",
                 "INTEGER NOT NULL DEFAULT 0");
+
+            await AddColumnIfMissing(
+                conn,
+                "ChatMessage",
+                "DatabaseName",
+                "TEXT NULL");
+
+            await AddColumnIfMissing(
+                conn,
+                "ChatMessage",
+                "LlmProvider",
+                "TEXT NULL");
+
+            await AddColumnIfMissing(
+                conn,
+                "ChatMessage",
+                "LlmModel",
+                "TEXT NULL");
+
+            await AddColumnIfMissing(
+                conn,
+                "ChatMessage",
+                "ModuleName",
+                "TEXT NULL");
         }
 
         // =====================================================

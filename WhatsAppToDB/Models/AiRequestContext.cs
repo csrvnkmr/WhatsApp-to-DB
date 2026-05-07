@@ -13,6 +13,8 @@ namespace WhatsAppToDB.Models
 
         // SQL Execution Metadata
         public string LastExecutedSql { get; set; } = "";
+        public string ModuleName { get; set; } = "";
+
 
         public string DataFileName { get; set; } = "";
 

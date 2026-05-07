@@ -6,6 +6,8 @@ using System.Text.Json;
 using WhatsAppToDB;
 using WhatsAppToDB.Abstractions;
 using WhatsAppToDB.Services;
+using WhatsAppToDB.Settings;
+using WhatsAppToDB.Testing;
 
 public class AdventureWorksTestHarness
 {

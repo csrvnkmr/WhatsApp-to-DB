@@ -1,0 +1,19 @@
+[
+  {
+    "Provider": "OpenAI",
+    "Enabled": true,
+    "Models": [
+      "gpt-5.4-mini",
+      "gpt-4"
+    ]
+  },
+  {
+    "Provider": "Ollama",
+    "Enabled": true,
+    "Models": [
+      "gpt-oss:120b-cloud",
+      "gemma4:31b-cloud",
+      "devstral-2:123b-cloud"      
+    ]
+  }
+]

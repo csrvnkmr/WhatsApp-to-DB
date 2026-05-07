@@ -11,44 +11,205 @@ UPDATED:
 <div class="h-full flex flex-col bg-base">
 
     <!-- HEADER -->
-    <div class="p-4 flex items-center justify-between">
+    <div class="p-4 flex items-center justify-between border-b border-soft bg-base">
 
-        <!-- Title -->
-        <div class="font-bold text-xl">
-            Insight Chat
+        <!-- LEFT: Title + DB Description -->
+        <div class="flex flex-col">
+            <div class="font-bold text-xl">
+                Insight Chat
+            </div>
+
+            <div class="text-xs opacity-70">
+                {{ activeDbDescription }}
+            </div>
         </div>
 
-        <!-- Theme Toggle -->
-        <div class="flex items-center gap-2 bg-gray-200/60 rounded-xl p-1">
+        <!-- RIGHT SIDE -->
+        <div class="flex items-center gap-3">
 
-            <button
-                @click="theme.currentTheme = 'light'"
-                :class="themeBtnClass('light')">
-                ☀️
-            </button>
+            <!-- Theme Toggle -->
+            <div class="flex items-center gap-1 bg-panel rounded-xl p-1">
 
-            <button
-                @click="theme.currentTheme = 'dark'"
-                :class="themeBtnClass('dark')">
-                🌙
-            </button>
+                <button
+                    @click="theme.currentTheme = 'light'"
+                    :class="themeBtnClass('light')">
+                    ☀️
+                </button>
 
-            <button
-                @click="theme.currentTheme = 'corporate'"
-                :class="themeBtnClass('corporate')">
-                🏢
-            </button>
+                <button
+                    @click="theme.currentTheme = 'dark'"
+                    :class="themeBtnClass('dark')">
+                    🌙
+                </button>
+
+                <button
+                    @click="theme.currentTheme = 'corporate'"
+                    :class="themeBtnClass('corporate')">
+                    🏢
+                </button>
+
+            </div>
+
+            <!-- DATABASE FILTER -->
+            <div ref="dbFilterRef" class="relative">
+
+                <button
+                    @click="showDbFilter = !showDbFilter"
+                    class="flex items-center gap-2 px-3 py-2 rounded-xl bg-panel border border-soft hover:bg-hover transition text-sm min-w-[160px] max-w-[220px]">
+
+                      <span class="truncate">
+
+                          {{ allSelected
+                              ? 'All Databases'
+                              : `${chat.selectedDatabases.length} Selected` }}
+
+                      </span>
+
+                      <span class="text-xs opacity-70">
+                          ▼
+                      </span>
+
+                  </button>
+
+                  <!-- DROPDOWN -->
+                  <div
+                      v-if="showDbFilter"
+                      class="absolute right-0 mt-2 w-72 max-w-[90vw] bg-panel border border-soft rounded-2xl shadow-xl z-50 overflow-hidden">
+
+                      <!-- ALL -->
+                      <div
+                          @click="toggleAllDatabases"
+                          class="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-hover border-b border-soft transition">
+
+                          <div class="font-medium text-sm">
+                              All
+                          </div>
+
+                          <div
+                              class="w-5 h-5 rounded border border-soft flex items-center justify-center text-xs"
+                              :class="allSelected
+                                  ? 'bg-user text-white'
+                                  : 'bg-base'">
+
+                              <span v-if="allSelected">
+                                  ✓
+                              </span>
+
+                          </div>
+
+                      </div>
+
+                      <!-- DATABASES -->
+                      <div
+                          v-for="db in databases"
+                          :key="db.name"
+                          @click="toggleDatabase(db.name)"
+                          class="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-hover transition">
+
+                          <div class="flex flex-col min-w-0">
+
+                              <div class="text-sm font-medium truncate">
+                                  {{ db.name }}
+                              </div>
+
+                              <div class="text-xs opacity-70 truncate">
+                                  {{ db.description }}
+                              </div>
+
+                          </div>
+
+                          <div
+                              class="w-5 h-5 rounded border border-soft flex items-center justify-center text-xs ml-3 shrink-0"
+                              :class="chat.selectedDatabases.includes(db.name)
+                                  ? 'bg-user text-white'
+                                  : 'bg-base'">
+
+                              <span v-if="chat.selectedDatabases.includes(db.name)">
+                                  ✓
+                              </span>
+
+                          </div>
+                      </div>
+
+                    </div>
+
+              </div>
+
+            <div class="relative">
+
+              <button
+                  @click="showLlmMenu = !showLlmMenu"
+                  class="px-3 py-2 rounded-xl bg-panel hover:bg-hover text-sm">
+
+                  {{ activeModel }}
+                  <span>▾</span>
+              </button>
+
+              <div
+                  v-if="showLlmMenu"
+                  class="absolute right-0 mt-2 w-72 bg-panel border border-soft rounded-xl shadow-lg z-50">
+
+                  <div
+                      v-for="llm in llms"
+                      :key="llm.provider"
+                      class="p-2 border-b border-soft">
+
+                      <div class="font-semibold text-sm mb-2">
+                          {{ llm.provider }}
+                      </div>
+
+                      <div
+                          v-for="model in llm.models"
+                          :key="model"
+                          @click="selectLlm(llm.provider, model)"
+                          class="px-2 py-1 rounded cursor-pointer hover:bg-hover text-sm">
+
+                          {{ model }}
+
+                      </div>
+
+                  </div>
+
+              </div>
+          </div>
+
+            <!-- DATABASE DROPDOWN -->
+            <div class="relative">
+
+                <!-- Selected DB -->
+                <button
+                    @click="toggleDbMenu"
+                    class="px-3 py-2 rounded-xl bg-panel hover:bg-hover text-sm flex items-center gap-2">
+
+                    <span>{{ activeDbName }}</span>
+                    <span>▾</span>
+                </button>
+
+                <!-- Dropdown -->
+                <div
+                    v-if="showDbMenu"
+                    class="absolute right-0 mt-2 w-56 bg-panel border border-soft rounded-xl shadow-lg z-50">
+
+                    <div
+                        v-for="db in databases"
+                        :key="db.name"
+                        @click="selectDb(db)"
+                        class="px-3 py-2 cursor-pointer hover:bg-hover text-sm">
+
+                        <div class="font-medium">
+                            {{ db.name }}
+                        </div>
+
+                        <div class="text-xs opacity-70">
+                            {{ db.description }}
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
 
         </div>
-
-        <!-- New Chat -->
-        <button
-            @click="newChat"
-            :disabled="loading"
-            class="bg-user px-4 py-2 rounded-xl text-sm disabled:opacity-50 hover:opacity-90 transition">
-            + New Chat
-        </button>
-
     </div>
 
     <!-- CHAT BODY -->
@@ -527,7 +688,7 @@ Place below existing SQL/Data modal
 
 <script setup lang="ts">
 
-import { ref, nextTick, watch } from "vue";
+import { ref, nextTick, watch, onMounted, computed, onBeforeUnmount } from "vue";
 import { useChatStore } from "@/stores/chat";
 
 // ------------------------------------------
@@ -568,7 +729,10 @@ function openBookmarkModal(msg:any) {
 async function saveBookmark() {
     await fetch(
         `${BASE_URL}/addbookmark/${bookmarkMessageId.value}?text=${encodeURIComponent(bookmarkText.value)}`,
-        { headers: authHeader() }
+        {
+            credentials: 'include',
+            headers: authHeader()
+        }
     )
     chat.messages.find((m:any)=>m.id===bookmarkMessageId.value).isBookmarked=true;
     showBookmarkModal.value = false
@@ -577,7 +741,10 @@ async function saveBookmark() {
 async function removeBookmark(msg:any) {
     await fetch(
         `${BASE_URL}/removebookmark/${msg.id}`,
-        { headers: authHeader() }
+        {
+          credentials: 'include',
+          headers: authHeader()
+        }
     )
     msg.isBookmarked=false
 }
@@ -652,8 +819,10 @@ async function sendQuestion() {
             `${BASE_URL}/ask`,
             {
                 method: "POST",
+                credentials: 'include',
                 headers: {
                     "Content-Type": "application/json",
+                    credentials: 'include',
                     "Authorization": `Bearer ${token}`
                 },
                 body: JSON.stringify({
@@ -756,6 +925,7 @@ async function showSql(msg: any) {
         const res = await fetch(
             `${BASE_URL}/messagesql/${msg.id}`,
             {
+              credentials: 'include',
                 headers: authHeader()
             });
 
@@ -785,7 +955,9 @@ async function showData(msg: any) {
 
         const res = await fetch(
             `${BASE_URL}/messagedata/${msg.id}`,
+
             {
+              credentials: 'include',
                 headers: authHeader()
             });
 
@@ -980,6 +1152,7 @@ async function sendEmail() {
 
         const result = await fetch(`${BASE_URL}/emailresult`, {
             method: "POST",
+            credentials: 'include',
             headers: {
                 "Content-Type":"application/json",
                 ...authHeader()
@@ -1035,9 +1208,10 @@ console.log("Exporting Excel for Message Id: ", msg.id)
         await fetch(
             `${BASE_URL}/exportdata/${msg.id}`,
             {
-                headers: {
-                    "Authorization": `Bearer ${token}`
-                }
+              credentials: 'include',
+              headers: {
+                "Authorization": `Bearer ${token}`
+              }
             });
 
     if (!res.ok) {
@@ -1061,4 +1235,266 @@ console.log("Exporting Excel for Message Id: ", msg.id)
 
     window.URL.revokeObjectURL(url);
 }
+
+const databases = ref<any[]>([])
+const activeDbName = ref('')
+const activeDbDescription = ref('')
+const showDbMenu = ref(false)
+
+onMounted(() => {
+    loadDatabases()
+    loadLlms()
+})
+
+function toggleDbMenu() {
+    showDbMenu.value = !showDbMenu.value
+}
+
+async function loadDatabases() {
+
+    const res = await fetch(
+        `${BASE_URL}/databases`,
+        {
+            credentials: 'include',
+            headers: authHeader()
+        });
+
+    const json = await res.json();
+
+    databases.value = json.databases;
+    activeDbName.value = json.activeDb;
+    activeDbDescription.value = json.activeDbDescription;
+
+    if (databases.value.length > 0 && !json.activeDb) {
+
+        const current = databases.value[0];
+
+        activeDbName.value = current.name;
+        activeDbDescription.value = current.description;
+    }
+
+    chat.setSelectedDatabases( databases.value.map((x: any) => x.name))
+}
+
+document.addEventListener('click', (e) => {
+    if (!(e.target as HTMLElement).closest('.relative')) {
+        showDbMenu.value = false
+    }
+})
+
+async function selectDb(db: any) {
+
+    const res = await fetch(
+        `${BASE_URL}/databases/select`,
+        {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                ...authHeader(),
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(db.name)
+        });
+
+    if (!res.ok) {
+        alert('Failed to change database');
+        return;
+    }
+
+    activeDbName.value = db.name;
+    activeDbDescription.value = db.description;
+
+    showDbMenu.value = false;
+
+    // Optional cleanup
+    chat.messages = [];
+    chat.selectedSessionId = null;
+}
+
+const llms = ref<any[]>([])
+
+const activeProvider = ref('')
+const activeModel = ref('')
+
+const showLlmMenu = ref(false)
+
+async function loadLlms() {
+
+    const res = await fetch(
+        `${BASE_URL}/llms`,
+        {
+            credentials: 'include',
+            headers: authHeader()
+        });
+
+    const json = await res.json()
+
+    llms.value = json.providers
+
+    activeProvider.value = json.selectedProvider
+
+    activeModel.value = json.selectedModel
+
+}
+
+async function selectLlm(provider: string, model: string) {
+    console.log("Llm changed to", provider, model)
+    const body:string = JSON.stringify({
+                provider,
+                model
+            })
+    await fetch(
+        `${BASE_URL}/llms/select`,
+        {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                ...authHeader(),
+                'Content-Type': 'application/json'
+            },
+            body: body
+        });
+
+    activeProvider.value = provider;
+    activeModel.value = model;
+
+    showLlmMenu.value = false;
+}
+
+const showDbFilter = ref(false)
+
+//const selectedDatabases = ref<string[]>([])
+
+const allSelected = computed(() => {
+    return chat.selectedDatabases.length === databases.value.length
+})
+
+function toggleAllDatabases() {
+
+    if (allSelected.value) {
+
+        chat.setSelectedDatabases([activeDbName.value])
+    }
+    else {
+
+        chat.setSelectedDatabases(databases.value.map((x: any) => x.name))
+    }
+}
+
+function toggleDatabase(dbName: string) {
+
+    // Current active DB cannot be unchecked
+    if (dbName === activeDbName.value)
+        return
+
+    if (chat.selectedDatabases.includes(dbName)) {
+        chat.selectedDatabases = chat.selectedDatabases
+            .filter(x => x !== dbName)
+    }
+    else {
+
+        chat.selectedDatabases.push(dbName)
+    }
+}
+
+async function applyDatabaseFilter() {
+
+    console.log("Applying DB filter", chat.selectedDatabases)
+
+    // -----------------------------
+    // FILTER SESSIONS
+    // -----------------------------
+    const sessionRes = await fetch(
+        `${BASE_URL}/sessions/filter`,
+        {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+                ...authHeader(),
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                databases: chat.selectedDatabases
+            })
+        })
+
+    const sessions =
+        await sessionRes.json()
+
+    chat.sessions = sessions
+
+    const exists = sessions.some( (x:any) => x.id === chat.selectedSessionId)
+
+    if (!exists) {
+
+        chat.selectedSessionId = null
+        chat.messages = []
+    }
+    // -----------------------------
+    // FILTER CURRENT SESSION MSGS
+    // -----------------------------
+    if (chat.selectedSessionId) {
+
+        const msgRes = await fetch(
+            `${BASE_URL}/message/filter/${chat.selectedSessionId}`,
+            {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    ...authHeader(),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    databases: chat.selectedDatabases
+                })
+            })
+
+        const msgs =
+            await msgRes.json()
+
+        chat.messages = msgs
+    }
+}
+
+watch(
+    () => chat.selectedDatabases,
+    async () => {
+
+        await applyDatabaseFilter()
+    },
+    {
+        deep: true
+    })
+
+watch(activeDbName, (db) => {
+
+    if (!db)
+        return
+
+    if (!chat.selectedDatabases.includes(db)) {
+
+        chat.selectedDatabases.push(db)
+    }
+})
+
+const dbFilterRef = ref()
+
+onMounted(() => {
+
+    document.addEventListener('click', handleOutsideClick)
+})
+
+onBeforeUnmount(() => {
+
+    document.removeEventListener('click', handleOutsideClick)
+})
+
+function handleOutsideClick(e: any) {
+
+    if (!dbFilterRef.value?.contains(e.target)) {
+
+        showDbFilter.value = false
+    }
+}
+
 </script>

@@ -1,6 +1,6 @@
 ﻿using WhatsAppToDB.Abstractions;
 
-namespace WhatsAppToDB.Services
+namespace WhatsAppToDB.Testing
 {
     public class TestIdentityService : IIdentityService
     {

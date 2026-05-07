@@ -144,30 +144,17 @@ const userName = computed(() =>
 );
 
 const searchText = ref("");
-// ==========================================
-// Filter Sessions
-// ==========================================
+
 const filteredSessions = computed(() => {
 return chat.sessions
-/*
-    const txt =
-        searchText.value
-            .toLowerCase()
-            .trim();
-
-    if (!txt)
-        return chat.sessions;
-
-    return chat.sessions.filter((x: any) =>
-        (x.title || "")
-            .toLowerCase()
-            .includes(txt)
-    );*/
+// uses Watch(searchText) for the filtering of sessions
 });
 const BASE_URL = "http://localhost:3000";
 
 let debounceTimer: any
-
+// ==========================================
+// Filter Sessions
+// ==========================================
 watch(searchText, (val) => {
 
     if (!val) {
@@ -247,7 +234,7 @@ async function openSearchResult(
 
 async function openSession(id: number) {
 
-
+console.log("Calling openSession", id)
     if (chat.loading)
         return;
     chat.viewMode = 'chat'
@@ -277,12 +264,21 @@ function newChat() {
 // ==========================================
 // Logout
 // ==========================================
-function logout() {
+async function logout() {
 
-    localStorage.removeItem("token");
-    localStorage.removeItem("username");
+    await fetch(
+        `${BASE_URL}/logout`,
+        {
+          credentials: 'include',
+            method: "POST",
+            headers: authHeader()
+        }
+    )
 
-    location.reload();
+    localStorage.removeItem("token")
+    localStorage.removeItem("username")
+
+    location.reload()
 }
 function authHeader() {
     const token =
@@ -299,7 +295,11 @@ async function loadBookmarks() {
 
     const res = await fetch(
         `${BASE_URL}/bookmarks`,
-        { headers: authHeader() }
+        {
+          credentials: 'include',
+          headers: authHeader()
+
+        }
     )
 
     const data = await res.json()

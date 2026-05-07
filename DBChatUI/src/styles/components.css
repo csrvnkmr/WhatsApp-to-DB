@@ -1,0 +1,19 @@
+.menu-item {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 0.5rem;
+
+  padding: 0.6rem 0.9rem;
+
+  border-radius: 0.9rem;
+
+  transition: background 0.2s;
+}
+
+.menu-item:hover {
+
+  background: var(--bg-hover);
+}

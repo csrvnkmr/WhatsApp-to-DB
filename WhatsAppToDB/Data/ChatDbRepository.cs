@@ -1,9 +1,11 @@
-﻿using System;
+﻿using Dapper;
+using Microsoft.Data.Sqlite;
+using Org.BouncyCastle.Asn1.X509;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
-using Dapper;
-using Microsoft.Data.Sqlite;
+using WhatsAppToDB.Abstractions;
 
 namespace WhatsAppToDB.Data
 {
@@ -30,6 +32,10 @@ namespace WhatsAppToDB.Data
         public bool CanShowChart { get; set; } = false;
         public bool CanShowData { get; set; } = false;
         public bool isBookmarked { get; set; } = false;
+        public string? DatabaseName { get; set; }
+        public string? LlmProvider { get; set; }
+        public string? LlmModel { get; set; }
+        public string? ModuleName { get; set; }
 
     }
 
@@ -143,7 +149,9 @@ namespace WhatsAppToDB.Data
         public async Task<long> InsertMessageAsync(
             long sessionId,
             string role,
-            string messageText, string sql, string datapath)
+            string messageText, string sql, string datapath,
+            string? databaseName = null, string? llmProvider = null,
+            string? llmModel = null, string? moduleName = null)
         {
             using var conn = GetConnection();
             await conn.OpenAsync();
@@ -163,7 +171,9 @@ namespace WhatsAppToDB.Data
                     DataFileName = datapath,
                     CanShowSql = 1,
                     CanShowData = 1,
-                    CanShowChart = 0
+                    CanShowChart = 0,
+                    DatabaseName = databaseName, 
+                    LlmProvider = llmProvider, LlmModel = llmModel, ModuleName=moduleName
                 });
             return msgid;
         }
@@ -196,6 +206,19 @@ namespace WhatsAppToDB.Data
             var rows = await conn.QueryAsync<ChatMessageDto>(
                 SqliteSqls.GetChatMessagesBySessionId,
                 new { SessionId = sessionId });
+
+            return rows.AsList();
+        }
+
+        public async Task<List<ChatMessageDto>> GetMessagesAsync(
+            long sessionId, List<string> databases)
+        {
+            using var conn = GetConnection();
+            await conn.OpenAsync();
+
+            var rows = await conn.QueryAsync<ChatMessageDto>(
+                SqliteSqls.GetChatMessagesBySessionIdDatabases,
+                new { SessionId = sessionId, Databases = databases });
 
             return rows.AsList();
         }
@@ -255,6 +278,24 @@ namespace WhatsAppToDB.Data
                     UserName = userName,
                     Text = text
                 });
+        }
+
+        public async Task<List<ChatSessionDto>> GetSessionsByDatabasesAsync(
+                string userName, List<string> databases)
+        {
+            using var conn = GetConnection();
+
+            var sql = SqliteSqls.GetChatSessionsByUserNameAndDatabases;
+
+            var result = await conn.QueryAsync<ChatSessionDto>(
+                sql,
+                new
+                {
+                    UserName = userName,
+                    Databases = databases
+                });
+
+            return result.ToList();
         }
     }
 }

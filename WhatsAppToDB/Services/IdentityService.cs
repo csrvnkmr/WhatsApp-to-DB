@@ -3,7 +3,8 @@ using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Options;
 using System.Text.Json;
 using WhatsAppToDB.Abstractions;
-using WhatsAppToDB.Data;
+using WhatsAppToDB.Database;
+using WhatsAppToDB.Settings;
 
 namespace WhatsAppToDB.Services
 {
@@ -13,19 +14,23 @@ namespace WhatsAppToDB.Services
         private readonly RoleSettings _roleSettings;
         private readonly IConfiguration _config;
         private readonly ILogger _logger;
+        private readonly DatabaseContextService _databaseContextService;
 
-        public IdentityService(IOptions<DatabaseSettings> dbSettings, IOptions<RoleSettings> roleSettings, IConfiguration config, ILogger? logger = null)
+
+        public IdentityService(IOptions<DatabaseSettings> dbSettings, IOptions<RoleSettings> roleSettings,
+            IConfiguration config, DatabaseContextService databaseContextService, ILogger? logger = null )
         {
             _roleSettings = roleSettings.Value;
             _defaultConnection = dbSettings.Value.ConnectionString ?? "";
             _config = config;
             _logger = logger ?? new AppLogger();
+            _databaseContextService = databaseContextService;
         }
 
         public async Task<IdentityContext> GetIdentityAsync(string mobileNumber)
         {
             await _logger.LogInfoAsync($"Fetching identity for mobile number: {mobileNumber}");
-
+            
             var source = _roleSettings.MappingSource?.ToUpper() ?? "JSON";
 
             var jsonfile = _roleSettings.RoleMappingJsonFile;
@@ -44,6 +49,7 @@ namespace WhatsAppToDB.Services
         public void HydrateRolePermissions(IdentityContext identity)
         {
             // 1. Map Modules: RoleModules: { "SalesPerson": "Sales,Inventory" }
+            
             var moduleMapping = _config.GetSection("RoleSettings:RoleModules").Get<Dictionary<string, string>>();
             if (moduleMapping?.TryGetValue(identity.Role, out var modules) == true)
             {
@@ -59,7 +65,8 @@ namespace WhatsAppToDB.Services
         private async Task<IdentityContext> GetFromSql(string mobileNumber, string roleMappingSql)
         {
             await _logger.LogInfoAsync($"Executing SQL for identity: {roleMappingSql} with Mobile={mobileNumber}");
-            using var connection = DbConnectionFactory.CreateConnection(_defaultConnection);
+
+            using var connection = _databaseContextService.CreateConnection(); //provider.GetConnection(dbConfig.ConnectionString);
 
             // We pass mobileNumber to the SQL query as @Mobile
             var result = await connection.QueryFirstOrDefaultAsync<IdentityContext>(
@@ -84,10 +91,10 @@ namespace WhatsAppToDB.Services
         private async Task<IdentityContext> GetFromJson(string mobileNumber, string jsonFile)
         {
             await _logger.LogInfoAsync($"Fetching identity from JSON file: {jsonFile} for Mobile={mobileNumber}");
-
+            var defaultRole = _config.GetValue<string>("RoleSettings:DefaultRole");
             if (!File.Exists(jsonFile))
             {
-                return new IdentityContext { WhatsAppNumber = mobileNumber, Role = "Guest" };
+                return new IdentityContext { WhatsAppNumber = mobileNumber, Role = defaultRole };
             }
 
             try
@@ -100,11 +107,11 @@ namespace WhatsAppToDB.Services
 
                 var user = mappings?.FirstOrDefault(m => m.WhatsAppNumber == mobileNumber);
 
-                return user ?? new IdentityContext { WhatsAppNumber = mobileNumber, Role = "Guest" };
+                return user ?? new IdentityContext { WhatsAppNumber = mobileNumber, Role = defaultRole };
             }
             catch
             {
-                return new IdentityContext { WhatsAppNumber = mobileNumber, Role = "Guest" };
+                return new IdentityContext { WhatsAppNumber = mobileNumber, Role = defaultRole };
             }
         }
 

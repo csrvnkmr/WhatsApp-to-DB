@@ -1,23 +1,25 @@
 ﻿using Dapper;
 using Microsoft.Data.SqlClient;
 using WhatsAppToDB.Data;
+using WhatsAppToDB.Database;
 
 namespace WhatsAppToDB.Services
 {
     public class TemplateService
     {
-        private readonly string _connectionString;
+        private readonly string _dbName;
         private readonly ILogger _logger;
+        private readonly DatabaseContextService _dbContextService;
 
-        public TemplateService(string connectionString, ILogger? logger = null)
+        public TemplateService(DatabaseContextService databaseContextService, ILogger? logger = null)
         {
-            _connectionString = connectionString;
+            _dbContextService = databaseContextService;
             _logger = logger ?? new AppLogger();
         }
 
         public async Task<List<FewShotQuery>> GetTemplatesByModule(string module)
         {
-            using var db = DbConnectionFactory.CreateConnection(_connectionString);
+            using var db = _dbContextService.CreateConnection();
             // We pull the descriptions so the AI can choose the right one
             return (await db.QueryAsync<FewShotQuery>(
                 "SELECT id, Module, QueryDescription, QueryText FROM FewShotQueries WHERE Module = @module",

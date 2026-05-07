@@ -15,6 +15,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SecurityPlugin", "SecurityP
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AnalyzeBills", "AnalyzeBills\AnalyzeBills.csproj", "{FD53F678-24EB-451A-BB6E-B740534F7BB7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PostgresDBPlugin", "PostgresDBPlugin\PostgresDBPlugin.csproj", "{88E0007D-3914-4132-8276-C6DB69592522}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OllamaLlmPlugin", "OllamaLlmProvider\OllamaLlmPlugin.csproj", "{94425C18-A175-4C38-BA3D-17B26CC4E30B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -71,6 +75,22 @@ Global
 		{FD53F678-24EB-451A-BB6E-B740534F7BB7}.Release|Any CPU.Build.0 = Release|Any CPU
 		{FD53F678-24EB-451A-BB6E-B740534F7BB7}.Release|x64.ActiveCfg = Release|Any CPU
 		{FD53F678-24EB-451A-BB6E-B740534F7BB7}.Release|x64.Build.0 = Release|Any CPU
+		{88E0007D-3914-4132-8276-C6DB69592522}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{88E0007D-3914-4132-8276-C6DB69592522}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{88E0007D-3914-4132-8276-C6DB69592522}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{88E0007D-3914-4132-8276-C6DB69592522}.Debug|x64.Build.0 = Debug|Any CPU
+		{88E0007D-3914-4132-8276-C6DB69592522}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{88E0007D-3914-4132-8276-C6DB69592522}.Release|Any CPU.Build.0 = Release|Any CPU
+		{88E0007D-3914-4132-8276-C6DB69592522}.Release|x64.ActiveCfg = Release|Any CPU
+		{88E0007D-3914-4132-8276-C6DB69592522}.Release|x64.Build.0 = Release|Any CPU
+		{94425C18-A175-4C38-BA3D-17B26CC4E30B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{94425C18-A175-4C38-BA3D-17B26CC4E30B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{94425C18-A175-4C38-BA3D-17B26CC4E30B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{94425C18-A175-4C38-BA3D-17B26CC4E30B}.Debug|x64.Build.0 = Debug|Any CPU
+		{94425C18-A175-4C38-BA3D-17B26CC4E30B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{94425C18-A175-4C38-BA3D-17B26CC4E30B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{94425C18-A175-4C38-BA3D-17B26CC4E30B}.Release|x64.ActiveCfg = Release|Any CPU
+		{94425C18-A175-4C38-BA3D-17B26CC4E30B}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

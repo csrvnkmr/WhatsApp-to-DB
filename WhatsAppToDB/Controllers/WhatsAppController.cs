@@ -10,6 +10,7 @@ using WhatsAppToDB.Abstractions;
 using WhatsAppToDB.Data;
 using WhatsAppToDB.Models;
 using WhatsAppToDB.Services;
+using WhatsAppToDB.Settings;
 
 namespace WhatsAppToDB.Controllers
 {

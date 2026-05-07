@@ -1,4 +1,4 @@
-﻿namespace WhatsAppToDB
+﻿namespace WhatsAppToDB.Settings
 {
     public class WhatsAppSettings
     {
@@ -14,12 +14,16 @@
         public string ConnectionString { get; set; } = string.Empty;
         public string ChromaUrl { get; set; } = string.Empty;
         public string SchemaDefinitionFile { get; set; } = string.Empty;
+        public string DatabasePluginsFolder { get; set; } = string.Empty;
+        public string DatabaseConfigFile { get; set; } = string.Empty;
+
     }
 
     public class CommonAiSettings
     {
         public string SystemPromptFile { get; set; } = string.Empty;
         public string Provider { get; set; } = string.Empty;
+        public string Model { get; set; } = string.Empty;
         // Helper property to get the full prompt
         public string FullSystemPrompt => File.ReadAllText(SystemPromptFile);// string.Join(" ", SystemPromptParts);
 

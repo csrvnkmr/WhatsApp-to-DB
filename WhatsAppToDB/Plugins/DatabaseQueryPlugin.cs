@@ -13,7 +13,9 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using WhatsAppToDB.Abstractions;
 using WhatsAppToDB.Data;
+using WhatsAppToDB.Database;
 using WhatsAppToDB.Models;
+using WhatsAppToDB.Settings;
 
 namespace WhatsAppToDB.Plugin
 {
@@ -29,36 +31,36 @@ namespace WhatsAppToDB.Plugin
         private readonly IModulePrompt? _promptExtension;
         private readonly ISqlInterceptor? _sqlExtension;
         private readonly DatabaseSettings _dbSettings;
+        private readonly DatabaseContextService _databaseContextService;
 
         public DatabaseQueryPlugin(IOptions<DatabaseSettings> dbSettings,
             AiRequestContext ctx,
             IModulePrompt? promptExtension = null,   
             ISqlInterceptor? sqlExtension = null,
-            ILogger? logger = null
-            )    
+            ILogger? logger = null, DatabaseContextService databaseContextService = null)
         {
             _promptExtension = promptExtension;
             _sqlExtension = sqlExtension;
             _logger = logger ?? new AppLogger();
             _dbSettings = dbSettings.Value;
             _ctx = ctx;
+            _databaseContextService = databaseContextService;
         }
 
-        
-        public async Task SetDatabaseSessionAsync(IDbConnection conn, IdentityContext identity)
-        {
-            // Determine the key: Mapped Key -> Fallback to Role
-            string contextKey = identity.GetActiveContextKey();
+        //public async Task SetDatabaseSessionAsync(IDbConnection conn, IdentityContext identity)
+        //{
+        //    // Determine the key: Mapped Key -> Fallback to Role
+        //    string contextKey = identity.GetActiveContextKey();
 
-            // In SQL Server, we set the session context
-            string sql = "EXEC sp_set_session_context @Key, @Value, @read_only = 1;";
+        //    // In SQL Server, we set the session context
+        //    string sql = "EXEC sp_set_session_context @Key, @Value, @read_only = 1;";
 
-            await conn.ExecuteAsync(sql, new
-            {
-                Key = contextKey,
-                Value = identity.InternalUserId
-            });
-        }
+        //    await conn.ExecuteAsync(sql, new
+        //    {
+        //        Key = contextKey,
+        //        Value = identity.InternalUserId
+        //    });
+        //}
 
         [KernelFunction]
         [Description("Executes a READ-ONLY SQL SELECT query against the database.")]
@@ -72,13 +74,17 @@ namespace WhatsAppToDB.Plugin
 
             waNumber = _ctx.WhatsAppNumber;
             userQuestion = _ctx.UserQuestion;
-            
 
             //if (kernel.Data.ContainsKey("WhatsAppNumber")) waNumber = kernel.Data["WhatsAppNumber"]?.ToString();
             //if (kernel.Data.ContainsKey("UserQuestion")) userQuestion = kernel.Data["UserQuestion"]?.ToString();            
-            if (kernel.Data.ContainsKey("LastRequestedModule")) moduleName = kernel.Data["LastRequestedModule"]?.ToString();
+            if (kernel.Data.ContainsKey("LastRequestedModule"))
+            {
+                moduleName = kernel.Data["LastRequestedModule"]?.ToString();
+                _ctx.ModuleName= moduleName;
+            }
 
             var identity = _ctx.Identity; // kernel.Data["UserIdentity"] as IdentityContext;
+            
             var currentConnectionString = _dbSettings.ConnectionString;
             if (identity!=null && !string.IsNullOrWhiteSpace(identity.ConnectionString)) {
                 currentConnectionString = identity.ConnectionString;
@@ -92,13 +98,13 @@ namespace WhatsAppToDB.Plugin
                 }
                 Console.WriteLine($"[SAP EXECUTION]: {sql}");
                 kernel.Data["LastExecutedSql"] = sql;
-
-                using IDbConnection db = DbConnectionFactory.CreateConnection(currentConnectionString);
+                var provider = _databaseContextService.GetProvider();
+                using IDbConnection db = _databaseContextService.CreateConnection();
                 // Ensure the connection is open before setting session context, as Dapper relies on it for the session state to be applied correctly.
                 db.Open(); 
                 if (identity != null && identity.Role?.ToLower()!= "admin")
                 {
-                    await SetDatabaseSessionAsync(db, identity);
+                    await provider.SetSessionContext(db, identity);
                 }
                     
                 // Use Dapper to get dynamic results (perfect for unpredictable SAP tables)
@@ -129,8 +135,17 @@ namespace WhatsAppToDB.Plugin
             }
             catch (Exception ex)
             {
-                // Give the error to the AI so it can try to fix the SQL
-                return $"Database Error: {ex.Message}. Check your table/column names.";
+                if (_logger != null)
+                {
+                    await _logger.LogErrorAsync("Error in Execute SQL", ex);
+                } else
+                {
+                    Console.WriteLine($"Error in Execute SQL {ex}");
+                }
+
+
+                    // Give the error to the AI so it can try to fix the SQL
+                    return $"Database Error: {ex.Message}. Check your table/column names.";
             }
             
         }
