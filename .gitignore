@@ -59,3 +59,4 @@ nunit-*.xml
 .vs/
 
 app[sS]ettings.json
+app[Ss]ettings.sql.json
