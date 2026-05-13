@@ -1,0 +1,61 @@
+[
+  {
+    "Name": "Sales",
+    "Details": "Sales and customer management",
+    "Tables": [
+      "Sales.SalesOrderHeader",
+      "Sales.SalesOrderDetail",
+      "Sales.Customer",
+      "Sales.Store",
+      "Sales.SalesPerson",
+      "Sales.SalesTerritory",
+      "Person.Person"
+    ]
+  },
+  {
+    "Name": "Production",
+    "Details": "Production and inventory management",
+    "Tables": [
+      "Production.Product",
+      "Production.ProductCategory",
+      "Production.ProductSubcategory",
+      "Production.ProductInventory",
+      "Production.Location",
+      "Production.BillOfMaterials"
+    ]
+  },
+  {
+    "Name": "Purchasing",
+    "Details": "Purchasing and vendor management",
+    "Tables": [
+      "Purchasing.PurchaseOrderHeader",
+      "Purchasing.PurchaseOrderDetail",
+      "Purchasing.Vendor",
+      "Purchasing.ProductVendor",
+      "Production.Product"
+    ]
+  },
+  {
+    "Name": "HumanResources",
+    "Details": "Employee and HR management",
+    "Tables": [
+      "HumanResources.Employee",
+      "HumanResources.Department",
+      "HumanResources.EmployeeDepartmentHistory",
+      "HumanResources.Shift",
+      "Person.Person",
+      "HumanResources.EmployeePayHistory"
+    ]
+  },
+  {
+    "Name": "Person",
+    "Details": "Person and contact management",
+    "Tables": [
+      "Person.Person",
+      "Person.Address",
+      "Person.EmailAddress",
+      "Person.PersonPhone",
+      "Person.BusinessEntityAddress"
+    ]
+  }
+]

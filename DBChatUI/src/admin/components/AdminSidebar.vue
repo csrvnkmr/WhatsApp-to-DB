@@ -2,36 +2,59 @@
 
 <div class="w-72 border-r border-soft bg-panel overflow-auto shrink-0">
 
-    <div class="p-4 border-b border-soft font-bold text-xl">
-        Admin
+    <!-- WELCOME & LOGOUT -->
+    <div class="p-4 border-b border-soft">
+
+        <div class="flex items-center justify-between">
+
+            <!-- Left: Welcome + Username inline -->
+            <div class="flex items-center gap-2 min-w-0">
+
+                <span class="text-sm text-gray-500">
+                    Welcome
+                </span>
+
+                <span class="font-semibold text-base truncate max-w-[140px]">
+                    {{ userName }}
+                </span>
+
+            </div>
+
+            <!-- Right: Logout -->
+            <button
+                @click="logout"
+                class="text-xs px-2 py-1 rounded-md text-gray-500 hover:text-black hover:bg-hover transition">
+                Logout
+            </button>
+
+        </div>
+
     </div>
 
-    <!-- MAIN -->
-
-    <div class="p-2">
+    <div class="p-2 text-sm">
 
         <RouterLink
             to="/admin/databases"
-            class="menu-item">
-            Databases
+            class="menu-item flex items-center gap-2">
+            <span>🗄️</span> Databases
         </RouterLink>
 
         <RouterLink
             to="/admin/llms"
-            class="menu-item">
-            LLMs
+            class="menu-item flex items-center gap-2">
+            <span>🤖</span> LLMs
         </RouterLink>
 
         <RouterLink
             to="/admin/users"
-            class="menu-item">
-            Users
+            class="menu-item flex items-center gap-2">
+            <span>👥</span> Users
         </RouterLink>
 
         <RouterLink
             to="/admin/defaultsettings"
-            class="menu-item">
-            Default Settings
+            class="menu-item flex items-center gap-2">
+            <span>⚙️</span> Default Settings
         </RouterLink>
 
     </div>
@@ -42,49 +65,75 @@
 
         <div
             v-for="db in databases"
-            :key="db.name"
+            :key="db.Name"
             class="mb-4">
 
-            <div class="px-3 py-2 text-sm font-semibold opacity-70">
-                {{ db.name }}
+            <div
+                class="px-3 py-1.5 text-sm font-semibold opacity-70 cursor-pointer flex justify-between items-center hover:opacity-100 transition"
+                @click="toggleDb(db.Name)">
+                <span class="flex items-center gap-2">📂 {{ db.Name }}</span>
+                <svg
+                    class="w-3.5 h-3.5 transition-transform duration-200"
+                    :class="{ 'rotate-180': expandedDbs[db.Name] }"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
             </div>
 
-            <div class="pl-2 flex flex-col gap-1">
+            <div v-show="expandedDbs[db.Name]" class="pl-5 flex flex-col gap-0.5">
+
+                <div class="px-1 py-1 font-bold opacity-50 text-[10px] uppercase tracking-wider mt-1 flex items-center gap-2">
+                    🛠️ Schema
+                </div>
+
+                <div class="pl-3 flex flex-col gap-0.5">
+                    <RouterLink
+                        :to="`/admin/database/${db.Name}/modules`"
+                        class="submenu-item flex items-center gap-2 text-xs py-1">
+                        <span>🧩</span> Modules
+                    </RouterLink>
+
+                    <RouterLink
+                        :to="`/admin/database/${db.Name}/tables`"
+                        class="submenu-item flex items-center gap-2 text-xs py-1">
+                        <span>📊</span> Tables
+                    </RouterLink>
+
+                    <RouterLink
+                        :to="`/admin/database/${db.Name}/tablejoins`"
+                        class="submenu-item flex items-center gap-2 text-xs py-1">
+                        <span>🔗</span> Table Joins
+                    </RouterLink>
+                  </div>
 
                 <RouterLink
-                    :to="`/admin/database/${db.name}/schema`"
-                    class="submenu-item">
-                    Schema
+                    :to="`/admin/database/${db.Name}/roles`"
+                    class="submenu-item flex items-center gap-2 text-xs py-1">
+                    <span>🔑</span> Roles
                 </RouterLink>
 
                 <RouterLink
-                    :to="`/admin/database/${db.name}/roles`"
-                    class="submenu-item">
-                    Roles
+                    :to="`/admin/database/${db.Name}/systemprompt`"
+                    class="submenu-item flex items-center gap-2 text-xs py-1">
+                    <span>📝</span> Prompt
                 </RouterLink>
 
                 <RouterLink
-                    :to="`/admin/database/${db.name}/systemprompt`"
-                    class="submenu-item">
-                    Prompt
+                    :to="`/admin/database/${db.Name}/plugins`"
+                    class="submenu-item flex items-center gap-2 text-xs py-1">
+                    <span>🔌</span> Plugins
                 </RouterLink>
 
                 <RouterLink
-                    :to="`/admin/database/${db.name}/plugins`"
-                    class="submenu-item">
-                    Plugins
+                    :to="`/admin/database/${db.Name}/extensions`"
+                    class="submenu-item flex items-center gap-2 text-xs py-1">
+                    <span>➕</span> Extensions
                 </RouterLink>
 
                 <RouterLink
-                    :to="`/admin/database/${db.name}/extensions`"
-                    class="submenu-item">
-                    Extensions
-                </RouterLink>
-
-                <RouterLink
-                    :to="`/admin/database/${db.name}/mailsettings`"
-                    class="submenu-item">
-                    Mail Settings
+                    :to="`/admin/database/${db.Name}/mailsettings`"
+                    class="submenu-item flex items-center gap-2 text-xs py-1">
+                    <span>📧</span> Mail Settings
                 </RouterLink>
 
             </div>
@@ -98,16 +147,61 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { getDatabases } from '@/services/api'
+import { onMounted, ref, computed } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+
+const auth = useAuthStore()
+const BASE_URL = "http://localhost:3000"
+
+const userName = computed(() =>
+    localStorage.getItem("username")
+    || auth.userName
+    || "User"
+)
 
 const databases = ref<any[]>([])
+const expandedDbs = ref<Record<string, boolean>>({})
+
+function toggleDb(name: string) {
+    expandedDbs.value[name] = !expandedDbs.value[name]
+}
+
+async function loadDatabases() {
+    console.log("Loading databases")
+    databases.value = await getDatabases()
+    console.log(databases.value)
+}
 
 onMounted(async () => {
+    loadDatabases()
+})
 
-    const res = await fetch(
-        'http://localhost:3000/admin/api/data/databases')
+function authHeader() {
+    const token = localStorage.getItem("token") || ""
+    return {
+        "Authorization": `Bearer ${token}`
+    }
+}
 
-    databases.value = await res.json()
+async function logout() {
+    await fetch(
+        `${BASE_URL}/logout`,
+        {
+            credentials: 'include',
+            method: "POST",
+            headers: authHeader()
+        }
+    )
+
+    localStorage.removeItem("token")
+    localStorage.removeItem("username")
+
+    location.reload()
+}
+
+defineExpose({
+    loadDatabases
 })
 </script>
 

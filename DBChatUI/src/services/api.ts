@@ -59,3 +59,50 @@ export async function getMessagesDatabases(sessionId: number, databases: string[
 
   return await res.json();
 }
+export async function getDatabases() {
+  const res = await fetch(
+    `${BASE_URL}/admin/api/data/databases`,
+    {
+      method: "GET",
+      credentials: 'include',
+      headers: authHeader(),
+    }
+  )
+
+  return await res.json()
+}
+
+export async function getMetadata(entity: string) {
+  console.log("Getting metadata for entity", entity, `${BASE_URL}/admin/api/metadata/${entity}`)
+  const res = await fetch(`${BASE_URL}/admin/api/metadata/${entity}`, {
+    method: 'GET',
+    credentials: 'include',
+    headers: authHeader()
+  });
+  const ret = await res.json();
+  console.log("metadata for", entity, ret)
+  return ret;
+}
+
+export async function getData(entity: string, database?: string) {
+  let url = `${BASE_URL}/admin/api/data/${entity}`;
+  if (database) url += `?database=${database}`;
+  const res = await fetch(url, {
+    method: 'GET',
+    credentials: 'include',
+    headers: authHeader()
+  });
+  return await res.json();
+}
+
+export async function saveData(entity: string, data: any, database?: string) {
+  let url = `${BASE_URL}/admin/api/data/${entity}`;
+  if (database) url += `?database=${database}`;
+  const res = await fetch(url, {
+    method: 'POST',
+    credentials: 'include',
+    headers: authHeader(),
+    body: JSON.stringify(data)
+  });
+  return await res.json();
+}

@@ -1,0 +1,7 @@
+[
+  {
+    "Name": "Search Helper Plugin",
+    "AssemblyPath": "C:\\Development\\AiAgents\\SemanticKernel\\Plugins\\DBSearchHelperPlugin.dll",
+    "PluginClassName": "DBSearchHelperPlugin.SearchHelperPlugin"
+  }
+]

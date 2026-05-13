@@ -33,6 +33,46 @@ namespace WhatsAppToDB
         Task LogErrorAsync(string message, Exception ex, [CallerMemberName] string caller = "", [CallerFilePath] string file = "", [CallerLineNumber] int line = 0);
         Task LogFatalAsync(string message, Exception ex, [CallerMemberName] string caller = "", [CallerFilePath] string file = "", [CallerLineNumber] int line = 0);
 
+        void LogDebug(string message,
+    [CallerMemberName] string caller = "",
+    [CallerFilePath] string file = "",
+    [CallerLineNumber] int line = 0);
+
+        void LogInfo(string message,
+            [CallerMemberName] string caller = "",
+            [CallerFilePath] string file = "",
+            [CallerLineNumber] int line = 0);
+
+        void LogWarning(string message,
+            [CallerMemberName] string caller = "",
+            [CallerFilePath] string file = "",
+            [CallerLineNumber] int line = 0);
+
+        void LogError(string message,
+            [CallerMemberName] string caller = "",
+            [CallerFilePath] string file = "",
+            [CallerLineNumber] int line = 0);
+
+        void LogFatal(string message,
+            [CallerMemberName] string caller = "",
+            [CallerFilePath] string file = "",
+            [CallerLineNumber] int line = 0);
+
+        void LogWarning(string message, Exception ex,
+    [CallerMemberName] string caller = "",
+    [CallerFilePath] string file = "",
+    [CallerLineNumber] int line = 0);
+
+        void LogError(string message, Exception ex,
+            [CallerMemberName] string caller = "",
+            [CallerFilePath] string file = "",
+            [CallerLineNumber] int line = 0);
+
+        void LogFatal(string message, Exception ex,
+            [CallerMemberName] string caller = "",
+            [CallerFilePath] string file = "",
+            [CallerLineNumber] int line = 0);
+
         // Minimum level filter — messages below this are ignored
         LogLevel MinimumLevel { get; set; }
     }
@@ -63,6 +103,64 @@ namespace WhatsAppToDB
                 Directory.CreateDirectory(_logFolder);
         }
 
+        private void Write(LogLevel level,
+                   string message,
+                   Exception? ex,
+                   string caller,
+                   string file,
+                   int line)
+        {
+            if (level < MinimumLevel)
+                return;
+
+            var entry =
+                FormatEntry(
+                    level,
+                    message,
+                    ex,
+                    caller,
+                    file,
+                    line);
+
+            if (WriteToConsole)
+                WriteColoured(level, entry);
+
+            AppendToFile(
+                DailyLogFile(),
+                entry);
+
+            if (level >= LogLevel.Warning)
+            {
+                AppendToFile(
+                    ErrorLogFile(),
+                    entry);
+            }
+        }
+
+        private void AppendToFile(
+    string filePath,
+    string entry)
+        {
+            _lock.Wait();
+
+            try
+            {
+                File.AppendAllText(
+                    filePath,
+                    entry,
+                    Encoding.UTF8);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(
+                    $"[AppLogger] Failed to write log: {ex.Message}");
+            }
+            finally
+            {
+                _lock.Release();
+            }
+        }
+
         // ── Core write ───────────────────────────────────────────────────────
 
         private async Task WriteAsync(LogLevel level, string message, Exception? ex,
@@ -82,6 +180,54 @@ namespace WhatsAppToDB
             if (level >= LogLevel.Warning)
                 await AppendToFileAsync(ErrorLogFile(), entry);
         }
+
+        public void LogDebug(string message,
+    [CallerMemberName] string caller = "",
+    [CallerFilePath] string file = "",
+    [CallerLineNumber] int line = 0)
+    => Write(LogLevel.Debug, message, null, caller, file, line);
+
+        public void LogInfo(string message,
+            [CallerMemberName] string caller = "",
+            [CallerFilePath] string file = "",
+            [CallerLineNumber] int line = 0)
+            => Write(LogLevel.Info, message, null, caller, file, line);
+
+        public void LogWarning(string message,
+            [CallerMemberName] string caller = "",
+            [CallerFilePath] string file = "",
+            [CallerLineNumber] int line = 0)
+            => Write(LogLevel.Warning, message, null, caller, file, line);
+
+        public void LogError(string message,
+            [CallerMemberName] string caller = "",
+            [CallerFilePath] string file = "",
+            [CallerLineNumber] int line = 0)
+            => Write(LogLevel.Error, message, null, caller, file, line);
+
+        public void LogFatal(string message,
+            [CallerMemberName] string caller = "",
+            [CallerFilePath] string file = "",
+            [CallerLineNumber] int line = 0)
+            => Write(LogLevel.Fatal, message, null, caller, file, line);
+
+        public void LogWarning(string message, Exception ex,
+    [CallerMemberName] string caller = "",
+    [CallerFilePath] string file = "",
+    [CallerLineNumber] int line = 0)
+    => Write(LogLevel.Warning, message, ex, caller, file, line);
+
+        public void LogError(string message, Exception ex,
+            [CallerMemberName] string caller = "",
+            [CallerFilePath] string file = "",
+            [CallerLineNumber] int line = 0)
+            => Write(LogLevel.Error, message, ex, caller, file, line);
+
+        public void LogFatal(string message, Exception ex,
+            [CallerMemberName] string caller = "",
+            [CallerFilePath] string file = "",
+            [CallerLineNumber] int line = 0)
+            => Write(LogLevel.Fatal, message, ex, caller, file, line);
 
         private async Task AppendToFileAsync(string filePath, string entry)
         {

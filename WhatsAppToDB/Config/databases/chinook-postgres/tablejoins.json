@@ -1,0 +1,38 @@
+[
+  {
+    "Description": "album and artist joins",
+    "JoinConditions": [
+      "album.artist_id=artist.artist_id"
+    ]
+  },
+  {
+    "Description": "track joins",
+    "JoinConditions": [
+      "track.album_id=album.album_id",
+      "track.genre_id=genre.genre_id",
+      "track.media_type_id=media_type.media_type_id"
+    ]
+  },
+  {
+    "Description": "invoice joins",
+    "JoinConditions": [
+      "invoice.customer_id=customer.customer_id",
+      "invoice_line.invoice_id=invoice.invoice_id",
+      "invoice_line.track_id=track.track_id"
+    ]
+  },
+  {
+    "Description": "customer and employee joins",
+    "JoinConditions": [
+      "customer.support_rep_id=employee.employee_id",
+      "employee.reports_to=employee.employee_id"
+    ]
+  },
+  {
+    "Description": "playlist joins",
+    "JoinConditions": [
+      "playlist_track.playlist_id=playlist.playlist_id",
+      "playlist_track.track_id=track.track_id"
+    ]
+  }
+]

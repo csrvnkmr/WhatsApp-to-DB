@@ -1,0 +1,31 @@
+{
+  "entity": "tables",
+  "title": "Tables",
+
+  "targetFile": "tables.json",
+
+  "fields": [
+    {
+      "name": "Name",
+      "label": "Table Name",
+      "type": "text",
+      "showinheader": true,
+      "required": true
+    },
+    {
+      "name": "Description",
+      "label": "Table Details",
+      "showinheader": true,
+      "type": "text",
+      "required": true
+    },
+    {
+      "name": "Columns",
+      "label": "Columns List",
+      "showinheader": true,
+      "fulllength": true,
+      "type": "array<text>",
+      "required": true      
+    }
+  ]
+}

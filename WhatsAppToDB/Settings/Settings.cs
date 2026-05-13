@@ -44,6 +44,7 @@
 
     public class PluginSettings
     {
+        public string Name { get; set; } = string.Empty;
         public string AssemblyPath { get; set; } = string.Empty;
         public string PluginClassName { get; set; } = string.Empty;
     }

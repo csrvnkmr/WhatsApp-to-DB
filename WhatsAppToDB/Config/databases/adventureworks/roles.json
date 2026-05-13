@@ -1,0 +1,27 @@
+[
+  {
+    "Name": "SalesPerson",
+    "Description": "Sales Person",
+    "Users": [
+      "csrvn"
+    ],
+    "Modules": [
+      "Sales",
+      "Person"
+    ]
+  },
+  {
+    "Name": "admin",
+    "Description": "Admin",
+    "Users": [
+      "admin"
+    ],
+    "Modules": [
+      "Sales",
+      "Production",
+      "Purchasing",
+      "Person",
+      "HumanResources"
+    ]
+  }
+]

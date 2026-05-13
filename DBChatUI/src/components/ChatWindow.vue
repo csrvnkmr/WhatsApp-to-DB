@@ -14,18 +14,29 @@ UPDATED:
     <div class="p-4 flex items-center justify-between border-b border-soft bg-base">
 
         <!-- LEFT: Title + DB Description -->
-        <div class="flex flex-col">
-            <div class="font-bold text-xl">
-                Insight Chat
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 text-lg shrink-0">
+                💬
             </div>
-
-            <div class="text-xs opacity-70">
-                {{ activeDbDescription }}
+            <div class="flex flex-col min-w-0">
+                <h1 class="font-bold text-base flex items-center leading-tight">
+                    <span class="bg-gradient-to-r from-blue-500 to-indigo-500 dark:from-blue-400 dark:to-indigo-400 bg-clip-text text-transparent">Insight Chat</span>
+                </h1>
+                <div class="text-[10px] opacity-70 truncate max-w-[200px] sm:max-w-[300px]">
+                    {{ activeDbDescription }}
+                </div>
             </div>
         </div>
 
         <!-- RIGHT SIDE -->
         <div class="flex items-center gap-3">
+
+            <!-- Admin Link -->
+            <router-link
+                to="/admin/databases"
+                class="px-3 py-1.5 rounded-xl border border-soft hover:bg-hover transition text-sm font-medium bg-panel">
+                ⚙️ Admin
+            </router-link>
 
             <!-- Theme Toggle -->
             <div class="flex items-center gap-1 bg-panel rounded-xl p-1">
@@ -1279,6 +1290,8 @@ async function loadDatabases() {
 document.addEventListener('click', (e) => {
     if (!(e.target as HTMLElement).closest('.relative')) {
         showDbMenu.value = false
+        showLlmMenu.value = false
+        showDbFilter.value = false
     }
 })
 

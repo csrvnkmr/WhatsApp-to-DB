@@ -3,15 +3,15 @@
 <div class="p-6">
 
     <DynamicTable
-        :entity="entity"
-        :database="database" />
+        :entity="props.entity"
+        :database="props.database" />
 
 </div>
 
 </template>
 
 <script setup lang="ts">
-defineProps<{
+const props = defineProps<{
     entity:string
     database:string
 }>()

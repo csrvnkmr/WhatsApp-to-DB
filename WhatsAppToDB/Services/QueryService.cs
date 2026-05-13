@@ -24,13 +24,16 @@ namespace WhatsAppToDB.Services
         private readonly DbProviderFactory _dbFactory;
         private readonly IHttpContextAccessor _http;
         private readonly LlmContextService _llmContext;
+        private readonly JsonConfigService _jsonConfigService;
+
         public QueryService(DatabaseRegistry dbRegistry, DbProviderFactory dbFactory,
-                IHttpContextAccessor http, LlmContextService llmContext)
+                IHttpContextAccessor http, LlmContextService llmContext, JsonConfigService jsonConfigService)
         {
             _dbRegistry = dbRegistry;
             _dbFactory = dbFactory;
             _http = http;
             _llmContext = llmContext;
+            _jsonConfigService = jsonConfigService;
         }
 
         public async Task<ChatMessageDto> ExecuteQuery(IServiceScopeFactory scopeFactory,
@@ -42,13 +45,14 @@ namespace WhatsAppToDB.Services
             {
                 using (var scope = scopeFactory.CreateScope())
                 {
-                    var dbName = _http.HttpContext?.Session?.GetString("activeDb") ?? "chinook-sqlite";
+                    var dbName = _http.HttpContext?.Session?.GetString(Constants.SessionKeys.ActiveDb) ?? "chinook-sqlite";
 
                     var dbConfig = _dbRegistry.GetDatabaseConfig(dbName);
                     var sessionId = _http.HttpContext?.Session?.Id;
 
-                    var schema = File.ReadAllText(dbConfig.SchemaFile);
-                    var prompt = File.ReadAllText(dbConfig.PromptFile);
+                    //var schema = File.ReadAllText(dbConfig.SchemaFile);
+                    //var prompt = File.ReadAllText(dbConfig.PromptFile);
+
                     Console.WriteLine($"[QUERY] Session={sessionId}");
                     Console.WriteLine($"[QUERY] DB={dbName}");
                     var sp = scope.ServiceProvider;
@@ -58,7 +62,6 @@ namespace WhatsAppToDB.Services
                     var identityService = sp.GetRequiredService<IIdentityService>();
                     //var identity = await identityService.GetIdentityAsync(usernameorphonenumber);
                     var kernel = sp.GetRequiredService<Kernel>();
-                    var aiOptions = sp.GetRequiredService<IOptions<CommonAiSettings>>();
 
                     var ctx = sp.GetRequiredService<AiRequestContext>();
                     if (identity!=null)
@@ -69,14 +72,33 @@ namespace WhatsAppToDB.Services
                     ctx.UserQuestion = messageText;
                     ctx.WhatsAppNumber = identity.WhatsAppNumber;
                     ctx.SessionId = sessionid;
-                    
+                    var modules = ctx.ModuleName;
+                    var modulePrompt = "";
+                    if (!string.IsNullOrEmpty(modules))
+                    {
+                        var lstmodules = modules.Split(',').ToList();
+                        var allmodules = _jsonConfigService.GetModules(dbName);
+                        foreach (var modulename in lstmodules)
+                        {
+                            var currmodule = allmodules.Find(x => x.Name == modulename);
+                            if (currmodule != null && !string.IsNullOrWhiteSpace(currmodule.Prompt))
+                            {
+                                modulePrompt += currmodule.Prompt + "\n\n";
+                            }                               
+                        }
+                    }
 
                     kernel.Data["UserIdentity"] = identity;
                     kernel.Data["WhatsAppNumber"] = identity.WhatsAppNumber;
                     kernel.Data["UserQuestion"] = messageText;
 
                     var history = new ChatHistory();
+                    var prompt = _jsonConfigService.GetPrompt(dbName);
                     var systemPrompt = prompt; //aiOptions.Value.FullSystemPrompt;
+                    if (!string.IsNullOrEmpty(modulePrompt))
+                    {
+                        systemPrompt = systemPrompt + "\n\n" + modulePrompt;
+                    }
 
                     if (identity != null)
                     {

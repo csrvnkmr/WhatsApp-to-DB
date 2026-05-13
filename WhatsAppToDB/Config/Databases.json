@@ -4,7 +4,7 @@
     "Description": "Chinook SQLite Sample DB",
     "ConnectionString": "Data Source=C:\\Development\\AiAgents\\SemanticKernel\\Chinook_Sqlite.sqlite",
     "SchemaFile": "C:\\Development\\AiAgents\\SemanticKernel\\chinnook_schema.json",
-    "Provider": "sqlite",
+    "DbProvider": "sqlite",
     "PromptFile": "C:\\Development\\AiAgents\\SemanticKernel\\AiPromptForChinook.txt"
   },
   {
@@ -12,22 +12,22 @@
     "Description": "B1 Database 1",
     "ConnectionString": "Server=srvn7530u;Database=SBODemoIn;User Id=vanna_reader;Password=vannareader;TrustServerCertificate=True",
     "SchemaFile": "C:\\Development\\AiAgents\\SemanticKernel\\b1_schema.json",
-    "Provider": "mssql",
+    "DbProvider": "mssql",
     "PromptFile": "C:\\Development\\AiAgents\\SemanticKernel\\AiPromptForB1Database.txt"
   },
   {
     "Name": "B1Database2",
-    "Description": "B1 Database 2",
+    "Description": "B1 Database two",
     "ConnectionString": "Server=srvn7530u;Database=sbodemo2;User Id=vanna_reader;Password=vannareader;TrustServerCertificate=True",
     "SchemaFile": "C:\\Development\\AiAgents\\SemanticKernel\\b1_schema.json",
-    "Provider": "mssql",
+    "DbProvider": "mssql",
     "PromptFile": "C:\\Development\\AiAgents\\SemanticKernel\\AiPromptForB1Database.txt"
   },
   {
     "Name": "chinook-postgres",
     "Description": "Chinook PostgreSQL DB",
     "ConnectionString": "Host=localhost;Port=5432;Database=chinook;Username=postgres;Password=pass",
-    "Provider": "postgres",
+    "DbProvider": "postgres",
     "PromptFile": "C:\\Development\\AiAgents\\SemanticKernel\\AiPromptForChinookPostGres.txt",
     "SchemaFile": "C:\\Development\\AiAgents\\SemanticKernel\\chinnook_postgres_schema.json"
   },
@@ -35,7 +35,7 @@
     "Name": "adventureworks",
     "Description": "SQL Server AdventureWorks",
     "ConnectionString": "Server=srvn7530u;Database=AdventureWorks2017;User Id=vanna_reader;Password=vannareader;TrustServerCertificate=True",
-    "Provider": "mssql",
+    "DbProvider": "mssql",
     "PromptFile": "C:\\Development\\AiAgents\\SemanticKernel\\AiPromptForAdventureWorks.txt",
     "SchemaFile": "C:\\Development\\AiAgents\\SemanticKernel\\aw_schema.json"
   }

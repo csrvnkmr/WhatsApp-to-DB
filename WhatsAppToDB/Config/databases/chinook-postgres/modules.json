@@ -1,0 +1,32 @@
+[
+  {
+    "Name": "sales",
+    "Details": "sales and invoice management",
+    "Tables": [
+      "invoice",
+      "invoice_line",
+      "customer",
+      "employee"
+    ]
+  },
+  {
+    "Name": "music",
+    "Details": "music catalog management",
+    "Tables": [
+      "track",
+      "album",
+      "artist",
+      "genre",
+      "media_type"
+    ]
+  },
+  {
+    "Name": "playlist",
+    "Details": "playlist management",
+    "Tables": [
+      "playlist",
+      "playlist_track",
+      "track"
+    ]
+  }
+]

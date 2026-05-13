@@ -19,34 +19,35 @@ namespace WhatsAppToDB.Plugin
         private readonly IModulePrompt? _promptExtension;
         private readonly ISqlInterceptor? _sqlExtension;
         private readonly ISqlTemplateExtension? _sqlTemplateExtension;
-        private readonly DatabaseSettings _dbSettings;
         private readonly ILogger _logger;
 
         private readonly DatabaseContextService _databaseContextService;
-
+        private readonly JsonConfigService _jsonConfigService;
         private readonly string dbName;
         private readonly DatabaseConfig _dbConfig;
 
-        public SchemaPlugin(IOptions<DatabaseSettings> dbSettings,
+        public SchemaPlugin(
+           JsonConfigService jsonConfigService,
            IModulePrompt? promptExtension = null,
            ISqlInterceptor? sqlExtension = null,
            ISqlTemplateExtension? sqlTemplateExtension = null,
-           ILogger? logger = null, DatabaseContextService databaseContextService = null)
+           ILogger? logger = null, DatabaseContextService databaseContextService = null
+           )
         {
             _promptExtension = promptExtension;
             _sqlExtension = sqlExtension;
             _sqlTemplateExtension = sqlTemplateExtension;
             _logger = logger ?? new AppLogger();
-            _dbSettings = dbSettings.Value;
             _databaseContextService = databaseContextService;
             dbName = _databaseContextService.GetCurrentDatabaseName();
             _dbConfig = _databaseContextService.GetCurrentConfig();
-            _schemaService = new SchemaService(_dbConfig.SchemaFile);
+            _jsonConfigService = jsonConfigService;
+            _schemaService = new SchemaService(_jsonConfigService);
         }
 
         [KernelFunction]
         [Description("Returns a list of all available modules to help decide which schema to load.")]
-        public string GetAvailableModules() => _schemaService.GetAvailableModules(); // b1Modules.GetModules(); // string.Join(", ", moduleSchemas.Keys);
+        public string GetAvailableModules() => _schemaService.GetAvailableModules(dbName); // b1Modules.GetModules(); // string.Join(", ", moduleSchemas.Keys);
 
 
         [KernelFunction]
@@ -100,7 +101,7 @@ namespace WhatsAppToDB.Plugin
                 }
 
                 // 4. Fetch Base Schema
-                var moduleSchema = _schemaService.GetModuleSchema(module);
+                var moduleSchema = _schemaService.GetModuleSchema(dbName, module);
 
                 // 5. Apply Dynamic Constraints (Row Level Security / Prompt Extensions)
                 if (_promptExtension != null )

@@ -30,11 +30,10 @@ namespace WhatsAppToDB.Plugin
 
         private readonly IModulePrompt? _promptExtension;
         private readonly ISqlInterceptor? _sqlExtension;
-        private readonly DatabaseSettings _dbSettings;
+        //private readonly DatabaseSettings _dbSettings;
         private readonly DatabaseContextService _databaseContextService;
 
-        public DatabaseQueryPlugin(IOptions<DatabaseSettings> dbSettings,
-            AiRequestContext ctx,
+        public DatabaseQueryPlugin(AiRequestContext ctx,
             IModulePrompt? promptExtension = null,   
             ISqlInterceptor? sqlExtension = null,
             ILogger? logger = null, DatabaseContextService databaseContextService = null)
@@ -42,7 +41,7 @@ namespace WhatsAppToDB.Plugin
             _promptExtension = promptExtension;
             _sqlExtension = sqlExtension;
             _logger = logger ?? new AppLogger();
-            _dbSettings = dbSettings.Value;
+            //_dbSettings = dbSettings.Value;
             _ctx = ctx;
             _databaseContextService = databaseContextService;
         }
@@ -84,8 +83,9 @@ namespace WhatsAppToDB.Plugin
             }
 
             var identity = _ctx.Identity; // kernel.Data["UserIdentity"] as IdentityContext;
-            
-            var currentConnectionString = _dbSettings.ConnectionString;
+
+            //var currentConnectionString = _dbSettings.ConnectionString;
+            var currentConnectionString = _databaseContextService.GetCurrentConfig().ConnectionString;
             if (identity!=null && !string.IsNullOrWhiteSpace(identity.ConnectionString)) {
                 currentConnectionString = identity.ConnectionString;
             }

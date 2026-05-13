@@ -1,0 +1,413 @@
+[
+  {
+    "Name": "HumanResources.Department",
+    "Description": "Department master",
+    "Columns": [
+      "DepartmentID",
+      "Name",
+      "GroupName"
+    ]
+  },
+  {
+    "Name": "HumanResources.EmployeeDepartmentHistory",
+    "Description": "Employee department history",
+    "Columns": [
+      "BusinessEntityID",
+      "DepartmentID",
+      "ShiftID",
+      "StartDate",
+      "EndDate"
+    ]
+  },
+  {
+    "Name": "HumanResources.EmployeePayHistory",
+    "Description": "Employee pay history",
+    "Columns": [
+      "BusinessEntityID",
+      "RateChangeDate",
+      "Rate",
+      "PayFrequency"
+    ]
+  },
+  {
+    "Name": "HumanResources.Employee",
+    "Description": "Employee master",
+    "Columns": [
+      "BusinessEntityID",
+      "NationalIDNumber",
+      "LoginID",
+      "OrganizationNode",
+      "OrganizationLevel",
+      "JobTitle",
+      "BirthDate",
+      "MaritalStatus",
+      "Gender",
+      "HireDate",
+      "SalariedFlag",
+      "VacationHours",
+      "SickLeaveHours",
+      "CurrentFlag"
+    ]
+  },
+  {
+    "Name": "HumanResources.JobCandidate",
+    "Description": "Job candidates",
+    "Columns": [
+      "JobCandidateID",
+      "BusinessEntityID",
+      "Resume"
+    ]
+  },
+  {
+    "Name": "HumanResources.Shift",
+    "Description": "Employee shifts",
+    "Columns": [
+      "ShiftID",
+      "Name",
+      "StartTime",
+      "EndTime"
+    ]
+  },
+  {
+    "Name": "Person.AddressType",
+    "Description": "Address types",
+    "Columns": [
+      "AddressTypeID",
+      "Name"
+    ]
+  },
+  {
+    "Name": "Person.Address",
+    "Description": "Address master",
+    "Columns": [
+      "AddressID",
+      "AddressLine1",
+      "AddressLine2",
+      "City",
+      "StateProvinceID",
+      "PostalCode",
+      "SpatialLocation"
+    ]
+  },
+  {
+    "Name": "Person.BusinessEntityAddress",
+    "Description": "Business entity addresses",
+    "Columns": [
+      "BusinessEntityID",
+      "AddressID",
+      "AddressTypeID"
+    ]
+  },
+  {
+    "Name": "Person.BusinessEntityContact",
+    "Description": "Business entity contacts",
+    "Columns": [
+      "BusinessEntityID",
+      "PersonID",
+      "ContactTypeID"
+    ]
+  },
+  {
+    "Name": "Person.BusinessEntity",
+    "Description": "Business entities",
+    "Columns": [
+      "BusinessEntityID"
+    ]
+  },
+  {
+    "Name": "Person.ContactType",
+    "Description": "Contact types",
+    "Columns": [
+      "ContactTypeID",
+      "Name"
+    ]
+  },
+  {
+    "Name": "Person.CountryRegion",
+    "Description": "Country and region master",
+    "Columns": [
+      "CountryRegionCode",
+      "Name"
+    ]
+  },
+  {
+    "Name": "Person.EmailAddress",
+    "Description": "Email addresses",
+    "Columns": [
+      "BusinessEntityID",
+      "EmailAddressID",
+      "EmailAddress"
+    ]
+  },
+  {
+    "Name": "Person.Password",
+    "Description": "Passwords",
+    "Columns": [
+      "BusinessEntityID",
+      "PasswordHash",
+      "PasswordSalt"
+    ]
+  },
+  {
+    "Name": "Person.PersonPhone",
+    "Description": "Person phone numbers",
+    "Columns": [
+      "BusinessEntityID",
+      "PhoneNumber",
+      "PhoneNumberTypeID"
+    ]
+  },
+  {
+    "Name": "Person.Person",
+    "Description": "Person master",
+    "Columns": [
+      "BusinessEntityID",
+      "PersonType",
+      "NameStyle",
+      "Title",
+      "FirstName",
+      "MiddleName",
+      "LastName",
+      "Suffix",
+      "EmailPromotion",
+      "AdditionalContactInfo",
+      "Demographics"
+    ]
+  },
+  {
+    "Name": "Person.PhoneNumberType",
+    "Description": "Phone number types",
+    "Columns": [
+      "PhoneNumberTypeID",
+      "Name"
+    ]
+  },
+  {
+    "Name": "Person.StateProvince",
+    "Description": "State and province master",
+    "Columns": [
+      "StateProvinceID",
+      "StateProvinceCode",
+      "CountryRegionCode",
+      "IsOnlyStateProvinceFlag",
+      "Name",
+      "TerritoryID"
+    ]
+  },
+  {
+    "Name": "Production.Product",
+    "Description": "Product master",
+    "Columns": [
+      "ProductID",
+      "Name",
+      "ProductNumber",
+      "Color",
+      "StandardCost",
+      "ListPrice",
+      "Size",
+      "Weight",
+      "DaysToManufacture",
+      "ProductSubcategoryID",
+      "ProductModelID",
+      "SellStartDate",
+      "SellEndDate"
+    ]
+  },
+  {
+    "Name": "Production.ProductCategory",
+    "Description": "Product categories",
+    "Columns": [
+      "ProductCategoryID",
+      "Name"
+    ]
+  },
+  {
+    "Name": "Production.ProductSubcategory",
+    "Description": "Product subcategories",
+    "Columns": [
+      "ProductSubcategoryID",
+      "ProductCategoryID",
+      "Name"
+    ]
+  },
+  {
+    "Name": "Production.ProductInventory",
+    "Description": "Product inventory",
+    "Columns": [
+      "ProductID",
+      "LocationID",
+      "Shelf",
+      "Bin",
+      "Quantity"
+    ]
+  },
+  {
+    "Name": "Production.Location",
+    "Description": "Inventory locations",
+    "Columns": [
+      "LocationID",
+      "Name",
+      "CostRate",
+      "Availability"
+    ]
+  },
+  {
+    "Name": "Production.BillOfMaterials",
+    "Description": "Bill of materials",
+    "Columns": [
+      "BillOfMaterialsID",
+      "ProductAssemblyID",
+      "ComponentID",
+      "StartDate",
+      "EndDate",
+      "UnitMeasureCode",
+      "BOMLevel",
+      "PerAssemblyQty"
+    ]
+  },
+  {
+    "Name": "Purchasing.PurchaseOrderHeader",
+    "Description": "Purchase order header",
+    "Columns": [
+      "PurchaseOrderID",
+      "RevisionNumber",
+      "Status",
+      "EmployeeID",
+      "VendorID",
+      "ShipMethodID",
+      "OrderDate",
+      "ShipDate",
+      "SubTotal",
+      "TaxAmt",
+      "Freight",
+      "TotalDue"
+    ]
+  },
+  {
+    "Name": "Purchasing.PurchaseOrderDetail",
+    "Description": "Purchase order detail",
+    "Columns": [
+      "PurchaseOrderID",
+      "PurchaseOrderDetailID",
+      "DueDate",
+      "OrderQty",
+      "ProductID",
+      "UnitPrice",
+      "LineTotal",
+      "ReceivedQty",
+      "RejectedQty",
+      "StockedQty"
+    ]
+  },
+  {
+    "Name": "Purchasing.Vendor",
+    "Description": "Vendor master",
+    "Columns": [
+      "BusinessEntityID",
+      "AccountNumber",
+      "Name",
+      "CreditRating",
+      "PreferredVendorStatus",
+      "ActiveFlag"
+    ]
+  },
+  {
+    "Name": "Purchasing.ProductVendor",
+    "Description": "Product vendors",
+    "Columns": [
+      "ProductID",
+      "BusinessEntityID",
+      "AverageLeadTime",
+      "StandardPrice",
+      "LastReceiptCost",
+      "MinOrderQty",
+      "MaxOrderQty",
+      "OnOrderQty",
+      "UnitMeasureCode"
+    ]
+  },
+  {
+    "Name": "Sales.Customer",
+    "Description": "Customer master",
+    "Columns": [
+      "CustomerID",
+      "PersonID",
+      "StoreID",
+      "TerritoryID",
+      "AccountNumber"
+    ]
+  },
+  {
+    "Name": "Sales.SalesOrderHeader",
+    "Description": "Sales order header",
+    "Columns": [
+      "SalesOrderID",
+      "OrderDate",
+      "DueDate",
+      "ShipDate",
+      "Status",
+      "SalesOrderNumber",
+      "PurchaseOrderNumber",
+      "CustomerID",
+      "SalesPersonID",
+      "TerritoryID",
+      "BillToAddressID",
+      "ShipToAddressID",
+      "ShipMethodID",
+      "SubTotal",
+      "TaxAmt",
+      "Freight",
+      "TotalDue"
+    ]
+  },
+  {
+    "Name": "Sales.SalesOrderDetail",
+    "Description": "Sales order detail",
+    "Columns": [
+      "SalesOrderID",
+      "SalesOrderDetailID",
+      "CarrierTrackingNumber",
+      "OrderQty",
+      "ProductID",
+      "SpecialOfferID",
+      "UnitPrice",
+      "UnitPriceDiscount",
+      "LineTotal"
+    ]
+  },
+  {
+    "Name": "Sales.SalesPerson",
+    "Description": "Sales persons",
+    "Columns": [
+      "BusinessEntityID",
+      "TerritoryID",
+      "SalesQuota",
+      "Bonus",
+      "CommissionPct",
+      "SalesYTD",
+      "SalesLastYear"
+    ]
+  },
+  {
+    "Name": "Sales.SalesTerritory",
+    "Description": "Sales territories",
+    "Columns": [
+      "TerritoryID",
+      "Name",
+      "CountryRegionCode",
+      "Group",
+      "SalesYTD",
+      "SalesLastYear"
+    ]
+  },
+  {
+    "Name": "Sales.Store",
+    "Description": "Stores",
+    "Columns": [
+      "BusinessEntityID",
+      "Name",
+      "SalesPersonID",
+      "Demographics"
+    ]
+  }
+]

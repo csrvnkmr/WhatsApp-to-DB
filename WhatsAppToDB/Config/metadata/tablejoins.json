@@ -1,0 +1,25 @@
+{
+  "entity": "tablejoins",
+  "title": "Table Joins",
+
+  "targetFile": "tablejoins.json",
+
+  "fields": [
+    {
+      "name": "Description",
+      "label": "Description",
+      "type": "text",
+      "showinheader": true,
+      "fulllength": true,
+      "required": true
+    },
+    {
+      "name": "JoinConditions",
+      "label": "Join Conditions",
+      "type": "array<text>",
+      "showinheader": true,
+      "fulllength": true,
+      "required": true
+    }
+  ]
+}

@@ -3,7 +3,8 @@
 <div class="p-6">
 
     <DynamicTable
-        :entity="entity" />
+        :entity="entity"
+        @data-changed="$emit('data-changed', entity)" />
 
 </div>
 
@@ -13,6 +14,8 @@
 defineProps<{
     entity:string
 }>()
+
+defineEmits(['data-changed'])
 
 import DynamicTable from '../components/DynamicTable.vue'
 </script>

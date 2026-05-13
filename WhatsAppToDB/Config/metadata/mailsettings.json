@@ -1,0 +1,46 @@
+{
+  "entity": "mailsettings",
+  "title": "Email Settings",
+
+  "targetFile": "mailsettings.json",
+  "maxrecords": 1,
+
+  "fields": [
+    {
+      "name": "smtpServer",
+      "label": "SMTP Server",
+      "type": "text",
+      "showinheader": true,
+      "required": true
+    },
+    {
+      "name": "Port",
+      "label": "Port",
+      "type": "text",
+      "showinheader": true,
+      "required": true
+    },
+    {
+      "name": "username",
+      "label": "User Name",
+      "type": "text",
+      "showinheader": true,
+      "required": true
+    },
+    {
+      "name": "password",
+      "label": "Password",
+      "type": "password",
+      "showinheader": false,
+      "required": true
+    },
+    {
+      "name": "EnableSSL",
+      "label": "Enable SSL",
+      "type": "boolean",
+      "showinheader": true,
+      "required": false
+    }
+
+  ]
+}

@@ -27,7 +27,7 @@ namespace WhatsAppToDB.Database
 
         public DatabaseConfig GetCurrentConfig()
         {
-            var dbName = _http.HttpContext?.Session?.GetString("activeDb")
+            var dbName = _http.HttpContext?.Session?.GetString(Constants.SessionKeys.ActiveDb)
                          ?? _defaultSettings.DefaultDatabase;
 
             return _registry.GetDatabaseConfig(dbName);
@@ -36,13 +36,13 @@ namespace WhatsAppToDB.Database
         public IDbProvider GetProvider()
         {
             var config = GetCurrentConfig();
-            return _factory.GetDbProvider(config.Provider);
+            return _factory.GetDbProvider(config.DbProvider);
         }
 
         public IDbConnection CreateConnection()
         {
             var config = GetCurrentConfig();
-            var provider = _factory.GetDbProvider(config.Provider);
+            var provider = _factory.GetDbProvider(config.DbProvider);
 
             return provider.GetConnection(config.ConnectionString);
         }
@@ -54,7 +54,7 @@ namespace WhatsAppToDB.Database
 
         public string GetProviderName()
         {
-            return GetCurrentConfig().Provider;
+            return GetCurrentConfig().DbProvider;
         }
         //public async Task<IEnumerable<dynamic>> ExecuteAsync(string sql)
         //{

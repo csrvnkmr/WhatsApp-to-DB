@@ -1,0 +1,28 @@
+{
+  "entity": "llms",
+  "title": "LLM Providers",
+
+  "targetFile": "llms.json",
+
+  "fields": [
+    {
+      "name": "Provider",
+      "label": "Provider",
+      "type": "text",
+      "showinheader": true,
+      "required": true
+    },
+    {
+      "name": "Enabled",
+      "label": "Enabled",
+      "showinheader": true,
+      "type": "boolean"
+    },
+    {
+      "name": "Models",
+      "label": "Models",
+      "showinheader": true,
+      "type": "array<text>"
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "entity": "plugins",
+  "title": "Plugins",
+
+  "targetFile": "plugins.json",
+
+  "fields": [
+    {
+      "name": "Name",
+      "label": "Plugin Name",
+      "type": "text",
+      "showinheader": true,
+      "fulllength": true,
+      "required": true
+    },
+    {
+      "name": "AssemblyPath",
+      "label": "Assembly Path",
+      "type": "file",
+      "fulllength": true,
+      "showinheader": true,
+      "required": true
+    },
+    {
+      "name": "PluginClassName",
+      "label": "Class Name",
+      "showinheader": true,
+      "fulllength": true,
+      "type": "text",
+      "required": true
+    }
+  ]
+}

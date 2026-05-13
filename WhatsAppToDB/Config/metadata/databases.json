@@ -1,0 +1,39 @@
+{
+  "entity": "databases",
+  "title": "Databases",
+
+  "targetFile": "databases.json",
+
+  "fields": [
+    {
+      "name": "Name",
+      "label": "Name",
+      "type": "text",
+      "showinheader": true,
+      "required": true
+    },
+    {
+      "name": "Description",
+      "label": "Description",
+      "showinheader": true,
+      "type": "text"
+    },
+    {
+      "name": "ConnectionString",
+      "label": "Connection String",
+      "showinheader": false,
+      "type": "textarea"
+    },
+    {
+      "name": "DbProvider",
+      "label": "Provider",
+      "type": "select",
+      "showinheader": true,
+      "options": [
+        "sqlite",
+        "mssql",
+        "postgres"
+      ]
+    }
+  ]
+}

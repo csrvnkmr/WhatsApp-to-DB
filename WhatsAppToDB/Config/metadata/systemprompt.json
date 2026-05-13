@@ -1,0 +1,19 @@
+{
+
+  "entity": "prompt",
+  "title": "System Prompt",
+
+  "targetFile": "prompt.json",
+  "maxrecords": 15,
+
+  "fields": [
+    {
+      "name": "systemprompt",
+      "label": "System Prompt",
+      "type": "textarea",
+      "fulllength": true,
+      "showinheader": true,
+      "required": true
+    }
+  ]
+}

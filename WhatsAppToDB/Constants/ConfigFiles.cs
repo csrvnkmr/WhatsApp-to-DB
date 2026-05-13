@@ -1,0 +1,49 @@
+﻿namespace WhatsAppToDB.Constants
+{
+    public static class ConfigFiles
+    {
+        // =========================================
+        // GLOBAL
+        // =========================================
+
+        public const string Users =
+            "users.json";
+
+        public const string Databases =
+            "databases.json";
+
+        public const string Llms =
+            "llms.json";
+
+        public const string DefaultSettings =
+            "defaultsettings.json";
+
+        // =========================================
+        // DATABASE-SPECIFIC
+        // =========================================
+
+        public const string Modules =
+            "modules.json";
+
+        public const string Tables =
+            "tables.json";
+
+        public const string TableJoins =
+            "tablejoins.json";
+
+        public const string Roles =
+            "roles.json";
+
+        public const string Plugins =
+            "plugins.json";
+
+        public const string Extensions =
+            "extensions.json";
+
+        public const string MailSettings =
+            "mailsettings.json";
+
+        public const string SystemPrompt =
+            "systemprompt.json";
+    }
+}

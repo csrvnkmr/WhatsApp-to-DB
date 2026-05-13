@@ -18,6 +18,7 @@ using WhatsAppToDB.Data;
 using WhatsAppToDB.Database;
 using WhatsAppToDB.LlmProviders;
 using WhatsAppToDB.Models;
+using WhatsAppToDB.Services.WhatsAppToDB.Plugins;
 using WhatsAppToDB.Settings;
 
 namespace WhatsAppToDB.Services
@@ -37,17 +38,17 @@ namespace WhatsAppToDB.Services
             var sqlTemplateDll = config["Extensions:SqlTemplateExtension:DllPath"];
 
             // Registering your Schema/Prompt Injector
-            services.RegisterPluginFromDll<IModulePrompt>(promptDll, logger);
+            services.RegisterExtensionFromDll<IModulePrompt>(promptDll, logger);
 
             // Registering your SQL Template Provider
-            services.RegisterPluginFromDll<ISqlTemplateExtension>(sqlTemplateDll, logger);
+            services.RegisterExtensionFromDll<ISqlTemplateExtension>(sqlTemplateDll, logger);
 
             // Registering your SQL Interceptor Layer
-            services.RegisterPluginFromDll<ISqlInterceptor>(interceptorDll, logger);
+            services.RegisterExtensionFromDll<ISqlInterceptor>(interceptorDll, logger);
             return services;
         }
 
-        private static IServiceCollection RegisterPluginFromDll<TInterface>(
+        private static IServiceCollection RegisterExtensionFromDll<TInterface>(
             this IServiceCollection services, string dllPath, ILogger logger) where TInterface : class
 
         {
@@ -99,14 +100,16 @@ namespace WhatsAppToDB.Services
             services.AddScoped<AiRequestContext>();
 
             services.AddSingleton<ILogger, AppLogger>();
+            services.AddSingleton<JsonConfigService>();
             services.AddSingleton<ChatDbRepository>();
             services.AddSingleton<IUserAuditService, UserAuditService>();
             services.AddControllers();
 
+             var configRoot = config.GetValue<string>("ConfigRootFolder");
+
+
             services.Configure<WhatsAppSettings>(config.GetSection("WhatsAppSettings"));
-            services.Configure<DatabaseSettings>(config.GetSection("DatabaseSettings"));
             services.Configure<OpenAiSettings>(config.GetSection("OpenAiSettings"));
-            services.Configure<CommonAiSettings>(config.GetSection("CommonAiSettings"));
             services.Configure<LocalAiSettings>(config.GetSection("LocalAiSettings"));
             services.Configure<RoleSettings>(config.GetSection("RoleSettings"));
             services.Configure<MailSettings>(config.GetSection("MailSettings"));
@@ -115,8 +118,6 @@ namespace WhatsAppToDB.Services
 
             services.AddPlugin(config, metadata);
 
-
-
             services.AddScoped<IIdentityService, IdentityService>();
             services.AddScoped<Plugin.DatabaseQueryPlugin>();
             services.AddScoped<Plugin.SchemaPlugin>();
@@ -124,25 +125,23 @@ namespace WhatsAppToDB.Services
             //services.AddSwaggerGen();
             AddSwaggerGen(services);
 
-            var llmConfigPath = config.GetValue<string>("LlmSettings:LlmConfigFile");
-            LoadLlmConfigs(services, llmConfigPath);
-            services.AddScoped<LlmContextService>();
+            //var llmConfigPath = config.GetValue<string>("LlmSettings:LlmConfigFile");
+            //var llmConfigPath = Path.Combine(configRoot, Constants.ConfigFiles.Llms);
+            //services.LoadLlmConfigs(llmConfigPath);
             
-            services.AddScoped<LlmProviderFactory>();
-            var llmPluginsPath = config.GetValue<string>("LlmSettings:LlmPluginsFolder");
+           
+            
+            var llmPluginsPath = config.GetValue<string>("LlmPluginsFolder");
             services.RegisterLlmProviders(llmPluginsPath);
 
-            var dbConfigPath = config.GetValue<string>("DatabaseSettings:DatabaseConfigFile");
+            //var dbConfigPath = config.GetValue<string>("DatabaseSettings:DatabaseConfigFile");
+            //LoadDatabaseConfigs(services, dbConfigPath);
 
-            LoadDatabaseConfigs(services, dbConfigPath);
-            services.AddScoped<DatabaseContextService>();
-            services.AddSingleton<DatabaseRegistry>();
-            services.AddScoped<DbProviderFactory>();
             services.AddDistributedMemoryCache();
             services.AddScoped<IQueryService, QueryService>();
             
 
-            var dbPluginsPath = config.GetValue<string>("DatabaseSettings:DatabasePluginsFolder");
+            var dbPluginsPath = config.GetValue<string>("DatabasePluginsFolder");
             services.RegisterDatabaseProviders(dbPluginsPath);
             
             services.AddKernel(metadata);
@@ -195,94 +194,33 @@ namespace WhatsAppToDB.Services
 
         
 
-        public static void AddPlugin(this IServiceCollection services, IConfiguration config, PluginMetadata metadata)
-        {
-            using var tempProvider = services.BuildServiceProvider();
-            var logger = tempProvider.GetService<ILogger>();
-            logger.WriteToConsole = true;
-
-            var lstpluginSettings = config.GetSection("PluginSettings").Get<List<PluginSettings>>();
-            if (lstpluginSettings != null)
-            {
-                foreach (var pluginSettings in lstpluginSettings)
-                {
-                    logger.LogAsync($"[AddPlugin] Attempting to load plugin from {pluginSettings.AssemblyPath} with class {pluginSettings.PluginClassName}");
-                    var assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(Path.GetFullPath(pluginSettings.AssemblyPath));
-
-                    var pluginDir = Path.GetDirectoryName(pluginSettings.AssemblyPath);
-                    AssemblyLoadContext.Default.Resolving += (context, assemblyName) =>
-                    {
-                        // 1. Check if already loaded in the AppDomain
-                        var alreadyLoaded = AppDomain.CurrentDomain.GetAssemblies()
-                            .FirstOrDefault(a => a.GetName().Name == assemblyName.Name);
-                        if (alreadyLoaded != null) return alreadyLoaded;
-
-                        // 2. SEARCH STRATEGY: Look in the EXE folder AND the Plugins folder
-                        string[] searchPaths = {
-                            AppDomain.CurrentDomain.BaseDirectory, // Current EXE folder
-                            pluginDir!                             // Your Plugins folder
-                        };
-
-                        foreach (var dir in searchPaths)
-                        {
-                            string path = Path.Combine(dir, $"{assemblyName.Name}.dll");
-                            if (File.Exists(path))
-                            {
-                                // IMPORTANT: Using LoadFromAssemblyPath FORCES the runtime 
-                                // to use this file, even if the version isn't an exact match.
-                                return context.LoadFromAssemblyPath(path);
-                            }
-                        }
-
-                        return null;
-                    };                    
-
-                    var pluginType = assembly.GetType(pluginSettings.PluginClassName);
-
-                    if (pluginType != null)
-                    {
-                        if (metadata.PluginTypes==null)
-                        {
-                            metadata.PluginTypes = new List<Type>();
-                        }
-                        if (!metadata.PluginTypes.Contains(pluginType))
-                        {
-                            metadata.PluginTypes.Add(pluginType);
-                            // Register for DI so Kernel can resolve it
-                            services.AddScoped(pluginType);
-                        }
-                        else
-                        {
-                            logger.LogAsync($"[AddPlugin] Failed to register plugin: {pluginSettings.PluginClassName}");
-                        }
-                    }
-                }
-                services.AddSingleton(metadata);
-            }
-        }
+        
 
         public static void RegisterDatabaseProviders(this IServiceCollection services, string folderName)
         {
             services.AddScoped<DatabaseContextService>();
+            services.AddSingleton<DatabaseRegistry>();
+
             services.AddScoped<IDbProvider, Database.MsSqlDbProvider>();
             services.AddScoped<IDbProvider, Database.SqliteDbProvider>();
-            LoadPlugins<IDbProvider>(services, folderName);            
+            services.LoadProviders<IDbProvider>(folderName, "*dbplugin.dll");            
             services.AddScoped<Database.DbProviderFactory>();
         }
 
-        private static void LoadLlmConfigs(IServiceCollection services, string configPath)
-        {
-            if (!File.Exists(configPath))
-                return;
+        //private static void LoadLlmConfigs(this IServiceCollection services, string configPath)
+        //{
+            
+        //    if (!File.Exists(configPath))
+        //        return;
 
-            var configs =
-                JsonSerializer.Deserialize<List<LlmConfig>>(
-                    File.ReadAllText(configPath))
-                ?? new();
+        //    var configs =
+        //        JsonSerializer.Deserialize<List<LlmConfig>>(
+        //            File.ReadAllText(configPath))
+        //        ?? new();
 
-            services.AddSingleton(configs);
-            services.AddSingleton<LlmRegistry>();
-        }
+        //    services.AddSingleton(configs);
+        //    services.AddSingleton<LlmRegistry>();
+        //}
 
         public static void RegisterLlmProviders(this IServiceCollection services, string configPath)
         {
@@ -290,8 +228,10 @@ namespace WhatsAppToDB.Services
             services.AddScoped<ILlmProvider, OpenAiProvider>();
             services.AddScoped<ILlmProvider, LocalAiProvider>();
             //LoadLlmPlugins(services);
-            LoadPlugins<ILlmProvider>(services, configPath);
-            services.AddScoped<LlmProviderFactory>();            
+            services.LoadProviders<ILlmProvider>(configPath, "*llmplugin.dll");
+
+            services.AddSingleton<LlmRegistry>();
+            services.AddScoped<LlmProviderFactory>();
         }
 
         //static void LoadLlmPlugins(IServiceCollection services)
@@ -330,15 +270,14 @@ namespace WhatsAppToDB.Services
         //    }
         //}
 
-        static void LoadPlugins<TInterface>(IServiceCollection services, string pluginFolder, 
+        static void LoadProviders<TInterface>(this IServiceCollection services, string pluginFolder, string filefilter,
             ServiceLifetime lifetime = ServiceLifetime.Scoped)
         {
             
-
             if (!Directory.Exists(pluginFolder))
                 return;
 
-            var dlls = Directory.GetFiles(pluginFolder, "*llmplugin.dll");
+            var dlls = Directory.GetFiles(pluginFolder, filefilter);
 
             foreach (var file in dlls)
             {
@@ -395,6 +334,7 @@ namespace WhatsAppToDB.Services
                 kernelBuilder.Plugins.AddFromObject(dbPlugin);
                 kernelBuilder.Plugins.AddFromObject(schemaPlugin);
 
+
                 // Add all dynamic plugins loaded from DLLs
                 foreach (var pluginType in metadata.PluginTypes)
                 {
@@ -407,6 +347,123 @@ namespace WhatsAppToDB.Services
             });
         }
 
+        public static void AddPlugin(this IServiceCollection services, IConfiguration config, PluginMetadata metadata)
+        {
+            using var tempProvider = services.BuildServiceProvider();
+            var logger = tempProvider.GetService<ILogger>();
+            logger.WriteToConsole = true;
+
+            var lstpluginSettings = config.GetSection("PluginSettings").Get<List<PluginSettings>>();
+            if (lstpluginSettings != null)
+            {
+                foreach (var pluginSettings in lstpluginSettings)
+                {
+                    logger.LogAsync($"[AddPlugin] Attempting to load plugin from {pluginSettings.AssemblyPath} with class {pluginSettings.PluginClassName}");
+                    var assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(Path.GetFullPath(pluginSettings.AssemblyPath));
+
+                    var pluginDir = Path.GetDirectoryName(pluginSettings.AssemblyPath);
+                    AssemblyLoadContext.Default.Resolving += (context, assemblyName) =>
+                    {
+                        // 1. Check if already loaded in the AppDomain
+                        var alreadyLoaded = AppDomain.CurrentDomain.GetAssemblies()
+                            .FirstOrDefault(a => a.GetName().Name == assemblyName.Name);
+                        if (alreadyLoaded != null) return alreadyLoaded;
+
+                        // 2. SEARCH STRATEGY: Look in the EXE folder AND the Plugins folder
+                        string[] searchPaths = {
+                            AppDomain.CurrentDomain.BaseDirectory, // Current EXE folder
+                            pluginDir!                             // Your Plugins folder
+                        };
+
+                        foreach (var dir in searchPaths)
+                        {
+                            string path = Path.Combine(dir, $"{assemblyName.Name}.dll");
+                            if (File.Exists(path))
+                            {
+                                // IMPORTANT: Using LoadFromAssemblyPath FORCES the runtime 
+                                // to use this file, even if the version isn't an exact match.
+                                return context.LoadFromAssemblyPath(path);
+                            }
+                        }
+
+                        return null;
+                    };
+
+                    var pluginType = assembly.GetType(pluginSettings.PluginClassName);
+
+                    if (pluginType != null)
+                    {
+                        if (metadata.PluginTypes == null)
+                        {
+                            metadata.PluginTypes = new List<Type>();
+                        }
+                        if (!metadata.PluginTypes.Contains(pluginType))
+                        {
+                            metadata.PluginTypes.Add(pluginType);
+                            // Register for DI so Kernel can resolve it
+                            services.AddScoped(pluginType);
+                        }
+                        else
+                        {
+                            logger.LogAsync($"[AddPlugin] Failed to register plugin: {pluginSettings.PluginClassName}");
+                        }
+                    }
+                }
+                services.AddSingleton(metadata);
+            }
+        }
+
+        public static void AddKernel(this IServiceCollection services)
+        {
+            services.AddScoped(sp =>
+            {
+                // Use a unique ID to track this specific resolution in the console
+                var requestId = Guid.NewGuid().ToString().Substring(0, 4);
+                Console.WriteLine($"[WhatsAppToDB] [{requestId}] Building Kernel...");                                
+
+                var kernelBuilder = Kernel.CreateBuilder();
+                var llmContext = sp.GetRequiredService<LlmContextService>();
+
+                var provider = llmContext.GetProvider();
+
+                var model = llmContext.GetModel();
+
+                provider.Register(kernelBuilder, sp, model);
+
+                //var aiSettings = sp.GetRequiredService<IOptions<CommonAiSettings>>().Value;
+                //var llmfactory = sp.GetRequiredService<LlmProviderFactory>();
+                //var provider = llmfactory.Get(aiSettings.Provider);
+                //provider.Register(kernelBuilder, sp, aiSettings.Model);
+
+                var dbPlugin = sp.GetRequiredService<Plugin.DatabaseQueryPlugin>();
+                var schemaPlugin = sp.GetRequiredService<Plugin.SchemaPlugin>();
+                kernelBuilder.Plugins.AddFromObject(dbPlugin);
+                kernelBuilder.Plugins.AddFromObject(schemaPlugin);
+
+                var dbContext = sp.GetRequiredService<DatabaseContextService>();
+
+                var database = dbContext.GetCurrentDatabaseName();
+
+                var json = sp.GetRequiredService<JsonConfigService>();
+
+                var pluginLoader = sp.GetRequiredService<PluginLoaderService>();
+
+                var plugins = json.GetPlugins(database);
+
+                foreach (var plugin in plugins)
+                {
+                    var pluginInstance = pluginLoader.CreatePluginInstance(plugin);
+
+                    if (pluginInstance == null) continue;
+
+                    kernelBuilder.Plugins.AddFromObject(pluginInstance);
+
+                    Console.WriteLine($"[Kernel] Added Plugin: {plugin.Name}");
+                }
+
+                return kernelBuilder.Build();
+            });
+        }
 
     }
 }

@@ -1,0 +1,13 @@
+[
+  {
+    "Name": "admin",
+    "Description": "Administrator",
+    "Modules": [
+      "Sales",
+      "Purchase",
+      "Finance",
+      "Inventory",
+      "Production"
+    ]
+  }
+]

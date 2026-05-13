@@ -26,7 +26,7 @@ namespace WhatsAppToDB.Services
             {
 
                 var activeDb =
-                    context.Session.GetString("activeDb");
+                    context.Session.GetString(Constants.SessionKeys.ActiveDb);
 
                 // Session missing -> restore
                 if (string.IsNullOrWhiteSpace(activeDb))
@@ -49,11 +49,11 @@ namespace WhatsAppToDB.Services
                         provider = model.Split(',')[0].Trim();
                         model = model.Split(',')[1].Trim();
                     }
-                    context.Session.SetString("activeDb", db);
+                    context.Session.SetString(Constants.SessionKeys.ActiveDb, db);
 
-                    context.Session.SetString("activeLlmProvider", provider);
+                    context.Session.SetString(Constants.SessionKeys.ActiveLlmProvider, provider);
 
-                    context.Session.SetString("activeLlmModel", model);
+                    context.Session.SetString(Constants.SessionKeys.ActiveLlmModel, model);
 
                     Console.WriteLine($"[SessionBootstrap] Restored for {userName}");
                 }

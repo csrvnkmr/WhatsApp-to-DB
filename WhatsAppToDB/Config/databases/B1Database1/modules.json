@@ -1,0 +1,99 @@
+[
+  {
+    "Name": "MasterData",
+    "Details": "Master data modules",
+    "Tables": [
+      "OCRD",
+      "OCRG",
+      "OACT",
+      "ODSC",
+      "DSC1",
+      "OITM",
+      "OITB",
+      "OSLP",
+      "OWHS"
+    ]
+  },
+  {
+    "Name": "Sales",
+    "Details": "Sales or invoice modules",
+    "Tables": [
+      "OINV",
+      "INV1",
+      "ORDR",
+      "RDR1",
+      "ORIN",
+      "RIN1",
+      "ODLN",
+      "DLN1"
+    ],
+    "Prompt": "### SALES INVOICE SETTLEMENTS\n- Internal Reconciliation (OITR \u0026 ITR1) tables are used to track the settlement of Sales Invoices\n- Sales Invoices can be settled by Payments (ORCT), Credit Notes (ORIN), or Journal Entries through Internal Reconciliation (OITR \u0026 ITR1)\n- OITR.ReconType : 3-Payments, 0-Manual, 4-Credit Note, 7-Cancellation\n- In case of Manual Reconciliation, multiple type of documents can be used for settling each other (Any Debit entries (Invoices/Outgoing Payments/Journal Entries) against Any Credit entries (Credit Notes/Receipts/Journal Entries)\n"
+  },
+  {
+    "Name": "Purchase",
+    "Details": "Purchase modules",
+    "Tables": [
+      "OPCH",
+      "PCH1",
+      "OPOR",
+      "POR1",
+      "ORPC",
+      "RPC1",
+      "OPDN",
+      "PDN1"
+    ]
+  },
+  {
+    "Name": "Finance/Accounting",
+    "Details": "Finance and accounting modules",
+    "Tables": [
+      "OJDT",
+      "JDT1",
+      "OACT",
+      "OCRD"
+    ]
+  },
+  {
+    "Name": "Payments",
+    "Details": "Incoming and outgoing payment modules",
+    "Tables": [
+      "ORCT",
+      "OVPM",
+      "RCT1",
+      "VPM1",
+      "RCT2",
+      "VPM2",
+      "RCT3",
+      "VPM3",
+      "RCT4",
+      "VPM4",
+      "ODSC",
+      "DSC1",
+      "OACT",
+      "OCRD",
+      "OITR",
+      "ITR1"
+    ]
+  },
+  {
+    "Name": "Batch",
+    "Details": "Batch management modules",
+    "Tables": [
+      "OBTN",
+      "OBTQ",
+      "OITL",
+      "ITL1"
+    ]
+  },
+  {
+    "Name": "Inventory",
+    "Details": "Inventory and warehouse modules",
+    "Tables": [
+      "OPDN",
+      "OGIN",
+      "OGIE",
+      "ODLN",
+      "OITL"
+    ]
+  }
+]

@@ -14,7 +14,10 @@
                 v-for="field in metadata.fields"
                 :key="field.name"
                 :field="field"
-                v-model="localModel[field.name]" />
+                v-model="localModel[field.name]"
+                :model="localModel"
+                :database="props.database"
+                :class="{'md:col-span-2': field.fulllength}" />
 
         </div>
 
@@ -39,3 +42,38 @@
 </div>
 
 </template>
+
+<script setup lang="ts">
+import { ref, watch } from 'vue'
+import FieldRenderer from './FieldRenderer.vue'
+
+const props = defineProps<{
+    metadata: any
+    model: any
+    database?: string
+}>()
+
+const emit = defineEmits(['save', 'cancel'])
+
+const localModel = ref({ ...props.model })
+
+watch(() => props.model, (newVal) => {
+    localModel.value = { ...newVal }
+}, { deep: true })
+
+function save() {
+    if (props.metadata && props.metadata.fields) {
+        for (const field of props.metadata.fields) {
+            if (field.required) {
+                const val = localModel.value[field.name];
+                if (val === undefined || val === null || val === '') {
+                    alert(`${field.label} is required.`);
+                    return;
+                }
+            }
+        }
+    }
+    
+    emit('save', localModel.value)
+}
+</script>

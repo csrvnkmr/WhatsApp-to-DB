@@ -1,121 +1,248 @@
 ﻿using Dapper;
-using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Options;
-using System.Text.Json;
 using WhatsAppToDB.Abstractions;
 using WhatsAppToDB.Database;
+using WhatsAppToDB.Models;
 using WhatsAppToDB.Settings;
 
 namespace WhatsAppToDB.Services
 {
     public class IdentityService : IIdentityService
     {
-        private readonly string _defaultConnection;
-        private readonly RoleSettings _roleSettings;
-        private readonly IConfiguration _config;
+        private readonly JsonConfigService _json;
         private readonly ILogger _logger;
         private readonly DatabaseContextService _databaseContextService;
 
-
-        public IdentityService(IOptions<DatabaseSettings> dbSettings, IOptions<RoleSettings> roleSettings,
-            IConfiguration config, DatabaseContextService databaseContextService, ILogger? logger = null )
+        public IdentityService(
+            JsonConfigService json,
+            DatabaseContextService databaseContextService,
+            ILogger? logger = null)
         {
-            _roleSettings = roleSettings.Value;
-            _defaultConnection = dbSettings.Value.ConnectionString ?? "";
-            _config = config;
-            _logger = logger ?? new AppLogger();
-            _databaseContextService = databaseContextService;
+            _json = json;
+
+            _logger =
+                logger ?? new AppLogger();
+
+            _databaseContextService =
+                databaseContextService;
         }
 
-        public async Task<IdentityContext> GetIdentityAsync(string mobileNumber)
+        // ==================================================
+        // GET IDENTITY
+        // ==================================================
+
+        public async Task<IdentityContext> GetIdentityAsync(
+            string mobileNumber)
         {
-            await _logger.LogInfoAsync($"Fetching identity for mobile number: {mobileNumber}");
-            
-            var source = _roleSettings.MappingSource?.ToUpper() ?? "JSON";
+            await _logger.LogInfoAsync(
+                $"Fetching identity for mobile number: {mobileNumber}");
 
-            var jsonfile = _roleSettings.RoleMappingJsonFile;
-            var rolemappingsql = _roleSettings.RoleMappingSqlQuery;
+            var ic= new IdentityContext
+            {
+                WhatsAppNumber = mobileNumber
+            };
+            HydrateRolePermissions( ic );
+            return ic;
 
-            IdentityContext identity = source.ToUpper() == "SQL"
-                ? await GetFromSql(mobileNumber, rolemappingsql)
-                : await GetFromJson(mobileNumber, jsonfile);
+            //var database =
+            //    _databaseContextService
+            //        .GetCurrentDatabaseName();
 
-            // Hydrate Role-based Permissions and Connections
-            HydrateRolePermissions(identity);
+            //// ============================================
+            //// LOAD DATABASE ROLES
+            //// ============================================
 
-            return identity;
+            //var roles =
+            //    _json.GetRoles(database);
+
+            //// ============================================
+            //// FIND USER ROLES
+            //// ============================================
+
+            //var matchedRoles =
+            //    roles
+            //        .Where(r =>
+            //            r.Users != null &&
+            //            r.Users.Any(u =>
+            //                u.Equals(
+            //                    mobileNumber,
+            //                    StringComparison.OrdinalIgnoreCase)))
+            //        .ToList();
+
+            //// ============================================
+            //// DEFAULT ROLE
+            //// ============================================
+
+            //if (!matchedRoles.Any())
+            //{
+            //    return new IdentityContext
+            //    {
+            //        WhatsAppNumber = mobileNumber,
+
+            //        Role = "Guest",
+
+            //        AuthorizedModules =
+            //            new List<string>(),
+
+            //        ConnectionString =
+            //            _databaseContextService
+            //                .GetCurrentConfig()
+            //                .ConnectionString
+            //    };
+            //}
+
+            //var identityContext = new IdentityContext
+            //{
+            //    WhatsAppNumber = mobileNumber,
+
+            //    Role = "Guest",
+
+            //    AuthorizedModules =
+            //            new List<string>(),
+
+            //    ConnectionString =
+            //            _databaseContextService
+            //                .GetCurrentConfig()
+            //                .ConnectionString
+            //};
+
+            //// ============================================
+            //// COMBINE MODULES
+            //// ============================================
+
+            //var modules =
+            //    matchedRoles
+            //        .SelectMany(r => r.Modules ?? [])
+            //        .Distinct(
+            //            StringComparer.OrdinalIgnoreCase)
+            //        .ToList();
+
+            //// ============================================
+            //// CONNECTION STRING
+            //// first role wins
+            //// ============================================
+
+            //var connectionString =
+            //    matchedRoles
+            //        .FirstOrDefault(r =>
+            //            !string.IsNullOrWhiteSpace(r.ConnectionString)) ?.ConnectionString
+            //    ?? _databaseContextService.GetCurrentConfig().ConnectionString;
+
+            //// ============================================
+            //// BUILD IDENTITY
+            //// ============================================
+            //var userRoles = "";
+            //matchedRoles.ForEach(x => userRoles += "," + x.Name );
+            //var identity =
+            //    new IdentityContext
+            //    {
+            //        WhatsAppNumber =
+            //            mobileNumber,
+
+            //        Role = userRoles,
+
+            //        AuthorizedModules =
+            //            modules,
+
+            //        ConnectionString =
+            //            connectionString
+            //    };
+
+            //await _logger.LogInfoAsync(
+            //    $"Identity loaded for {mobileNumber}. Roles={string.Join(",", identity.Role)}");
+
+            //return identity;
+        }
+
+        // ==================================================
+        // OPTIONAL SQL BASED LOOKUP
+        // ==================================================
+
+        public async Task<IdentityContext?> GetFromSqlAsync(
+            string sql,
+            string mobileNumber)
+        {
+            await _logger.LogInfoAsync(
+                $"Executing identity SQL for {mobileNumber}");
+
+            using var connection =
+                _databaseContextService
+                    .CreateConnection();
+
+            var result =
+                await connection
+                    .QueryFirstOrDefaultAsync<IdentityContext>(
+                        sql,
+                        new
+                        {
+                            Mobile = mobileNumber
+                        });
+
+            return result;
         }
 
         public void HydrateRolePermissions(IdentityContext identity)
         {
-            // 1. Map Modules: RoleModules: { "SalesPerson": "Sales,Inventory" }
-            
-            var moduleMapping = _config.GetSection("RoleSettings:RoleModules").Get<Dictionary<string, string>>();
-            if (moduleMapping?.TryGetValue(identity.Role, out var modules) == true)
-            {
-                identity.AuthorizedModules = modules.Split(',').Select(m => m.Trim()).ToList();
-            }
+            _logger.LogInfo(
+                $"Fetching Roles for name: {identity.WhatsAppNumber}");
 
-            // 2. Map Connection: Use Role-specific string or fallback
-            var roleConn = _config.GetConnectionString($"{identity.Role}Connection");
-            identity.ConnectionString = !string.IsNullOrEmpty(roleConn) ? roleConn : _defaultConnection;
+            var database = _databaseContextService.GetCurrentDatabaseName();
+
+            var roles = _json.GetRoles(database);
+
+            // ============================================
+            // FIND USER ROLES
+            // ============================================
+
+            var matchedRoles =
+                roles
+                    .Where(r =>
+                        r.Users != null &&
+                        r.Users.Any(u =>
+                            u.Equals(
+                                identity.WhatsAppNumber,
+                                StringComparison.OrdinalIgnoreCase)))
+                    .ToList();
+            if (!matchedRoles.Any())
+            {
+                identity.Role = "Guest";
+                identity.AuthorizedModules = new List<string>();
+                identity.ConnectionString = _databaseContextService
+                    .GetCurrentConfig().ConnectionString;
+                return ;
+            }
+            // ============================================
+            // COMBINE MODULES
+            // ============================================
+
+            var modules =
+                matchedRoles
+                    .SelectMany(r => r.Modules ?? [])
+                    .Distinct(
+                        StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+            // ============================================
+            // CONNECTION STRING
+            // first role wins
+            // ============================================
+
+            var connectionString =
+                matchedRoles
+                    .FirstOrDefault(r =>
+                        !string.IsNullOrWhiteSpace(r.ConnectionString))?.ConnectionString
+                ?? _databaseContextService.GetCurrentConfig().ConnectionString;
+
+            // ============================================
+            // BUILD IDENTITY
+            // ============================================
+            var userRoles = "";
+            matchedRoles.ForEach(x => userRoles += "," + x.Name);
+            if (userRoles.StartsWith(",")) {
+                userRoles = userRoles.Substring(1);
+            }
+            identity.Role = userRoles;
+            identity.AuthorizedModules = modules;
+            identity.ConnectionString = connectionString;
         }
-
-        // SELECT RoleName as Role,EmpID as InternalUserId,'EmployeeID' as SessionContextKey FROM UserMapping WHERE Mobile = @Mobile
-        private async Task<IdentityContext> GetFromSql(string mobileNumber, string roleMappingSql)
-        {
-            await _logger.LogInfoAsync($"Executing SQL for identity: {roleMappingSql} with Mobile={mobileNumber}");
-
-            using var connection = _databaseContextService.CreateConnection(); //provider.GetConnection(dbConfig.ConnectionString);
-
-            // We pass mobileNumber to the SQL query as @Mobile
-            var result = await connection.QueryFirstOrDefaultAsync<IdentityContext>(
-                roleMappingSql,
-                new { Mobile = mobileNumber }
-            );
-
-            if (result == null)
-            {
-                return new IdentityContext { WhatsAppNumber = mobileNumber, Role = "Guest" };
-            }
-
-            result.WhatsAppNumber = mobileNumber;
-            return result;
-        }
-        /*
-         * [
-  { "WhatsAppNumber": "919876543210", "Role": "Admin", "InternalUserId": "ADM01", "SessionContextKey": "Admin" },
-  { "WhatsAppNumber": "919000000000", "Role": "SalesPerson", "InternalUserId": "SLS42", "SessionContextKey": "EmployeeID" }
-]
-         */
-        private async Task<IdentityContext> GetFromJson(string mobileNumber, string jsonFile)
-        {
-            await _logger.LogInfoAsync($"Fetching identity from JSON file: {jsonFile} for Mobile={mobileNumber}");
-            var defaultRole = _config.GetValue<string>("RoleSettings:DefaultRole");
-            if (!File.Exists(jsonFile))
-            {
-                return new IdentityContext { WhatsAppNumber = mobileNumber, Role = defaultRole };
-            }
-
-            try
-            {
-                var jsonString = await File.ReadAllTextAsync(jsonFile);
-                var mappings = JsonSerializer.Deserialize<List<IdentityContext>>(jsonString, new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                });
-
-                var user = mappings?.FirstOrDefault(m => m.WhatsAppNumber == mobileNumber);
-
-                return user ?? new IdentityContext { WhatsAppNumber = mobileNumber, Role = defaultRole };
-            }
-            catch
-            {
-                return new IdentityContext { WhatsAppNumber = mobileNumber, Role = defaultRole };
-            }
-        }
-
     }
 }
-
-

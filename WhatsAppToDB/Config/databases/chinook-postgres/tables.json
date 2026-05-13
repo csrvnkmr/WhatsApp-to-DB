@@ -1,0 +1,132 @@
+[
+  {
+    "Name": "album",
+    "Description": "album master",
+    "Columns": [
+      "album_id",
+      "title",
+      "artist_id"
+    ]
+  },
+  {
+    "Name": "artist",
+    "Description": "artist master",
+    "Columns": [
+      "artist_id",
+      "name"
+    ]
+  },
+  {
+    "Name": "customer",
+    "Description": "customer master",
+    "Columns": [
+      "customer_id",
+      "first_name",
+      "last_name",
+      "company",
+      "address",
+      "city",
+      "state",
+      "country",
+      "postal_code",
+      "phone",
+      "fax",
+      "email",
+      "support_rep_id"
+    ]
+  },
+  {
+    "Name": "employee",
+    "Description": "employee master",
+    "Columns": [
+      "employee_id",
+      "last_name",
+      "first_name",
+      "title",
+      "reports_to",
+      "birth_date",
+      "hire_date",
+      "address",
+      "city",
+      "state",
+      "country",
+      "postal_code",
+      "phone",
+      "fax",
+      "email"
+    ]
+  },
+  {
+    "Name": "genre",
+    "Description": "music genres",
+    "Columns": [
+      "genre_id",
+      "name"
+    ]
+  },
+  {
+    "Name": "invoice",
+    "Description": "invoice header",
+    "Columns": [
+      "invoice_id",
+      "customer_id",
+      "invoice_date",
+      "billing_address",
+      "billing_city",
+      "billing_state",
+      "billing_country",
+      "billing_postal_code",
+      "total"
+    ]
+  },
+  {
+    "Name": "invoice_line",
+    "Description": "invoice detail lines",
+    "Columns": [
+      "invoice_line_id",
+      "invoice_id",
+      "track_id",
+      "unit_price",
+      "quantity"
+    ]
+  },
+  {
+    "Name": "media_type",
+    "Description": "media types",
+    "Columns": [
+      "media_type_id",
+      "name"
+    ]
+  },
+  {
+    "Name": "playlist",
+    "Description": "playlist master",
+    "Columns": [
+      "playlist_id",
+      "name"
+    ]
+  },
+  {
+    "Name": "playlist_track",
+    "Description": "playlist tracks",
+    "Columns": [
+      "playlist_id",
+      "track_id"
+    ]
+  },
+  {
+    "Name": "track",
+    "Description": "music tracks",
+    "Columns": [
+      "track_id",
+      "name",
+      "album_id",
+      "media_type_id",
+      "genre_id",
+      "composer",
+      "milliseconds",
+      "bytes",
+      "unit_price"
+    ]
+  }
+]

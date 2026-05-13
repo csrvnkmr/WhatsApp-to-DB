@@ -1,0 +1,34 @@
+{
+  "entity": "extensions",
+  "title": "Extensions",
+
+  "targetFile": "extensions.json",
+  "maxrecords": 1,
+
+  "fields": [
+    {
+      "name": "PromptInjectorDLL",
+      "label": "Prompt Injector DLL Path",
+      "type": "file",
+      "showinheader": true,
+      "fulllength": true,
+      "required": false
+    },
+    {
+      "name": "SqlInterceptorDLL",
+      "label": "Sql Interceptor DLL Path",
+      "type": "file",
+      "showinheader": true,
+      "fulllength": true,
+      "required": false
+    },
+    {
+      "name": "SqlTemplateExtensionDLL",
+      "label": "Sql Template Extension DLL Path",
+      "showinheader": true,
+      "fulllength": true,
+      "type": "file",
+      "required": false
+    }
+  ]
+}

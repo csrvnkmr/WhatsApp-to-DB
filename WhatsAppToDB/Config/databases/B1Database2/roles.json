@@ -1,0 +1,13 @@
+[
+  {
+    "Name": "SalesPerson",
+    "Description": "Sales Perosn",
+    "Users": [
+      "csrvn"
+    ],
+    "Modules": [
+      "Sales",
+      "MasterData"
+    ]
+  }
+]

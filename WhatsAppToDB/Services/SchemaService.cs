@@ -1,62 +1,134 @@
-﻿using System.Text.Json;
+﻿using WhatsAppToDB.Database;
+using WhatsAppToDB.Models;
+
 
 namespace WhatsAppToDB.Services
 {
     public class SchemaService
     {
-        private readonly DatabaseSchema _schema;
+        private readonly JsonConfigService _json;
 
-        public SchemaService(string jsonPath)
+        public SchemaService(
+            JsonConfigService json)
         {
-            var json = File.ReadAllText(jsonPath);
-            _schema = JsonSerializer.Deserialize<DatabaseSchema>(json) ?? new();
+            _json = json;
         }
 
-        public string GetModuleSchema(string moduleNames)
-        {
-            var lstModules = moduleNames.Split(',').Select(m => m.Trim()).ToList();
-            var finalResult = "";
-            // 1. Find the module and its tables
-            foreach (var moduleName in lstModules)
-            {
-                var moduleLine = _schema.Modules
-                .FirstOrDefault(m => m.StartsWith(moduleName, StringComparison.OrdinalIgnoreCase));
+        // ==================================================
+        // GET MODULE SCHEMA
+        // ==================================================
 
-                if (moduleLine == null)
+        public string GetModuleSchema(
+            string database,
+            string moduleNames)
+        {
+            var modules =
+                _json.GetModules(database);
+
+            var tables =
+                _json.GetTables(database);
+
+            var joins =
+                _json.GetTableJoins(database);
+
+            var requestedModules =
+                moduleNames
+                    .Split(',')
+                    .Select(x => x.Trim())
+                    .ToList();
+
+            var finalResult = "";
+
+            // ============================================
+            // EACH MODULE
+            // ============================================
+
+            foreach (var moduleName in requestedModules)
+            {
+                var module =
+                    modules.FirstOrDefault(m =>
+                        m.Name.Equals(
+                            moduleName,
+                            StringComparison.OrdinalIgnoreCase));
+
+                if (module == null)
                 {
-                    Console.WriteLine("Module not found. "+moduleName);
+                    Console.WriteLine(
+                        $"Module not found: {moduleName}");
+
                     continue;
                 }
 
-                var tableList = moduleLine.Split('|')[1].Split(',');
+                // ========================================
+                // TABLES
+                // ========================================
 
-                // 2. Extract Table Metadata
-                var tableDetails = _schema.Tables
-                    .Where(t => tableList.Any(name => t.StartsWith(name.Trim())))
-                    .ToList();
+                var moduleTables =
+                    tables
+                        .Where(t =>
+                            module.Tables.Contains(
+                                t.Name,
+                                StringComparer.OrdinalIgnoreCase))
+                        .ToList();
 
-                // 3. Extract relevant Joins
-                var relevantJoins = _schema.TableJoins
-                    .Where(j => tableList.Any(name => j.Contains(name.Trim())))
-                    .ToList();
+                // ========================================
+                // JOINS
+                // ========================================
 
-                // 4. Format for AI Context
-                var moduleschema = $"### MODULE: {moduleName}\n" +
-                       "**Tables & Fields:**\n" + string.Join("\n", tableDetails) + "\n\n" +
-                       "**Suggested Joins:**\n" + string.Join("\n", relevantJoins);
-                finalResult += moduleschema + "\n\n";
+                var relevantJoins =
+                    joins
+                        .SelectMany(j => j.JoinConditions)
+                        .Where(j =>
+                            module.Tables.Any(t =>
+                                j.Contains(
+                                    t,
+                                    StringComparison.OrdinalIgnoreCase)))
+                        .Distinct()
+                        .ToList();
+
+                // ========================================
+                // FORMAT TABLE DETAILS
+                // ========================================
+
+                var tableText =
+                    moduleTables.Select(t =>
+                        $"{t.Name} ({t.Description}) : " +
+                        $"{string.Join(", ", t.Columns)}");
+
+                // ========================================
+                // BUILD MODULE SCHEMA
+                // ========================================
+
+                var moduleSchema =
+                    $"### MODULE: {module.Name}\n" +
+                    $"DESCRIPTION: {module.Details}\n\n" +
+
+                    $"**Tables & Fields:**\n" +
+                    $"{string.Join("\n", tableText)}\n\n" +
+
+                    $"**Suggested Joins:**\n" +
+                    $"{string.Join("\n", relevantJoins)}";
+
+                finalResult +=
+                    moduleSchema + "\n\n";
             }
+
             return finalResult;
         }
 
-        public string GetAvailableModules() =>
-            string.Join(", ", _schema.Modules.Select(m => m.Split('|')[0].Trim()).ToList());
-    }
+        // ==================================================
+        // AVAILABLE MODULES
+        // ==================================================
 
-    public class DatabaseSchema
-    {
-        public List<string> Tables { get; set; } = new();
-        public List<string> TableJoins { get; set; } = new();
-        public List<string> Modules { get; set; } = new();
+        public string GetAvailableModules(
+            string database)
+        {
+            var modules =
+                _json.GetModules(database);
+
+            return string.Join(
+                ", ",
+                modules.Select(m => m.Name));
+        }
     }
 }

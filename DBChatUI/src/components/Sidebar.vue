@@ -73,7 +73,7 @@
                 {{ item.title }}
             </div>
 
-            <div class="text-xs text-gray-500 mt-1">
+            <div class="text-xs mt-1 opacity-60">
                 {{ item.updatedOn }}
             </div>
 

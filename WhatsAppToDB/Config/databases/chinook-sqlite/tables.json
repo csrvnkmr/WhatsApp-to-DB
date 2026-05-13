@@ -1,0 +1,132 @@
+[
+  {
+    "Name": "Album",
+    "Description": "Album master",
+    "Columns": [
+      "AlbumId",
+      "Title",
+      "ArtistId"
+    ]
+  },
+  {
+    "Name": "Artist",
+    "Description": "Artist master",
+    "Columns": [
+      "ArtistId",
+      "Name"
+    ]
+  },
+  {
+    "Name": "Customer",
+    "Description": "Customer master",
+    "Columns": [
+      "CustomerId",
+      "FirstName",
+      "LastName",
+      "Company",
+      "Address",
+      "City",
+      "State",
+      "Country",
+      "PostalCode",
+      "Phone",
+      "Fax",
+      "Email",
+      "SupportRepId"
+    ]
+  },
+  {
+    "Name": "Employee",
+    "Description": "Employee master",
+    "Columns": [
+      "EmployeeId",
+      "LastName",
+      "FirstName",
+      "Title",
+      "ReportsTo",
+      "BirthDate",
+      "HireDate",
+      "Address",
+      "City",
+      "State",
+      "Country",
+      "PostalCode",
+      "Phone",
+      "Fax",
+      "Email"
+    ]
+  },
+  {
+    "Name": "Genre",
+    "Description": "Music genres",
+    "Columns": [
+      "GenreId",
+      "Name"
+    ]
+  },
+  {
+    "Name": "Invoice",
+    "Description": "Invoice header",
+    "Columns": [
+      "InvoiceId",
+      "CustomerId",
+      "InvoiceDate",
+      "BillingAddress",
+      "BillingCity",
+      "BillingState",
+      "BillingCountry",
+      "BillingPostalCode",
+      "Total"
+    ]
+  },
+  {
+    "Name": "InvoiceLine",
+    "Description": "Invoice detail lines",
+    "Columns": [
+      "InvoiceLineId",
+      "InvoiceId",
+      "TrackId",
+      "UnitPrice",
+      "Quantity"
+    ]
+  },
+  {
+    "Name": "MediaType",
+    "Description": "Media types",
+    "Columns": [
+      "MediaTypeId",
+      "Name"
+    ]
+  },
+  {
+    "Name": "Playlist",
+    "Description": "Playlist master",
+    "Columns": [
+      "PlaylistId",
+      "Name"
+    ]
+  },
+  {
+    "Name": "PlaylistTrack",
+    "Description": "Playlist tracks",
+    "Columns": [
+      "PlaylistId",
+      "TrackId"
+    ]
+  },
+  {
+    "Name": "Track",
+    "Description": "Music tracks",
+    "Columns": [
+      "TrackId",
+      "Name",
+      "AlbumId",
+      "MediaTypeId",
+      "GenreId",
+      "Composer",
+      "Milliseconds",
+      "Bytes",
+      "UnitPrice"
+    ]
+  }
+]

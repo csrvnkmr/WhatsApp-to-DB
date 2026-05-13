@@ -1,0 +1,20 @@
+[
+  {
+    "Username": "csrvn",
+    "Password": "password123",
+    "Fullname": "C Saravana Kumar",
+    "Role": "SalesPerson",
+    "InternalUserId": "277",
+    "SessionContextKey": "SalesPersonID",
+    "DefaultDatabase": "chinook-sqlite"
+  },
+  {
+    "Username": "admin",
+    "Password": "adminpassword",
+    "Fullname": "Administrator",
+    "Role": "Admin",
+    "InternalUserId": "1",
+    "SessionContextKey": "EmployeeID",
+    "DefaultDatabase": "B1Database2"
+  }
+]

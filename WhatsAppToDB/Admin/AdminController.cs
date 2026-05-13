@@ -1,8 +1,9 @@
-﻿// ==========================================================
+// ==========================================================
 // Admin/AdminController.cs
 // ==========================================================
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
+using static Org.BouncyCastle.Math.EC.ECCurve;
 
 namespace WhatsAppToDB.Admin
 {
@@ -11,7 +12,7 @@ namespace WhatsAppToDB.Admin
     public class AdminController : ControllerBase
     {
         private readonly IWebHostEnvironment _env;
-
+        private readonly string ConfigRoot;
         private readonly JsonSerializerOptions _jsonOptions =
             new JsonSerializerOptions
             {
@@ -19,8 +20,16 @@ namespace WhatsAppToDB.Admin
             };
 
         public AdminController(
-            IWebHostEnvironment env)
+            IWebHostEnvironment env,IConfiguration config)
         {
+            
+            ConfigRoot = config.GetValue<string>("ConfigRootFolder");
+            if (string.IsNullOrWhiteSpace(ConfigRoot))
+            {
+                var appRoot = Path.Combine(AppContext.BaseDirectory, "config");
+                ConfigRoot = appRoot;
+                Console.WriteLine($"Default config folder not in the appsettings.json. Using {appRoot}");
+            }
             _env = env;
         }
 
@@ -28,15 +37,10 @@ namespace WhatsAppToDB.Admin
         // CONFIG ROOT
         // ======================================================
 
-        private string ConfigRoot =>
-            Path.Combine(
-                AppContext.BaseDirectory,
-                "config");
+        //private string ConfigRoot => Path.Combine( AppContext.BaseDirectory, "config");
 
         private string MetadataRoot =>
-            Path.Combine(
-                ConfigRoot,
-                "metadata");
+            Path.Combine(ConfigRoot, "metadata");
 
         // ======================================================
         // GET METADATA
@@ -89,6 +93,11 @@ namespace WhatsAppToDB.Admin
 
             if (!System.IO.File.Exists(file))
             {
+                var foldername = System.IO.Path.GetDirectoryName(file);
+                if (!Directory.Exists(foldername))
+                {
+                    Directory.CreateDirectory(foldername);
+                }
                 // auto create empty array
                 System.IO.File.WriteAllText(
                     file,
@@ -190,7 +199,10 @@ namespace WhatsAppToDB.Admin
                     "systemprompt",
                     "plugins",
                     "extensions",
-                    "mailsettings"
+                    "mailsettings",
+                    "tables",
+                    "modules",
+                    "tablejoins"
                 };
 
             if (dbSpecific.Contains(
