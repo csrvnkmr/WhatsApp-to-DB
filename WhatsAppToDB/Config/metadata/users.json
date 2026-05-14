@@ -17,7 +17,8 @@
       "label": "Password",
       "showinheader": false,
       "type": "password",
-      "required": true
+      "required": true,
+      "sensitive": true
     },
     {
       "name": "Fullname",

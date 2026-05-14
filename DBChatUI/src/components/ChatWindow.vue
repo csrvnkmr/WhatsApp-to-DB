@@ -11,7 +11,7 @@ UPDATED:
 <div class="h-full flex flex-col bg-base">
 
     <!-- HEADER -->
-    <div class="p-4 flex items-center justify-between border-b border-soft bg-base">
+    <div class="p-4 flex flex-col lg:flex-row lg:items-center justify-between border-b border-soft bg-base gap-4">
 
         <!-- LEFT: Title + DB Description -->
         <div class="flex items-center gap-3">
@@ -29,7 +29,7 @@ UPDATED:
         </div>
 
         <!-- RIGHT SIDE -->
-        <div class="flex items-center gap-3">
+        <div class="flex flex-wrap items-center gap-2 sm:gap-3 w-full lg:w-auto">
 
             <!-- Admin Link -->
             <router-link
@@ -85,7 +85,7 @@ UPDATED:
                   <!-- DROPDOWN -->
                   <div
                       v-if="showDbFilter"
-                      class="absolute right-0 mt-2 w-72 max-w-[90vw] bg-panel border border-soft rounded-2xl shadow-xl z-50 overflow-hidden">
+                      class="absolute left-0 sm:left-auto sm:right-0 mt-2 w-72 max-w-[90vw] bg-panel border border-soft rounded-2xl shadow-xl z-50 overflow-hidden">
 
                       <!-- ALL -->
                       <div
@@ -158,7 +158,7 @@ UPDATED:
 
               <div
                   v-if="showLlmMenu"
-                  class="absolute right-0 mt-2 w-72 bg-panel border border-soft rounded-xl shadow-lg z-50">
+                  class="absolute left-0 sm:left-auto sm:right-0 mt-2 w-72 max-w-[90vw] bg-panel border border-soft rounded-xl shadow-lg z-50">
 
                   <div
                       v-for="llm in llms"
@@ -199,7 +199,7 @@ UPDATED:
                 <!-- Dropdown -->
                 <div
                     v-if="showDbMenu"
-                    class="absolute right-0 mt-2 w-56 bg-panel border border-soft rounded-xl shadow-lg z-50">
+                    class="absolute left-0 sm:left-auto sm:right-0 mt-2 w-56 max-w-[90vw] bg-panel border border-soft rounded-xl shadow-lg z-50">
 
                     <div
                         v-for="db in databases"
@@ -421,6 +421,8 @@ UPDATED:
             ref="questionInput"
             v-model="question"
             @keyup.enter="sendQuestion"
+            @keydown.up.prevent="navigateHistory('up')"
+            @keydown.down.prevent="navigateHistory('down')"
             :disabled="loading"
             :placeholder="loading
                 ? 'Please wait. Fetching the answer...'
@@ -698,20 +700,53 @@ Place below existing SQL/Data modal
 </template>
 
 <script setup lang="ts">
-
 import { ref, nextTick, watch, onMounted, computed, onBeforeUnmount } from "vue";
 import { useChatStore } from "@/stores/chat";
-
-// ------------------------------------------
-// MODAL STATE
-// ------------------------------------------
-const modalVisible = ref(false);
-const modalTitle = ref("");
-const modalContent = ref("");
-
-const modalType = ref(""); // sql / data
+import { useThemeStore } from "@/stores/theme";
+import { useMessageModals } from "@/composables/useMessageModals";
+import { useEmailResult } from "@/composables/useEmailResult";
+import {
+    getDatabasesList,
+    selectActiveDatabase,
+    getLlmsList,
+    selectActiveLlm,
+    filterSessions,
+    getMessagesDatabases,
+    addBookmark,
+    removeBookmark as apiRemoveBookmark,
+    exportExcelFile,
+    askQuestion
+} from "@/services/api";
 
 const chat = useChatStore();
+const theme = useThemeStore();
+
+// Composable for message visual actions (SQL / Data view modals)
+const {
+    modalVisible,
+    modalTitle,
+    modalContent,
+    modalType,
+    showSql,
+    showData,
+    copyContent,
+    downloadContent,
+    downloadExcel
+} = useMessageModals();
+
+// Composable for email result popups
+const {
+    emailModalVisible,
+    emailFrom,
+    emailTo,
+    emailCc,
+    emailSubject,
+    emailBody,
+    emailSending,
+    emailResult,
+    sendEmail,
+    getQuestion
+} = useEmailResult();
 
 const question = ref("");
 const loading = ref(false);
@@ -720,44 +755,39 @@ const chatBody = ref<HTMLElement | null>(null);
 const bottomRef = ref<HTMLElement | null>(null);
 const questionInput = ref<HTMLInputElement | null>(null);
 
-const BASE_URL = "http://localhost:3000";
+const bookmarkText = ref("");
+const bookmarkMessageId = ref<number | null>(null);
+const showBookmarkModal = ref(false);
 
-const bookmarkText = ref("")
-const bookmarkMessageId = ref<number | null>(null)
-const showBookmarkModal = ref(false)
-
-import { useThemeStore } from '@/stores/theme'
-
-const theme = useThemeStore()
-
-function openBookmarkModal(msg:any) {
-  console.log("Opening bookmark modal")
-    bookmarkMessageId.value = msg.id
-    bookmarkText.value = getQuestion(msg) // msg.messageText   // default question
-    showBookmarkModal.value = true
+function openBookmarkModal(msg: any) {
+    console.log("Opening bookmark modal");
+    bookmarkMessageId.value = msg.id;
+    bookmarkText.value = getQuestion(msg); // default question text
+    showBookmarkModal.value = true;
 }
 
 async function saveBookmark() {
-    await fetch(
-        `${BASE_URL}/addbookmark/${bookmarkMessageId.value}?text=${encodeURIComponent(bookmarkText.value)}`,
-        {
-            credentials: 'include',
-            headers: authHeader()
+    if (bookmarkMessageId.value === null) return;
+
+    try {
+        await addBookmark(bookmarkMessageId.value, bookmarkText.value);
+        const m = chat.messages.find((m: any) => m.id === bookmarkMessageId.value);
+        if (m) {
+            m.isBookmarked = true;
         }
-    )
-    chat.messages.find((m:any)=>m.id===bookmarkMessageId.value).isBookmarked=true;
-    showBookmarkModal.value = false
+        showBookmarkModal.value = false;
+    } catch (err) {
+        console.error("Failed to save bookmark:", err);
+    }
 }
 
-async function removeBookmark(msg:any) {
-    await fetch(
-        `${BASE_URL}/removebookmark/${msg.id}`,
-        {
-          credentials: 'include',
-          headers: authHeader()
-        }
-    )
-    msg.isBookmarked=false
+async function removeBookmark(msg: any) {
+    try {
+        await apiRemoveBookmark(msg.id);
+        msg.isBookmarked = false;
+    } catch (err) {
+        console.error("Failed to remove bookmark:", err);
+    }
 }
 
 // ==========================================
@@ -765,14 +795,43 @@ async function removeBookmark(msg:any) {
 // ==========================================
 async function scrollToBottom() {
     await nextTick();
-
     bottomRef.value?.scrollIntoView({
         behavior: "smooth",
         block: "end"
     });
 }
 
-// Scroll to bottom when the message length change
+// ==========================================
+// Question History Navigation
+// ==========================================
+const questionHistory = ref<string[]>([]);
+const historyIndex = ref(-1);
+const unsentQuestion = ref("");
+
+function navigateHistory(direction: "up" | "down") {
+    if (questionHistory.value.length === 0) return;
+
+    if (direction === "up") {
+        if (historyIndex.value === -1) {
+            unsentQuestion.value = question.value;
+            historyIndex.value = questionHistory.value.length - 1;
+            question.value = questionHistory.value[historyIndex.value];
+        } else if (historyIndex.value > 0) {
+            historyIndex.value--;
+            question.value = questionHistory.value[historyIndex.value];
+        }
+    } else if (direction === "down") {
+        if (historyIndex.value !== -1) {
+            if (historyIndex.value < questionHistory.value.length - 1) {
+                historyIndex.value++;
+                question.value = questionHistory.value[historyIndex.value];
+            } else if (historyIndex.value === questionHistory.value.length - 1) {
+                historyIndex.value = -1;
+                question.value = unsentQuestion.value;
+            }
+        }
+    }
+}
 
 watch(
     () => chat.messages.length,
@@ -780,6 +839,13 @@ watch(
         await nextTick();
         await scrollToBottom();
         questionInput.value?.focus();
+
+        const userMsgs = chat.messages
+            .filter((m: any) => isUser(m.role) && m.messageText)
+            .map((m: any) => m.messageText);
+        questionHistory.value = userMsgs;
+        historyIndex.value = -1;
+        unsentQuestion.value = "";
     }
 );
 
@@ -792,17 +858,17 @@ function newChat() {
     chat.messages = [];
     chat.selectedSessionId = null;
 }
-const wasNewSession = !chat.selectedSessionId;
+
 // ==========================================
 // Send Question
 // ==========================================
 async function sendQuestion() {
-
     if (!question.value.trim() || loading.value)
         return;
 
     const userQuestion = question.value;
     const now = new Date().toLocaleString();
+    const wasNewSession = !chat.selectedSessionId;
 
     // Add user msg
     chat.messages.push({
@@ -812,8 +878,8 @@ async function sendQuestion() {
         createdOn: now,
         SessionId: chat.selectedSessionId,
         canShowChart: false,
-        canShowData : false,
-        canShowSql : false
+        canShowData: false,
+        canShowSql: false
     });
 
     question.value = "";
@@ -822,33 +888,13 @@ async function sendQuestion() {
     await scrollToBottom();
 
     try {
-
-        const token =
-            localStorage.getItem("token") || "";
-
-        const res = await fetch(
-            `${BASE_URL}/ask`,
-            {
-                method: "POST",
-                credentials: 'include',
-                headers: {
-                    "Content-Type": "application/json",
-                    credentials: 'include',
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    SessionId: chat.selectedSessionId,
-                    Question: userQuestion
-                })
-            });
-
-        const raw = await res.text();
+        const raw = await askQuestion(userQuestion, chat.selectedSessionId);
 
         let text = raw;
         let msgid = Date.now() + 1;
         try {
             const json = JSON.parse(raw);
-            console.log ("Received data from Agent", json);
+            console.log("Received data from Agent", json);
             try {
                 text =
                     json.response ||
@@ -856,15 +902,14 @@ async function sendQuestion() {
                     json.message ||
                     json.messageText ||
                     raw;
-            }
-            catch {
+            } catch {
                 text = raw;
             }
             if (json.sessionId) {
                 chat.selectedSessionId = json.sessionId;
             }
             if (json.id) {
-                msgid=json.id;
+                msgid = json.id;
             }
             if (wasNewSession || json?.sessionId) {
                 await chat.loadSessions();
@@ -880,16 +925,13 @@ async function sendQuestion() {
                 canShowData: json.canShowData || false,
                 canShowChart: json.canShowChart || false
             });
-
-        }
-        catch {
+        } catch {
             text = raw;
         }
 
         await scrollToBottom();
-    }
-    catch (ex) {
-        console.log("Exception in SendQuestion", ex)
+    } catch (ex) {
+        console.log("Exception in SendQuestion", ex);
         chat.messages.push({
             id: Date.now() + 2,
             sessionId: chat.selectedSessionId,
@@ -899,8 +941,7 @@ async function sendQuestion() {
         });
 
         await scrollToBottom();
-    }
-    finally {
+    } finally {
         loading.value = false;
         questionInput.value?.focus();
     }
@@ -908,168 +949,7 @@ async function sendQuestion() {
 
 function isUser(role: string) {
     const r = (role || "").toLowerCase().trim();
-
     return r === "user";
-}
-
-function authHeader() {
-    const token =
-        localStorage.getItem("token") || "";
-
-    return {
-        "Authorization": `Bearer ${token}`
-    };
-}
-
-// ------------------------------------------
-// SHOW SQL
-// ------------------------------------------
-async function showSql(msg: any) {
-
-    modalType.value = "sql";
-
-    try {
-        modalTitle.value = "SQL";
-        modalContent.value = "Loading...";
-        modalVisible.value = true;
-
-        const res = await fetch(
-            `${BASE_URL}/messagesql/${msg.id}`,
-            {
-              credentials: 'include',
-                headers: authHeader()
-            });
-
-        const json = await res.json();
-
-        modalContent.value =
-            json.sql || "";
-    }
-    catch {
-        modalContent.value =
-            "Unable to load SQL.";
-    }
-}
-
-
-// ------------------------------------------
-// SHOW DATA
-// ------------------------------------------
-async function showData(msg: any) {
-
-    modalType.value = "data";
-
-    try {
-        modalTitle.value = "Data";
-        modalContent.value = "Loading...";
-        modalVisible.value = true;
-
-        const res = await fetch(
-            `${BASE_URL}/messagedata/${msg.id}`,
-
-            {
-              credentials: 'include',
-                headers: authHeader()
-            });
-
-        const json = await res.json();
-
-        modalContent.value =
-            JSON.stringify(json, null, 2);
-    }
-    catch {
-        modalContent.value =
-            "Unable to load Data.";
-    }
-}
-
-// ------------------------------------------
-// COPY
-// ------------------------------------------
-async function copyContent() {
-
-    await navigator.clipboard.writeText(
-        modalContent.value
-    );
-}
-
-// ------------------------------------------
-// DOWNLOAD TXT / JSON / SQL
-// ------------------------------------------
-function downloadContent() {
-
-    let ext = "txt";
-
-    if (modalType.value === "sql")
-        ext = "sql";
-
-    if (modalType.value === "data")
-        ext = "json";
-
-    const blob = new Blob(
-        [modalContent.value],
-        { type: "text/plain" }
-    );
-
-    const url =
-        URL.createObjectURL(blob);
-
-    const a =
-        document.createElement("a");
-
-    a.href = url;
-    a.download =
-        `${modalType.value}.${ext}`;
-
-    a.click();
-
-    URL.revokeObjectURL(url);
-}
-
-// ------------------------------------------
-// DOWNLOAD EXCEL (CSV)
-// ------------------------------------------
-function downloadExcel() {
-
-    try {
-
-        const rows =
-            JSON.parse(modalContent.value);
-
-        if (!rows || !rows.length)
-            return;
-
-        const headers =
-            Object.keys(rows[0]);
-
-        const csv = [
-            headers.join(","),
-            ...rows.map((row: any) =>
-                headers.map(h =>
-                    `"${String(row[h] ?? "").replace(/"/g, '""')}"`
-                ).join(","))
-        ].join("\n");
-
-        const blob = new Blob(
-            [csv],
-            { type: "text/csv;charset=utf-8;" }
-        );
-
-        const url =
-            URL.createObjectURL(blob);
-
-        const a =
-            document.createElement("a");
-
-        a.href = url;
-        a.download = "data.csv";
-        a.click();
-
-        URL.revokeObjectURL(url);
-    }
-    catch {
-        alert("Unable to export Excel.");
-    }
 }
 
 function showChart(msg: any) {
@@ -1082,432 +962,197 @@ const themeBtnClass = (name: string) => {
         theme.currentTheme === name
             ? "bg-white shadow text-black"
             : "text-gray-600 hover:bg-white/50"
-    ]
-}
-
-const emailModalVisible = ref(false);
-
-const emailFrom = ref("");
-const emailTo = ref("");
-const emailCc = ref("");
-
-const emailSubject = ref("");
-const emailBody = ref("");
-
-const emailMessageId = ref(0);
-const emailSending = ref(false);
-
-function getQuestion(msg: any):string {
-    const index =
-        chat.messages.findIndex(
-            (x: any) => x.id === msg.id
-        );
-
-    if (index > 0) {
-
-        for (let i = index - 1; i >= 0; i--) {
-
-            if (
-                chat.messages[i].role.toLowerCase() === "user"
-            ) {
-                return chat.messages[i].messageText;
-            }
-        }
-    }
-    return "InsightChat Result";
-}
-
-// ------------------------------------------
-// Open Email Modal
-// msg = assistant message clicked
-// ------------------------------------------
-function emailResult(msg: any) {
-
-
-    emailMessageId.value = msg.id;
-
-    // default from
-    emailFrom.value =
-        localStorage.getItem("username") || "";
-
-    emailTo.value = "";
-    emailCc.value = "";
-
-    // Find previous user question in chat
-    const question = getQuestion(msg); //"InsightChat Result";
-
-    emailSubject.value = question;
-
-    // default body = current answer
-    emailBody.value = msg.messageText || "";
-
-    emailModalVisible.value = true;
-}
-
-// ------------------------------------------
-// Send Email
-// Connect backend later
-// ------------------------------------------
-async function sendEmail() {
-
-
-    if (!emailFrom.value || !emailTo.value) {
-        alert("Please enter From and To.");
-        return;
-    }
-
-    if (emailSending.value)
-        return;
-    try {
-        emailSending.value = true;
-
-        const result = await fetch(`${BASE_URL}/emailresult`, {
-            method: "POST",
-            credentials: 'include',
-            headers: {
-                "Content-Type":"application/json",
-                ...authHeader()
-            },
-            body: JSON.stringify({
-                messageId: emailMessageId.value,
-                from: emailFrom.value,
-                to: emailTo.value,
-                cc: emailCc.value,
-                subject: emailSubject.value,
-                body: emailBody.value
-            })
-        });
-
-        console.log(result);
-        alert("Email sent successfully.");
-
-        emailModalVisible.value = false;
-    }
-
-    catch (err: any) {
-
-        alert(
-            err?.message ||
-            "Unable to send email."
-        );
-    }
-    finally {
-        emailSending.value = false;
-    }
-}
+    ];
+};
 
 function startFromBookmark(questionText: string) {
+    chat.viewMode = 'chat';
+    chat.messages = [];
+    chat.selectedSessionId = null;
 
-    chat.viewMode = 'chat'
-    chat.messages = []
-    chat.selectedSessionId = null
-
-    question.value = questionText
+    question.value = questionText;
 
     nextTick(() => {
-        questionInput.value?.focus()
-    })
+        questionInput.value?.focus();
+    });
 }
-
 
 async function exportExcel(msg: any) {
-
-    const token =
-        localStorage.getItem("token") || "";
-console.log("Exporting Excel for Message Id: ", msg.id)
-    const res =
-        await fetch(
-            `${BASE_URL}/exportdata/${msg.id}`,
-            {
-              credentials: 'include',
-              headers: {
-                "Authorization": `Bearer ${token}`
-              }
-            });
-
-    if (!res.ok) {
+    try {
+        console.log("Exporting Excel for Message Id: ", msg.id);
+        const blob = await exportExcelFile(msg.id);
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `export_${msg.id}.xlsx`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+    } catch (err) {
         alert("Unable to export Excel");
-        return;
     }
-
-    const blob =
-        await res.blob();
-
-    const url =
-        window.URL.createObjectURL(blob);
-
-    const a =
-        document.createElement("a");
-
-    a.href = url;
-    a.download = `export_${msg.id}.xlsx`;
-
-    a.click();
-
-    window.URL.revokeObjectURL(url);
 }
 
-const databases = ref<any[]>([])
-const activeDbName = ref('')
-const activeDbDescription = ref('')
-const showDbMenu = ref(false)
+const databases = ref<any[]>([]);
+const activeDbName = ref('');
+const activeDbDescription = ref('');
+const showDbMenu = ref(false);
 
 onMounted(() => {
-    loadDatabases()
-    loadLlms()
-})
+    loadDatabases();
+    loadLlms();
+});
 
 function toggleDbMenu() {
-    showDbMenu.value = !showDbMenu.value
+    showDbMenu.value = !showDbMenu.value;
 }
 
 async function loadDatabases() {
+    try {
+        const json = await getDatabasesList();
+        databases.value = json.databases;
+        activeDbName.value = json.activeDb;
+        activeDbDescription.value = json.activeDbDescription;
 
-    const res = await fetch(
-        `${BASE_URL}/databases`,
-        {
-            credentials: 'include',
-            headers: authHeader()
-        });
+        if (databases.value.length > 0 && !json.activeDb) {
+            const current = databases.value[0];
+            activeDbName.value = current.name;
+            activeDbDescription.value = current.description;
+        }
 
-    const json = await res.json();
-
-    databases.value = json.databases;
-    activeDbName.value = json.activeDb;
-    activeDbDescription.value = json.activeDbDescription;
-
-    if (databases.value.length > 0 && !json.activeDb) {
-
-        const current = databases.value[0];
-
-        activeDbName.value = current.name;
-        activeDbDescription.value = current.description;
+        chat.setSelectedDatabases(databases.value.map((x: any) => x.name));
+    } catch (err) {
+        console.error("Failed to load databases:", err);
     }
-
-    chat.setSelectedDatabases( databases.value.map((x: any) => x.name))
 }
-
-document.addEventListener('click', (e) => {
-    if (!(e.target as HTMLElement).closest('.relative')) {
-        showDbMenu.value = false
-        showLlmMenu.value = false
-        showDbFilter.value = false
-    }
-})
 
 async function selectDb(db: any) {
+    try {
+        const res = await selectActiveDatabase(db.name);
+        if (!res.ok) {
+            alert('Failed to change database');
+            return;
+        }
 
-    const res = await fetch(
-        `${BASE_URL}/databases/select`,
-        {
-            method: 'POST',
-            credentials: 'include',
-            headers: {
-                ...authHeader(),
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(db.name)
-        });
+        activeDbName.value = db.name;
+        activeDbDescription.value = db.description;
+        showDbMenu.value = false;
 
-    if (!res.ok) {
-        alert('Failed to change database');
-        return;
+        // Optional cleanup
+        chat.messages = [];
+        chat.selectedSessionId = null;
+    } catch (err) {
+        console.error("Failed to select database:", err);
     }
-
-    activeDbName.value = db.name;
-    activeDbDescription.value = db.description;
-
-    showDbMenu.value = false;
-
-    // Optional cleanup
-    chat.messages = [];
-    chat.selectedSessionId = null;
 }
 
-const llms = ref<any[]>([])
-
-const activeProvider = ref('')
-const activeModel = ref('')
-
-const showLlmMenu = ref(false)
+const llms = ref<any[]>([]);
+const activeProvider = ref('');
+const activeModel = ref('');
+const showLlmMenu = ref(false);
 
 async function loadLlms() {
-
-    const res = await fetch(
-        `${BASE_URL}/llms`,
-        {
-            credentials: 'include',
-            headers: authHeader()
-        });
-
-    const json = await res.json()
-
-    llms.value = json.providers
-
-    activeProvider.value = json.selectedProvider
-
-    activeModel.value = json.selectedModel
-
+    try {
+        const json = await getLlmsList();
+        llms.value = json.providers;
+        activeProvider.value = json.selectedProvider;
+        activeModel.value = json.selectedModel;
+    } catch (err) {
+        console.error("Failed to load LLMs:", err);
+    }
 }
 
 async function selectLlm(provider: string, model: string) {
-    console.log("Llm changed to", provider, model)
-    const body:string = JSON.stringify({
-                provider,
-                model
-            })
-    await fetch(
-        `${BASE_URL}/llms/select`,
-        {
-            method: 'POST',
-            credentials: 'include',
-            headers: {
-                ...authHeader(),
-                'Content-Type': 'application/json'
-            },
-            body: body
-        });
-
-    activeProvider.value = provider;
-    activeModel.value = model;
-
-    showLlmMenu.value = false;
+    try {
+        console.log("Llm changed to", provider, model);
+        await selectActiveLlm(provider, model);
+        activeProvider.value = provider;
+        activeModel.value = model;
+        showLlmMenu.value = false;
+    } catch (err) {
+        console.error("Failed to select LLM:", err);
+    }
 }
 
-const showDbFilter = ref(false)
-
-//const selectedDatabases = ref<string[]>([])
+const showDbFilter = ref(false);
 
 const allSelected = computed(() => {
-    return chat.selectedDatabases.length === databases.value.length
-})
+    return chat.selectedDatabases.length === databases.value.length;
+});
 
 function toggleAllDatabases() {
-
     if (allSelected.value) {
-
-        chat.setSelectedDatabases([activeDbName.value])
-    }
-    else {
-
-        chat.setSelectedDatabases(databases.value.map((x: any) => x.name))
+        chat.setSelectedDatabases([activeDbName.value]);
+    } else {
+        chat.setSelectedDatabases(databases.value.map((x: any) => x.name));
     }
 }
 
 function toggleDatabase(dbName: string) {
-
     // Current active DB cannot be unchecked
     if (dbName === activeDbName.value)
-        return
+        return;
 
     if (chat.selectedDatabases.includes(dbName)) {
         chat.selectedDatabases = chat.selectedDatabases
-            .filter(x => x !== dbName)
-    }
-    else {
-
-        chat.selectedDatabases.push(dbName)
+            .filter(x => x !== dbName);
+    } else {
+        chat.selectedDatabases.push(dbName);
     }
 }
 
 async function applyDatabaseFilter() {
+    console.log("Applying DB filter", chat.selectedDatabases);
+    try {
+        const sessions = await filterSessions(chat.selectedDatabases);
+        chat.sessions = sessions;
 
-    console.log("Applying DB filter", chat.selectedDatabases)
+        const exists = sessions.some((x: any) => x.id === chat.selectedSessionId);
+        if (!exists) {
+            chat.selectedSessionId = null;
+            chat.messages = [];
+        }
 
-    // -----------------------------
-    // FILTER SESSIONS
-    // -----------------------------
-    const sessionRes = await fetch(
-        `${BASE_URL}/sessions/filter`,
-        {
-            method: 'POST',
-            credentials: 'include',
-            headers: {
-                ...authHeader(),
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                databases: chat.selectedDatabases
-            })
-        })
-
-    const sessions =
-        await sessionRes.json()
-
-    chat.sessions = sessions
-
-    const exists = sessions.some( (x:any) => x.id === chat.selectedSessionId)
-
-    if (!exists) {
-
-        chat.selectedSessionId = null
-        chat.messages = []
-    }
-    // -----------------------------
-    // FILTER CURRENT SESSION MSGS
-    // -----------------------------
-    if (chat.selectedSessionId) {
-
-        const msgRes = await fetch(
-            `${BASE_URL}/message/filter/${chat.selectedSessionId}`,
-            {
-                method: 'POST',
-                credentials: 'include',
-                headers: {
-                    ...authHeader(),
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    databases: chat.selectedDatabases
-                })
-            })
-
-        const msgs =
-            await msgRes.json()
-
-        chat.messages = msgs
+        if (chat.selectedSessionId) {
+            const msgs = await getMessagesDatabases(chat.selectedSessionId, chat.selectedDatabases);
+            chat.messages = msgs;
+        }
+    } catch (err) {
+        console.error("Failed to apply database filter:", err);
     }
 }
 
 watch(
     () => chat.selectedDatabases,
     async () => {
-
-        await applyDatabaseFilter()
+        await applyDatabaseFilter();
     },
     {
         deep: true
-    })
+    }
+);
 
 watch(activeDbName, (db) => {
-
     if (!db)
-        return
+        return;
 
     if (!chat.selectedDatabases.includes(db)) {
-
-        chat.selectedDatabases.push(db)
+        chat.selectedDatabases.push(db);
     }
-})
+});
 
-const dbFilterRef = ref()
+const dbFilterRef = ref();
 
 onMounted(() => {
-
-    document.addEventListener('click', handleOutsideClick)
-})
+    document.addEventListener('click', handleOutsideClick);
+});
 
 onBeforeUnmount(() => {
-
-    document.removeEventListener('click', handleOutsideClick)
-})
+    document.removeEventListener('click', handleOutsideClick);
+});
 
 function handleOutsideClick(e: any) {
-
     if (!dbFilterRef.value?.contains(e.target)) {
-
-        showDbFilter.value = false
+        showDbFilter.value = false;
     }
 }
-
 </script>

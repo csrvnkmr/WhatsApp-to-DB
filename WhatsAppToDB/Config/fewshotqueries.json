@@ -1,0 +1,17 @@
+[
+  {
+    "Name": "sales for the current month",
+    "Module": "Sales",
+    "Query": "Select a.DocNum, a.DocDate, a.CardCode, a.CardName, a.DocTotal from oinv a where a.CANCELED=\u0027N\u0027 and datepart(month, a.docdate)=MONTH(getdate())\n\tand DATEPART(YEAR, a.DocDate)=year(getdate())\n"
+  },
+  {
+    "Query": "Select b.ItemCode, c.ItemName, sum(b.Quantity) as SalesQuantity, sum(b.LineTotal) as SalesValue from oinv a join inv1 b on a.DocEntry=b.DocEntry  \n\tjoin OITM c on c.ItemCode=b.ItemCode\n\twhere a.CANCELED=\u0027N\u0027 and datepart(month, a.docdate)=MONTH(getdate())\n\tand DATEPART(YEAR, a.DocDate)=year(getdate())",
+    "Name": "Itemwise Sales For the current month",
+    "Module": "Sales"
+  },
+  {
+    "Name": "Item not sold in the current month",
+    "Module": "Sales",
+    "Query": "select a.ItemCode, a.ItemName \n\tfrom OITM a left join (INV1 b join oinv c on c.DocEntry=b.DocEntry and c.CANCELED=\u0027N\u0027 and datepart(month, c.DocDate)=MONTH(getdate())\n\tand DATEPART(YEAR, c.DocDate)=year(getdate())) on a.ItemCode=b.ItemCode where c.DocEntry is null and a.SellItem=\u0027Y\u0027\n"
+  }
+]

@@ -35,7 +35,7 @@ namespace WhatsAppToDB.Controllers
         public ChatController(
             IServiceScopeFactory scopeFactory,
             ILogger waLogger, ChatDbRepository repo, IOptions<MailSettings> mailOptions,
-            IQueryService queryService, IOptions<DefaultSettings> defaultSettings, IUserAuditService auditService)
+            IQueryService queryService)
         {
             _scopeFactory = scopeFactory;
             _waLogger = waLogger;
@@ -105,7 +105,7 @@ namespace WhatsAppToDB.Controllers
         {
             var userName =
                 HttpContext.Items["UserName"]?.ToString() ?? "";
-
+            Console.WriteLine($"Getting sessions for user {userName}");
             var rows =
                 await _repo.GetSessionsAsync(userName);
 

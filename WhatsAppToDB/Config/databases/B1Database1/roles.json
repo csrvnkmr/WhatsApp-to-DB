@@ -9,5 +9,21 @@
       "Sales",
       "MasterData"
     ]
+  },
+  {
+    "Name": "Admin",
+    "Description": "Adminisrtator",
+    "Users": [
+      "admin"
+    ],
+    "Modules": [
+      "MasterData",
+      "Sales",
+      "Purchase",
+      "Payments",
+      "Finance/Accounting",
+      "Batch",
+      "Inventory"
+    ]
   }
 ]

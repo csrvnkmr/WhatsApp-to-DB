@@ -1,5 +1,5 @@
-﻿using Microsoft.Extensions.Options;
-using WhatsAppToDB.Abstractions;
+﻿using WhatsAppToDB.Abstractions;
+using WhatsAppToDB.Services;
 using WhatsAppToDB.Settings;
 
 namespace WhatsAppToDB.LlmProviders
@@ -16,12 +16,12 @@ namespace WhatsAppToDB.LlmProviders
         public LlmContextService(
             IHttpContextAccessor http,
             LlmProviderFactory factory,
-            IOptions<DefaultSettings> defaultSettings,
-            IUserAuditService userAuditService  )
+            JsonConfigService jsonConfigService,
+            IUserAuditService userAuditService)
         {
             _http = http;
             _factory = factory;
-            _defaultSettings = defaultSettings.Value;
+            _defaultSettings = jsonConfigService.GetDefaultSettings();
             _userAuditService = userAuditService;
         }
 

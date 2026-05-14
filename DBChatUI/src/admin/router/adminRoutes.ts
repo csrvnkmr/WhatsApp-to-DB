@@ -43,6 +43,14 @@ export default [
       },
 
       {
+        path: 'defaultfolders',
+        component: EntityPage,
+        props: {
+          entity: 'defaultfolders'
+        }
+      },
+
+      {
         path: 'database/:database/:entity',
         component: DatabaseSectionPage,
         props: true

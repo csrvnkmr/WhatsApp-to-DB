@@ -19,15 +19,17 @@ namespace WhatsAppToDB.Controllers
         private readonly LlmRegistry _llmRegistry;
         private readonly DefaultSettings _defaultSettings;
         private readonly IUserAuditService _auditService;
+        private readonly JsonConfigService _jsonConfigService;
 
         public LlmController(
             ILogger waLogger, LlmRegistry llmRegistry, 
-            IOptions<DefaultSettings> defaultSettings, IUserAuditService auditService)
+            IUserAuditService auditService, JsonConfigService jsonConfigService)
         {
             _waLogger = waLogger;
             _auditService = auditService;
-            _defaultSettings = defaultSettings.Value;
             _llmRegistry = llmRegistry;
+            _jsonConfigService = jsonConfigService;
+            _defaultSettings = _jsonConfigService.GetDefaultSettings();
         }
 
         [HttpGet("llms")]

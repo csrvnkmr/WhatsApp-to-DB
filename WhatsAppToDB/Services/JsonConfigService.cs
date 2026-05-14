@@ -2,6 +2,7 @@
 using NPOI.POIFS.Storage;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using WhatsAppToDB.Database;
 using WhatsAppToDB.DbProviders.SchemaModels;
 using WhatsAppToDB.LlmProviders;
@@ -14,6 +15,7 @@ namespace WhatsAppToDB.Services
     {
         private readonly string _configRoot;
         private readonly ILogger _logger;
+        private readonly FieldEncryptionService _encryption;
 
         private readonly JsonSerializerOptions _options =
             new()
@@ -28,6 +30,7 @@ namespace WhatsAppToDB.Services
                 config.GetValue<string>(
                     "ConfigRootFolder")!;
             _logger = logger;
+              _encryption = new FieldEncryptionService();
         }
 
         // ============================================
@@ -99,46 +102,168 @@ namespace WhatsAppToDB.Services
             }
         }
 
+        /// <summary>
+        /// Reads a JSON file and decrypts any ENC:... values whose field
+        /// names are flagged as sensitive in the supplied metadata.
+        /// Returns the raw JsonNode so AdminController can send it as-is.
+        /// </summary>
+        public JsonNode? LoadAndDecrypt(string filePath, IEnumerable<string> sensitiveFields)
+        {
+            if (!File.Exists(filePath))
+                return JsonNode.Parse("[]");
+ 
+            var json = File.ReadAllText(filePath);
+            var node = JsonNode.Parse(json);
+ 
+            DecryptNode(node, sensitiveFields.ToHashSet(StringComparer.OrdinalIgnoreCase));
+            return node;
+        }
+ 
+        /// <summary>
+        /// Encrypts sensitive fields in the supplied JSON, then writes to filePath.
+        /// </summary>
+        public void EncryptAndSave(
+            string filePath,
+            string rawJson,
+            IEnumerable<string> sensitiveFields,
+            JsonSerializerOptions? prettyOptions = null)
+        {
+            var node   = JsonNode.Parse(rawJson)
+                         ?? throw new Exception("Invalid JSON body");
+            var fields = sensitiveFields.ToHashSet(StringComparer.OrdinalIgnoreCase);
+ 
+            EncryptNode(node, fields);
+ 
+            var pretty = node.ToJsonString(prettyOptions ?? new JsonSerializerOptions { WriteIndented = true });
+ 
+            var folder = Path.GetDirectoryName(filePath)!;
+            if (!Directory.Exists(folder))
+                Directory.CreateDirectory(folder);
+ 
+            File.WriteAllText(filePath, pretty);
+        }
+
+
+        // ============================================================
+        // PRIVATE HELPERS
+        // ============================================================
+ 
+        private void DecryptNode(JsonNode? node, HashSet<string> fields)
+        {
+            if (node is JsonArray arr)
+                foreach (var item in arr)
+                    DecryptNode(item, fields);
+ 
+            else if (node is JsonObject obj)
+                foreach (var field in fields)
+                    if (obj[field]?.GetValue<string>() is string val && _encryption.IsEncrypted(val))
+                        obj[field] = _encryption.Decrypt(val);
+        }
+ 
+        private void EncryptNode(JsonNode? node, HashSet<string> fields)
+        {
+            if (node is JsonArray arr)
+                foreach (var item in arr)
+                    EncryptNode(item, fields);
+ 
+            else if (node is JsonObject obj)
+                foreach (var field in fields)
+                    if (obj[field]?.GetValue<string>() is string val && !_encryption.IsEncrypted(val))
+                        obj[field] = _encryption.Encrypt(val);
+        }
+
+        /// <summary>
+        /// Reads entity's metadata file and returns field names marked as sensitive.
+        /// </summary>
+        public List<string> GetSensitiveFields(string entity)
+        {
+            var metadataRoot = Path.Combine(_configRoot, "metadata");
+            var metaFile = Path.Combine(metadataRoot, $"{entity}.json");
+ 
+            if (!File.Exists(metaFile))
+                return new List<string>();
+ 
+            try
+            {
+                var json = File.ReadAllText(metaFile);
+                var metaNode = JsonNode.Parse(json);
+ 
+                var fields = metaNode?["fields"]?.AsArray();
+                if (fields == null) return new List<string>();
+ 
+                return fields
+                    .Where(f => f?["sensitive"]?.GetValue<bool>() == true)
+                    .Select(f => f?["name"]?.GetValue<string>() ?? "")
+                    .Where(name => !string.IsNullOrEmpty(name))
+                    .ToList();
+            }
+            catch
+            {
+                // If metadata can't be parsed, treat nothing as sensitive
+                return new List<string>();
+            }
+        }
+
+        /// <summary>
+        /// Loads and decrypts a global config file using metadata-driven sensitive fields.
+        /// </summary>
+        public T LoadAndDecryptGlobal<T>(string fileName) where T : class
+        {
+            var filePath = Path.Combine(_configRoot, fileName);
+            var entity = Path.GetFileNameWithoutExtension(fileName);
+            var sensitiveFields = GetSensitiveFields(entity);
+            
+            var node = LoadAndDecrypt(filePath, sensitiveFields);
+            return node?.Deserialize<T>(_options) ?? null!;
+        }
+
+        /// <summary>
+        /// Loads and decrypts a database-specific config file using metadata-driven sensitive fields.
+        /// </summary>
+        public T LoadDatabaseConfigAndDecrypt<T>(string database, string fileName) where T : class
+        {
+            var filePath = Path.Combine(_configRoot, "databases", database, fileName);
+            var entity = Path.GetFileNameWithoutExtension(fileName);
+            var sensitiveFields = GetSensitiveFields(entity);
+            
+            var node = LoadAndDecrypt(filePath, sensitiveFields);
+            return node?.Deserialize<T>(_options) ?? null!;
+        }
+
+
         public List<DatabaseConfig> GetDatabaseConfigs()
         {
-            var lstConfigs = Load<List<DatabaseConfig>>(Constants.ConfigFiles.Databases);
-            return lstConfigs;
+            return LoadAndDecryptGlobal<List<DatabaseConfig>>(Constants.ConfigFiles.Databases);
         }
         public List<LlmConfig> GetLlmConfigs()
         {
-            var lstConfigs = Load<List<LlmConfig>>(Constants.ConfigFiles.Llms);
-            return lstConfigs;
+            return LoadAndDecryptGlobal<List<LlmConfig>>(Constants.ConfigFiles.Llms);
         }
         public List<LoginUser> GetUsers()
         {
-            var lstUsers = Load<List<LoginUser>>(Constants.ConfigFiles.Users);
-            return lstUsers;
+            return LoadAndDecryptGlobal<List<LoginUser>>(Constants.ConfigFiles.Users);
         }
         public List<DatabaseTable> GetTables(string database)
         {
-            var lstTables = LoadDatabaseConfig <List<DatabaseTable>>(database, Constants.ConfigFiles.Tables);
-            return lstTables;
+            return LoadDatabaseConfigAndDecrypt<List<DatabaseTable>>(database, Constants.ConfigFiles.Tables);
         }
         public List<DatabaseTableJoin> GetTableJoins(string database)
         {
-            var lstTableJoins = LoadDatabaseConfig <List<DatabaseTableJoin>>(database, Constants.ConfigFiles.TableJoins);
-            return lstTableJoins;
+            return LoadDatabaseConfigAndDecrypt<List<DatabaseTableJoin>>(database, Constants.ConfigFiles.TableJoins);
         }
         public List<Module> GetModules(string database)
         {
-            var lstModules = LoadDatabaseConfig<List<Module>>(database, Constants.ConfigFiles.Modules);
-            return lstModules;
+            return LoadDatabaseConfigAndDecrypt<List<Module>>(database, Constants.ConfigFiles.Modules);
         }
 
         public List<PluginSettings> GetPlugins(string database)
         {
-            var lstPlugins = LoadDatabaseConfig<List<PluginSettings>>(database, Constants.ConfigFiles.Plugins);
-            return lstPlugins;
+            return LoadDatabaseConfigAndDecrypt<List<PluginSettings>>(database, Constants.ConfigFiles.Plugins);
         }
 
         public string GetPrompt(string database)
         {
-            var lstPrompts = LoadDatabaseConfig<List<DatabasePrompt>>(database, Constants.ConfigFiles.SystemPrompt);
+            var lstPrompts = LoadDatabaseConfigAndDecrypt<List<DatabasePrompt>>(database, Constants.ConfigFiles.SystemPrompt);
             var finalPrompt = "";
             if (lstPrompts != null && lstPrompts.Count > 0)
             {
@@ -147,10 +272,41 @@ namespace WhatsAppToDB.Services
             return finalPrompt;
         }
 
+        public List<ModuleQuery> GetModuleQueries(string database, string moduleName)
+        {
+            var lstQueries = LoadDatabaseConfigAndDecrypt<List<ModuleQuery>>(database, Constants.ConfigFiles.FewShotQueries);
+            var finalQueries = new List<ModuleQuery>();
+            if (lstQueries != null && lstQueries.Count > 0)
+            {
+                lstQueries.ForEach(x => {if (x.Module == moduleName) finalQueries.Add(x);});
+            }
+            return finalQueries;
+        }
+    
         public List<Role> GetRoles(string database)
         {
-            var lstRoles = LoadDatabaseConfig<List<Role>>(database, Constants.ConfigFiles.Roles);
-            return lstRoles;
+            return LoadDatabaseConfigAndDecrypt<List<Role>>(database, Constants.ConfigFiles.Roles);
         }
+
+        public DefaultSettings GetDefaultSettings()
+        {
+            var settings = Load<List<DefaultSettings>>(Constants.ConfigFiles.DefaultSettings);
+            if (settings != null && settings.Count > 0)
+            {
+                return settings[0];
+            }            
+            return null;
+        }
+
+        public DefaultFolders GetDefaultFolders()
+        {
+            var folders = Load<List<DefaultFolders>>(Constants.ConfigFiles.DefaultFolders);
+            if (folders != null && folders.Count > 0)
+            {
+                return folders[0];
+            }            
+            return null;
+        }
+
     }
 }

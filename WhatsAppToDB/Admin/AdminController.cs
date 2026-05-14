@@ -3,6 +3,8 @@
 // ==========================================================
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
+using System.Text.Json.Nodes;
+using WhatsAppToDB.Services;
 using static Org.BouncyCastle.Math.EC.ECCurve;
 
 namespace WhatsAppToDB.Admin
@@ -13,6 +15,7 @@ namespace WhatsAppToDB.Admin
     {
         private readonly IWebHostEnvironment _env;
         private readonly string ConfigRoot;
+        private readonly JsonConfigService _configService;
         private readonly JsonSerializerOptions _jsonOptions =
             new JsonSerializerOptions
             {
@@ -20,7 +23,9 @@ namespace WhatsAppToDB.Admin
             };
 
         public AdminController(
-            IWebHostEnvironment env,IConfiguration config)
+            IWebHostEnvironment env,IConfiguration config,
+            JsonConfigService configService)
+
         {
             
             ConfigRoot = config.GetValue<string>("ConfigRootFolder");
@@ -31,6 +36,7 @@ namespace WhatsAppToDB.Admin
                 Console.WriteLine($"Default config folder not in the appsettings.json. Using {appRoot}");
             }
             _env = env;
+            _configService = configService;
         }
 
         // ======================================================
@@ -86,35 +92,26 @@ namespace WhatsAppToDB.Admin
             string entity,
             [FromQuery] string? database = null)
         {
-            var file =
-                GetDataFilePath(
-                    entity,
-                    database);
-
-            if (!System.IO.File.Exists(file))
+            var filePath       = GetDataFilePath(entity, database);
+            var sensitiveFields = _configService.GetSensitiveFields(entity);
+ 
+            // Auto-create empty file if missing
+            if (!System.IO.File.Exists(filePath))
             {
-                var foldername = System.IO.Path.GetDirectoryName(file);
-                if (!Directory.Exists(foldername))
-                {
-                    Directory.CreateDirectory(foldername);
-                }
-                // auto create empty array
-                System.IO.File.WriteAllText(
-                    file,
-                    "[]");
-
-                return Content(
-                    "[]",
-                    "application/json");
+                var folder = System.IO.Path.GetDirectoryName(filePath)!;
+                if (!Directory.Exists(folder))
+                    Directory.CreateDirectory(folder);
+ 
+                System.IO.File.WriteAllText(filePath, "[]");
+                return Content("[]", "application/json");
             }
-
-            var json =
-                System.IO.File.ReadAllText(file);
-
-            return Content(
-                json,
-                "application/json");
+ 
+            // Load & decrypt
+            var node   = _configService.LoadAndDecrypt(filePath, sensitiveFields);
+            var result = node?.ToJsonString(_jsonOptions) ?? "[]";
+            return Content(result, "application/json");
         }
+
 
         // ======================================================
         // SAVE DATA
@@ -147,32 +144,25 @@ namespace WhatsAppToDB.Admin
                 });
             }
 
-            var file =
+            var filePath =
                 GetDataFilePath(
                     entity,
                     database);
 
-            var folder =
-                Path.GetDirectoryName(file)!;
+            var folder = Path.GetDirectoryName(filePath)!;
 
             if (!Directory.Exists(folder))
             {
                 Directory.CreateDirectory(folder);
             }
 
-            // pretty format
-            var parsed =
-                JsonSerializer.Deserialize<object>(
-                    body);
+            var sensitiveFields = _configService.GetSensitiveFields(entity);            
+            _configService.EncryptAndSave(filePath, body, sensitiveFields, _jsonOptions);
 
-            var pretty =
-                JsonSerializer.Serialize(
-                    parsed,
-                    _jsonOptions);
-
-            await System.IO.File.WriteAllTextAsync(
-                file,
-                pretty);
+            
+            //var parsed =JsonSerializer.Deserialize<object>(body);
+            //var pretty =JsonSerializer.Serialize(parsed, _jsonOptions);
+            //await System.IO.File.WriteAllTextAsync(filePath, pretty);
 
             return Ok(new
             {
@@ -180,6 +170,7 @@ namespace WhatsAppToDB.Admin
             });
         }
 
+        
         // ======================================================
         // PATH RESOLUTION
         // ======================================================
@@ -202,7 +193,8 @@ namespace WhatsAppToDB.Admin
                     "mailsettings",
                     "tables",
                     "modules",
-                    "tablejoins"
+                    "tablejoins",
+                    "fewshotqueries"
                 };
 
             if (dbSpecific.Contains(
@@ -233,5 +225,12 @@ namespace WhatsAppToDB.Admin
                 ConfigRoot,
                 $"{entity}.json");
         }
+
+        
+        // ======================================================
+        // SENSITIVE FIELD RESOLUTION
+        // Now handled by JsonConfigService.GetSensitiveFields()
+        // ======================================================
+
     }
 }

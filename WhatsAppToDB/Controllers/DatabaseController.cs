@@ -17,14 +17,16 @@ namespace WhatsAppToDB.Controllers
         private readonly Database.DatabaseRegistry _registry;
         private readonly DefaultSettings _defaultSettings;
         private readonly IUserAuditService _auditService;
+        private readonly JsonConfigService _jsonConfigService;
 
         public DatabaseController(
             ILogger waLogger, Database.DatabaseRegistry registry,
-            IOptions<DefaultSettings> defaultSettings, IUserAuditService auditService)
+            IUserAuditService auditService, JsonConfigService jsonConfigService)
         {
             _waLogger = waLogger;
             _auditService = auditService;
-            _defaultSettings = defaultSettings.Value;
+            _jsonConfigService = jsonConfigService;
+            _defaultSettings = _jsonConfigService.GetDefaultSettings();
             _registry = registry;
         }
 

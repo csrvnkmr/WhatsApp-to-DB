@@ -22,6 +22,8 @@
       "name": "ConnectionString",
       "label": "Connection String",
       "showinheader": false,
+      "sensitive":true,
+      "fulllength":true,
       "type": "textarea"
     },
     {
@@ -34,6 +36,16 @@
         "mssql",
         "postgres"
       ]
+    },
+    {
+      "name": "DefaultRole",
+      "label": "Default Role",
+      "showinheader": true,
+      "type": "text",
+      "description": "Role assigned to users who connect to this database if they don't have a specific role for it.",
+      "required": false,
+      "references": "roles.Name",
+      "sourceScope": "Name"
     }
   ]
 }

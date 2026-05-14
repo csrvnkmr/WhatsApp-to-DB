@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Options;
 using System.Data;
 using WhatsAppToDB.Data;
+using WhatsAppToDB.Services;
 using WhatsAppToDB.Settings;
 
 namespace WhatsAppToDB.Database
@@ -13,16 +14,19 @@ namespace WhatsAppToDB.Database
         private readonly DbProviderFactory _factory;
         private readonly DefaultSettings _defaultSettings;
 
+        private readonly JsonConfigService _jsonConfigService;
+
         public DatabaseContextService(
             IHttpContextAccessor http,
             DatabaseRegistry registry,
             DbProviderFactory factory,
-            IOptions<DefaultSettings> defaultSettings)
+            JsonConfigService jsonConfigService)
         {
             _http = http;
             _registry = registry;
             _factory = factory;
-            _defaultSettings = defaultSettings.Value;
+            _jsonConfigService = jsonConfigService;
+            _defaultSettings = _jsonConfigService.GetDefaultSettings();
         }   
 
         public DatabaseConfig GetCurrentConfig()

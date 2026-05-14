@@ -32,12 +32,19 @@
     </div>
 
     <!-- PASSWORD -->
-    <input
-        v-else-if="field.type === 'password'"
-        type="password"
-        :value="modelValue"
-        @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
-        class="w-full rounded-xl border border-soft bg-base px-3 py-2" />
+    <div v-else-if="field.type === 'password'" class="relative w-full">
+        <input
+            :type="showPassword ? 'text' : 'password'"
+            :value="modelValue"
+            @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+            class="w-full rounded-xl border border-soft bg-base px-3 py-2 pr-16" />
+        <button
+            type="button"
+            @click.prevent="showPassword = !showPassword"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-xs opacity-60 hover:opacity-100 transition">
+            {{ showPassword ? 'Hide' : 'Show' }}
+        </button>
+    </div>
 
     <!-- TEXTAREA -->
     <textarea
@@ -164,6 +171,7 @@ const emit = defineEmits(['update:modelValue'])
 
 const newItemText = ref('')
 const fileInputRef = ref<HTMLInputElement | null>(null)
+const showPassword = ref(false)
 
 // Autocomplete State
 const referenceDataRaw = ref<any[]>([])
@@ -176,17 +184,35 @@ watch(showAutocomplete, (val) => {
     }
 })
 
-onMounted(async () => {
+async function loadReferenceData() {
     if (props.field.references && props.field.references.includes('.')) {
         const [refObj, refField] = props.field.references.split('.')
+        const scopeField = props.field.sourceScope || props.field.sourcescope
+        let targetDb = props.database
+        if (scopeField && props.model?.[scopeField]) {
+            targetDb = props.model[scopeField]
+        }
         try {
-            const data = await getData(refObj, props.database)
+            const data = await getData(refObj, targetDb)
             if (Array.isArray(data)) {
                 referenceDataRaw.value = data
             }
         } catch (e) {
             console.error("Failed to load reference data for", refObj, e)
         }
+    }
+}
+
+onMounted(() => {
+    loadReferenceData()
+})
+
+watch(() => {
+    const scopeField = props.field?.sourceScope || props.field?.sourcescope
+    return scopeField ? props.model?.[scopeField] : null
+}, (newVal, oldVal) => {
+    if (newVal !== oldVal) {
+        loadReferenceData()
     }
 })
 

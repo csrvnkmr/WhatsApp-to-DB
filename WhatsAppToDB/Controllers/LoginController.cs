@@ -20,13 +20,13 @@ namespace WhatsAppToDB.Controllers
         private readonly JsonConfigService _jsonConfigService;
 
         public LoginController(
-            ILogger waLogger, IOptions<DefaultSettings> defaultSettings, 
+            ILogger waLogger, 
             IUserAuditService auditService, JsonConfigService jsonConfigService )
         {
             _waLogger = waLogger;
             _auditService = auditService;
-            _defaultSettings = defaultSettings.Value;
             _jsonConfigService = jsonConfigService;
+            _defaultSettings = _jsonConfigService.GetDefaultSettings();
         }
 
 

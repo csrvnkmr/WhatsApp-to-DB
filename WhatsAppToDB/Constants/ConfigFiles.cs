@@ -18,6 +18,9 @@
         public const string DefaultSettings =
             "defaultsettings.json";
 
+        public const string DefaultFolders =
+            "defaultfolders.json";
+
         // =========================================
         // DATABASE-SPECIFIC
         // =========================================
@@ -45,5 +48,8 @@
 
         public const string SystemPrompt =
             "systemprompt.json";
+
+        public const string FewShotQueries =
+            "fewshotqueries.json";
     }
 }

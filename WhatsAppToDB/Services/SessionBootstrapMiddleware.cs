@@ -8,18 +8,21 @@ namespace WhatsAppToDB.Services
     public class SessionBootstrapMiddleware
     {
         private readonly RequestDelegate _next;
+        private readonly JsonConfigService _jsonConfigService;
 
         public SessionBootstrapMiddleware(
-            RequestDelegate next)
+            RequestDelegate next,
+            JsonConfigService jsonConfigService)
         {
             _next = next;
+            _jsonConfigService = jsonConfigService;
         }
 
         public async Task InvokeAsync(
             HttpContext context,
-            IUserAuditService audit,
-            IOptions<DefaultSettings> defaultSettings)
+            IUserAuditService audit)
         {
+                var defaultSettings = _jsonConfigService.GetDefaultSettings();
             // Skip if not authenticated
             var userName = context.Items["UserName"]?.ToString();
             if (!string.IsNullOrWhiteSpace(userName))
@@ -35,15 +38,15 @@ namespace WhatsAppToDB.Services
                         await audit.GetLatestValueAsync(
                             userName,
                             AuditActions.DatabaseChanged)
-                        ?? defaultSettings.Value.DefaultDatabase;
+                        ?? defaultSettings.DefaultDatabase;
 
                     var provider =
                         await audit.GetLatestValueAsync(userName, AuditActions.ProviderChanged)
-                        ?? defaultSettings.Value.DefaultLlmProvider;
+                        ?? defaultSettings.DefaultLlmProvider;
 
                     var model =
                         await audit.GetLatestValueAsync(userName, AuditActions.ModelChanged)
-                        ?? defaultSettings.Value.DefaultLlmModel;
+                        ?? defaultSettings.DefaultLlmModel;
                     if (model.Split(',').Length > 1)
                     {
                         provider = model.Split(',')[0].Trim();

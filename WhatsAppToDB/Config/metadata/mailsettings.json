@@ -32,7 +32,8 @@
       "label": "Password",
       "type": "password",
       "showinheader": false,
-      "required": true
+      "required": true,
+      "sensitive": true
     },
     {
       "name": "EnableSSL",

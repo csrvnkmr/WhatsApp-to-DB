@@ -1,5 +1,26 @@
 const BASE_URL = 'http://localhost:3000'
 
+export interface EmailPayload {
+  messageId: number;
+  from: string;
+  to: string;
+  cc: string;
+  subject: string;
+  body: string;
+}
+
+function authHeader(extraHeaders: Record<string, string> = {}) {
+  const token = localStorage.getItem("token") || "";
+  return {
+    "Content-Type": "application/json",
+    "Authorization": `Bearer ${token}`,
+    ...extraHeaders
+  };
+}
+
+// ================================================
+// Existing Authentication and Admin API Methods
+// ================================================
 export async function login(username: string, password: string) {
   const res = await fetch(`${BASE_URL}/login`, {
     method: 'POST',
@@ -20,22 +41,12 @@ export async function ask(token: string, question: string) {
   return await res.text()
 }
 
-function authHeader() {
-  const token = localStorage.getItem("token") || "";
-
-  return {
-    "Content-Type": "application/json",
-    "Authorization": `Bearer ${token}`
-  };
-}
-
 export async function getSessions() {
   const res = await fetch(`${BASE_URL}/session`, {
     method: "GET",
     credentials: 'include',
     headers: authHeader()
   });
-
   return await res.json();
 }
 
@@ -45,7 +56,6 @@ export async function getMessages(sessionId: number) {
     credentials: 'include',
     headers: authHeader()
   });
-
   return await res.json();
 }
 
@@ -56,9 +66,9 @@ export async function getMessagesDatabases(sessionId: number, databases: string[
     headers: authHeader(),
     body: JSON.stringify({ databases })
   });
-
   return await res.json();
 }
+
 export async function getDatabases() {
   const res = await fetch(
     `${BASE_URL}/admin/api/data/databases`,
@@ -68,7 +78,6 @@ export async function getDatabases() {
       headers: authHeader(),
     }
   )
-
   return await res.json()
 }
 
@@ -106,3 +115,162 @@ export async function saveData(entity: string, data: any, database?: string) {
   });
   return await res.json();
 }
+
+// ================================================
+// New Chat, Sidebar, Bookmark & Configuration APIs
+// ================================================
+
+export async function logoutSession() {
+  return await fetch(`${BASE_URL}/logout`, {
+    method: "POST",
+    credentials: "include",
+    headers: authHeader()
+  });
+}
+
+export async function searchChats(searchText: string) {
+  const res = await fetch(
+    `${BASE_URL}/search?text=${encodeURIComponent(searchText)}`,
+    {
+      credentials: "include",
+      headers: authHeader()
+    }
+  );
+  return await res.json();
+}
+
+export async function getBookmarks() {
+  const res = await fetch(`${BASE_URL}/bookmarks`, {
+    credentials: "include",
+    headers: authHeader()
+  });
+  return await res.json();
+}
+
+export async function addBookmark(messageId: number, text: string) {
+  return await fetch(
+    `${BASE_URL}/addbookmark/${messageId}?text=${encodeURIComponent(text)}`,
+    {
+      credentials: "include",
+      headers: authHeader()
+    }
+  );
+}
+
+export async function removeBookmark(messageId: number) {
+  return await fetch(`${BASE_URL}/removebookmark/${messageId}`, {
+    credentials: "include",
+    headers: authHeader()
+  });
+}
+
+export async function askQuestion(question: string, sessionId: number | null) {
+  const res = await fetch(`${BASE_URL}/ask`, {
+    method: "POST",
+    credentials: "include",
+    headers: authHeader(),
+    body: JSON.stringify({
+      SessionId: sessionId,
+      Question: question
+    })
+  });
+  return await res.text();
+}
+
+export async function getMessageSql(messageId: number) {
+  const res = await fetch(`${BASE_URL}/messagesql/${messageId}`, {
+    credentials: "include",
+    headers: authHeader()
+  });
+  return await res.json();
+}
+
+export async function getMessageData(messageId: number) {
+  const res = await fetch(`${BASE_URL}/messagedata/${messageId}`, {
+    credentials: "include",
+    headers: authHeader()
+  });
+  return await res.json();
+}
+
+export async function sendEmailResult(payload: EmailPayload) {
+  const res = await fetch(`${BASE_URL}/emailresult`, {
+    method: "POST",
+    credentials: "include",
+    headers: authHeader(),
+    body: JSON.stringify({
+      messageId: payload.messageId,
+      from: payload.from,
+      to: payload.to,
+      cc: payload.cc,
+      subject: payload.subject,
+      body: payload.body
+    })
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || "Unable to send email.");
+  }
+  return await res.json();
+}
+
+export async function getDatabasesList() {
+  const res = await fetch(`${BASE_URL}/databases`, {
+    credentials: "include",
+    headers: authHeader()
+  });
+  return await res.json();
+}
+
+export async function selectActiveDatabase(dbName: string) {
+  const res = await fetch(`${BASE_URL}/databases/select`, {
+    method: "POST",
+    credentials: "include",
+    headers: authHeader(),
+    body: JSON.stringify(dbName)
+  });
+  return res;
+}
+
+export async function getLlmsList() {
+  const res = await fetch(`${BASE_URL}/llms`, {
+    credentials: "include",
+    headers: authHeader()
+  });
+  return await res.json();
+}
+
+export async function selectActiveLlm(provider: string, model: string) {
+  const res = await fetch(`${BASE_URL}/llms/select`, {
+    method: "POST",
+    credentials: "include",
+    headers: authHeader(),
+    body: JSON.stringify({ provider, model })
+  });
+  return res;
+}
+
+export async function filterSessions(databases: string[]) {
+  const res = await fetch(`${BASE_URL}/sessions/filter`, {
+    method: "POST",
+    credentials: "include",
+    headers: authHeader(),
+    body: JSON.stringify({ databases })
+  });
+  return await res.json();
+}
+
+export async function exportExcelFile(messageId: number) {
+  const token = localStorage.getItem("token") || "";
+  const res = await fetch(`${BASE_URL}/exportdata/${messageId}`, {
+    credentials: "include",
+    headers: {
+      "Authorization": `Bearer ${token}`
+    }
+  });
+  if (!res.ok) {
+    throw new Error("Unable to export Excel");
+  }
+  return await res.blob();
+}
+

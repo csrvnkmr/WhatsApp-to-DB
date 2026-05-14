@@ -1,9 +1,9 @@
 <template>
 
-<div class="w-72 border-r border-soft bg-panel overflow-auto shrink-0">
+<div class="w-full md:w-72 h-full border-r border-soft bg-panel overflow-auto shrink-0 flex flex-col">
 
     <!-- WELCOME & LOGOUT -->
-    <div class="p-4 border-b border-soft">
+    <div class="p-4 border-b border-soft shrink-0">
 
         <div class="flex items-center justify-between">
 
@@ -31,37 +31,48 @@
 
     </div>
 
-    <div class="p-2 text-sm">
+    <div class="p-2 text-sm shrink-0">
 
         <RouterLink
             to="/admin/databases"
+            @click="emit('closeMobile')"
             class="menu-item flex items-center gap-2">
             <span>🗄️</span> Databases
         </RouterLink>
 
         <RouterLink
             to="/admin/llms"
+            @click="emit('closeMobile')"
             class="menu-item flex items-center gap-2">
             <span>🤖</span> LLMs
         </RouterLink>
 
         <RouterLink
             to="/admin/users"
+            @click="emit('closeMobile')"
             class="menu-item flex items-center gap-2">
             <span>👥</span> Users
         </RouterLink>
 
         <RouterLink
             to="/admin/defaultsettings"
+            @click="emit('closeMobile')"
             class="menu-item flex items-center gap-2">
             <span>⚙️</span> Default Settings
+        </RouterLink>
+
+        <RouterLink
+            to="/admin/defaultfolders"
+            @click="emit('closeMobile')"
+            class="menu-item flex items-center gap-2">
+            <span>📁</span> Default Folders
         </RouterLink>
 
     </div>
 
     <!-- DATABASE SUB MENUS -->
 
-    <div class="px-2 pb-4">
+    <div class="px-2 pb-4 flex-1 overflow-auto">
 
         <div
             v-for="db in databases"
@@ -89,18 +100,21 @@
                 <div class="pl-3 flex flex-col gap-0.5">
                     <RouterLink
                         :to="`/admin/database/${db.Name}/modules`"
+                        @click="emit('closeMobile')"
                         class="submenu-item flex items-center gap-2 text-xs py-1">
                         <span>🧩</span> Modules
                     </RouterLink>
 
                     <RouterLink
                         :to="`/admin/database/${db.Name}/tables`"
+                        @click="emit('closeMobile')"
                         class="submenu-item flex items-center gap-2 text-xs py-1">
                         <span>📊</span> Tables
                     </RouterLink>
 
                     <RouterLink
                         :to="`/admin/database/${db.Name}/tablejoins`"
+                        @click="emit('closeMobile')"
                         class="submenu-item flex items-center gap-2 text-xs py-1">
                         <span>🔗</span> Table Joins
                     </RouterLink>
@@ -108,32 +122,44 @@
 
                 <RouterLink
                     :to="`/admin/database/${db.Name}/roles`"
+                    @click="emit('closeMobile')"
                     class="submenu-item flex items-center gap-2 text-xs py-1">
                     <span>🔑</span> Roles
                 </RouterLink>
 
                 <RouterLink
                     :to="`/admin/database/${db.Name}/systemprompt`"
+                    @click="emit('closeMobile')"
                     class="submenu-item flex items-center gap-2 text-xs py-1">
                     <span>📝</span> Prompt
                 </RouterLink>
 
                 <RouterLink
                     :to="`/admin/database/${db.Name}/plugins`"
+                    @click="emit('closeMobile')"
                     class="submenu-item flex items-center gap-2 text-xs py-1">
                     <span>🔌</span> Plugins
                 </RouterLink>
 
                 <RouterLink
                     :to="`/admin/database/${db.Name}/extensions`"
+                    @click="emit('closeMobile')"
                     class="submenu-item flex items-center gap-2 text-xs py-1">
                     <span>➕</span> Extensions
                 </RouterLink>
 
                 <RouterLink
                     :to="`/admin/database/${db.Name}/mailsettings`"
+                    @click="emit('closeMobile')"
                     class="submenu-item flex items-center gap-2 text-xs py-1">
                     <span>📧</span> Mail Settings
+                </RouterLink>
+
+                <RouterLink
+                    :to="`/admin/database/${db.Name}/fewshotqueries`"
+                    @click="emit('closeMobile')"
+                    class="submenu-item flex items-center gap-2 text-xs py-1">
+                    <span>💡</span> Few Shot Queries
                 </RouterLink>
 
             </div>
@@ -151,6 +177,7 @@ import { getDatabases } from '@/services/api'
 import { onMounted, ref, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 
+const emit = defineEmits(["closeMobile"])
 const auth = useAuthStore()
 const BASE_URL = "http://localhost:3000"
 

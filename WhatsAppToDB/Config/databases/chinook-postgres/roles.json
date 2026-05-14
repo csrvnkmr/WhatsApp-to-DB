@@ -1,0 +1,14 @@
+[
+  {
+    "Name": "Admin",
+    "Description": "Administrator",
+    "Users": [
+      "admin"
+    ],
+    "Modules": [
+      "sales",
+      "playlist",
+      "music"
+    ]
+  }
+]

@@ -1,0 +1,14 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": ".NET Core Launch",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "${workspaceFolder}/WhatsAppToDB/bin/Debug/net9.0/WhatsAppToDB.dll",
+      "args": [],
+      "cwd": "${workspaceFolder}/WhatsAppToDB",
+      "stopAtEntry": false
+    }
+  ]
+}

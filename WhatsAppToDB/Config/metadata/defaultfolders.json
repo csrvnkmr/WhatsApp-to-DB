@@ -1,0 +1,33 @@
+{
+  "entity": "defaultfolders",
+  "title": "Default Folders",
+
+  "targetFile": "defaultfolders.json",
+  "maxrecords": 1,
+  "fields": [
+    {
+      "name": "LlmProviderFolder",
+      "label": "Llm Provider Folder",
+      "type": "text",
+      "showinheader": true,
+      "fulllength":true,
+      "required": false
+    },
+    {
+      "name": "DatabaseProviderFolder",
+      "label": "Database Provider Folder",
+      "showinheader": true,
+      "type": "text",
+      "fulllength":true,
+      "required": false
+    },
+    {
+      "name": "ChatHistoryFolder",
+      "label": "Chat History Folder",
+      "showinheader": true,
+      "type": "text",
+      "fulllength":true,
+      "required": true
+    }
+  ]
+}

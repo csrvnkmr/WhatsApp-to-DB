@@ -5,6 +5,7 @@ using System.IO;
 using System.Threading.Tasks;
 using WhatsAppToDB.Data;
 using Xunit;
+using Microsoft.Extensions.Configuration;
 
 namespace WhatsAppToDB.Tests
 {
@@ -30,7 +31,11 @@ namespace WhatsAppToDB.Tests
 
             var dbname = Path.GetFileName(_dbPath);
 
-            var repo = new ChatDbRepository(null, dbname);
+            var config = new ConfigurationBuilder()
+                .AddInMemoryCollection(new[] { new KeyValuePair<string, string>("DataFolder", "Data") })
+                .Build();
+
+            var repo = new ChatDbRepository(new FolderUtils(config, null), null, dbname);
 
             // ---------------------------------------------
             // Create DB + Tables

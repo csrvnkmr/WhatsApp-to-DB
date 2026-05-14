@@ -12,17 +12,19 @@ namespace WhatsAppToDB.Audit
     {
         private readonly ILogger logger;
         private readonly string _connectionString;
+        private readonly FolderUtils _folderUtils;
 
-        public UserAuditService(ILogger? logger = null, string filename = "chathistory.db")
+        public UserAuditService(FolderUtils folderUtils, ILogger? logger = null, string filename = "chathistory.db")
         {
+            _folderUtils = folderUtils;
             this.logger = logger ?? new AppLogger();
 
-            var folder = FolderUtls.GetDataFolder();
+            var folder = _folderUtils.GetDataFolder();
 
             if (!Directory.Exists(folder))
                 Directory.CreateDirectory(folder);
 
-            var dbPath = FolderUtls.GetSqliteDBPath();
+            var dbPath = _folderUtils.GetSqliteDBPath();
             if (!string.IsNullOrWhiteSpace(filename))
             {
                 dbPath = Path.Combine(folder, filename);

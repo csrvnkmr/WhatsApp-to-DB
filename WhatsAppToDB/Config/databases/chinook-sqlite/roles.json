@@ -1,6 +1,6 @@
 [
   {
-    "Name": "admin",
+    "Name": "Admin",
     "Description": "Administrator",
     "Modules": [
       "Sales",
@@ -8,6 +8,9 @@
       "Finance",
       "Inventory",
       "Production"
+    ],
+    "Users": [
+      "admin"
     ]
   }
 ]

@@ -116,18 +116,19 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, watch } from "vue";
+import { computed, onMounted } from "vue";
 import { useChatStore } from "@/stores/chat";
 import { useAuthStore } from "@/stores/auth";
-
+import { useSidebarSearch } from "@/composables/useSidebarSearch";
+import { logoutSession, getBookmarks } from "@/services/api";
 
 const emit = defineEmits(["closeMobile"]);
 
 const chat = useChatStore();
 const auth = useAuthStore();
 
-const searchResults = ref<any[]>([])
-const groupedResults = ref<any[]>([])
+const { searchText, groupedResults, openSearchResult } = useSidebarSearch();
+
 onMounted(async () => {
     if (chat.loading)
         return;
@@ -143,101 +144,15 @@ const userName = computed(() =>
     || "User"
 );
 
-const searchText = ref("");
-
 const filteredSessions = computed(() => {
-return chat.sessions
-// uses Watch(searchText) for the filtering of sessions
+    return chat.sessions;
 });
-const BASE_URL = "http://localhost:3000";
-
-let debounceTimer: any
-// ==========================================
-// Filter Sessions
-// ==========================================
-watch(searchText, (val) => {
-
-    if (!val) {
-        groupedResults.value = []
-        clearTimeout(debounceTimer)
-        return
-    }
-
-    clearTimeout(debounceTimer)
-
-    debounceTimer = setTimeout(() => {
-        runSearch()
-    }, 300)
-
-})
-async function runSearch() {
-
-    if (!searchText.value) {
-        groupedResults.value = []
-        return
-    }
-
-    const res = await fetch(
-        `${BASE_URL}/search?text=${encodeURIComponent(searchText.value)}`,
-        { headers: authHeader() }
-    )
-
-    const data = await res.json()
-
-    groupResults(data)
-}
-
-function groupResults(data:any[]) {
-
-    const map: any = {}
-
-    data.forEach(r => {
-
-        if (!map[r.SessionId]) {
-            map[r.SessionId] = {
-                sessionId: r.SessionId,
-                title: r.SessionTitle,
-                messages: []
-            }
-        }
-
-        // only add message if it matches text
-        if (r.MessageText?.toLowerCase().includes(searchText.value.toLowerCase())) {
-            map[r.SessionId].messages.push(r)
-        }
-    })
-    console.log ("map", map)
-    groupedResults.value = Object.values(map)
-}
-
-async function openSearchResult(
-    sessionId: number,
-    messageId: number)
-{
-  console.log ("openSearchResult", sessionId, messageId)
-    console.log ("Loading session", sessionId)
-    await chat.loadMessages(sessionId)
-
-    chat.viewMode = 'chat'
-    chat.selectedSessionId = sessionId
-
-    nextTick(() => {
-        const el =
-            document.getElementById(`msg-${messageId}`)
-
-        el?.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center'
-        })
-    })
-}
 
 async function openSession(id: number) {
-
-console.log("Calling openSession", id)
+    console.log("Calling openSession", id);
     if (chat.loading)
         return;
-    chat.viewMode = 'chat'
+    chat.viewMode = 'chat';
 
     await chat.loadMessages(id);
 
@@ -248,9 +163,7 @@ console.log("Calling openSession", id)
 // ==========================================
 // SAME as ChatWindow New Chat
 // ==========================================
-
 function newChat() {
-
     if (chat.loading)
         return;
 
@@ -265,77 +178,60 @@ function newChat() {
 // Logout
 // ==========================================
 async function logout() {
+    try {
+        await logoutSession();
+    } catch (err) {
+        console.error("Logout request failed:", err);
+    }
 
-    await fetch(
-        `${BASE_URL}/logout`,
-        {
-          credentials: 'include',
-            method: "POST",
-            headers: authHeader()
-        }
-    )
+    localStorage.removeItem("token");
+    localStorage.removeItem("username");
 
-    localStorage.removeItem("token")
-    localStorage.removeItem("username")
-
-    location.reload()
-}
-function authHeader() {
-    const token =
-        localStorage.getItem("token") || "";
-
-    return {
-        "Authorization": `Bearer ${token}`
-    };
+    location.reload();
 }
 
+// ==========================================
+// Load Bookmarks
+// ==========================================
 async function loadBookmarks() {
+    if (chat.loading) return;
 
-    if (chat.loading) return
+    try {
+        const data = await getBookmarks();
 
-    const res = await fetch(
-        `${BASE_URL}/bookmarks`,
-        {
-          credentials: 'include',
-          headers: authHeader()
+        // 🔥 KEY: map bookmarks → messages
+        chat.messages = [];
 
-        }
-    )
+        data.forEach((b: any) => {
+            // USER QUESTION
+            chat.messages.push({
+                id: b.Id,
+                role: "User",
+                messageText: b.BookmarkText,
+                createdOn: b.CreatedOn,
+                isBookmarkView: true
+            });
 
-    const data = await res.json()
+            // AI ANSWER
+            chat.messages.push({
+                id: b.Id,
+                role: "Assistant",
+                messageText: b.MessageText,
+                createdOn: b.CreatedOn,
+                canShowSql: b.CanShowSql,
+                canShowData: b.CanShowData,
+                canShowChart: b.CanShowChart,
+                originalMessageId: b.Id,
+                isBookmarkView: true,
+                isBookmarked: true
+            });
+        });
 
-    // 🔥 KEY: map bookmarks → messages
-    chat.messages = []
-
-    data.forEach((b: any) => {
-
-        // USER QUESTION
-        chat.messages.push({
-            id: b.Id,
-            role: "User",
-            messageText: b.BookmarkText,
-            createdOn: b.CreatedOn,
-            isBookmarkView: true
-        })
-
-        // AI ANSWER
-        chat.messages.push({
-            id: b.Id,
-            role: "Assistant",
-            messageText: b.MessageText,
-            createdOn: b.CreatedOn,
-            canShowSql: b.CanShowSql,
-            canShowData: b.CanShowData,
-            canShowChart: b.CanShowChart,
-            originalMessageId: b.Id,
-            isBookmarkView: true,
-            isBookmarked:true
-        })
-
-    })
-    console.log("Bookmarks loaded ", chat.messages.length)
-    chat.viewMode = 'bookmarks'
-    chat.selectedSessionId = null
+        console.log("Bookmarks loaded ", chat.messages.length);
+        chat.viewMode = 'bookmarks';
+        chat.selectedSessionId = null;
+    } catch (err) {
+        console.error("Failed to load bookmarks:", err);
+    }
 }
-
 </script>

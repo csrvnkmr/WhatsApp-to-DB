@@ -5,6 +5,7 @@ using WhatsAppToDB;
 using WhatsAppToDB.Data;
 using WhatsAppToDB.Services;
 using WhatsAppToDB.Settings;
+using WhatsAppToDB.VectorStore;
 
 var builder = Microsoft.AspNetCore.Builder.WebApplication.CreateBuilder(args);
 var metadata = new PluginMetadata();
@@ -53,6 +54,7 @@ using (var scope = app.Services.CreateScope())
     var repo = scope.ServiceProvider.GetRequiredService<ChatDbRepository>();
     await repo.InitializeAsync();
 }
+await VectorDbService.TestVectorDbService();
 app.Run();
 
 
@@ -62,4 +64,3 @@ async Task TestSqliteExecution()
     await repo.Full_Sqlite_Test_Create_Insert_Select_Delete();
 }
 
- 

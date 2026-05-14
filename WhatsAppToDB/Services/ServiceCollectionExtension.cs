@@ -101,19 +101,21 @@ namespace WhatsAppToDB.Services
 
             services.AddSingleton<ILogger, AppLogger>();
             services.AddSingleton<JsonConfigService>();
+            //services.AddSingleton(provider => new FolderUtils(provider.GetRequiredService<IConfiguration>()));
+            services.AddSingleton<FolderUtils>();
             services.AddSingleton<ChatDbRepository>();
             services.AddSingleton<IUserAuditService, UserAuditService>();
             services.AddControllers();
 
-             var configRoot = config.GetValue<string>("ConfigRootFolder");
+            //var configRoot = config.GetValue<string>("ConfigRootFolder");
 
+            var tempJsonConfig = new JsonConfigService(config, new AppLogger());
+            var defaultFolders = tempJsonConfig.GetDefaultFolders();
 
             services.Configure<WhatsAppSettings>(config.GetSection("WhatsAppSettings"));
             services.Configure<OpenAiSettings>(config.GetSection("OpenAiSettings"));
             services.Configure<LocalAiSettings>(config.GetSection("LocalAiSettings"));
-            services.Configure<RoleSettings>(config.GetSection("RoleSettings"));
             services.Configure<MailSettings>(config.GetSection("MailSettings"));
-            services.Configure<DefaultSettings>(config.GetSection("DefaultSettings"));
             services.AddDynamicExtensions(config);
 
             services.AddPlugin(config, metadata);
@@ -123,26 +125,16 @@ namespace WhatsAppToDB.Services
             services.AddScoped<Plugin.SchemaPlugin>();
             services.AddEndpointsApiExplorer();
             //services.AddSwaggerGen();
-            AddSwaggerGen(services);
-
-            //var llmConfigPath = config.GetValue<string>("LlmSettings:LlmConfigFile");
-            //var llmConfigPath = Path.Combine(configRoot, Constants.ConfigFiles.Llms);
-            //services.LoadLlmConfigs(llmConfigPath);
+            AddSwaggerGen(services);           
             
-           
-            
-            var llmPluginsPath = config.GetValue<string>("LlmPluginsFolder");
-            services.RegisterLlmProviders(llmPluginsPath);
-
-            //var dbConfigPath = config.GetValue<string>("DatabaseSettings:DatabaseConfigFile");
-            //LoadDatabaseConfigs(services, dbConfigPath);
+            var llmProviderPath = defaultFolders?.LlmProviderFolder ?? config.GetValue<string>("LlmPluginsFolder") ?? "Plugins/LLM";
+            services.RegisterLlmProviders(llmProviderPath);
 
             services.AddDistributedMemoryCache();
             services.AddScoped<IQueryService, QueryService>();
             
-
-            var dbPluginsPath = config.GetValue<string>("DatabasePluginsFolder");
-            services.RegisterDatabaseProviders(dbPluginsPath);
+            var dbProviderPath = defaultFolders?.DatabaseProviderFolder ?? config.GetValue<string>("DatabasePluginsFolder") ?? "Plugins/DB";
+            services.RegisterDatabaseProviders(dbProviderPath);
             
             services.AddKernel(metadata);
 
@@ -162,7 +154,6 @@ namespace WhatsAppToDB.Services
                 System.Text.Json.JsonSerializer.Deserialize<List<DatabaseConfig>>(File.ReadAllText(configPath)) ?? new List<DatabaseConfig>();
             services.AddSingleton<List<DatabaseConfig>>(lstDbConfigs);
         }
-
 
         private static void AddSwaggerGen(IServiceCollection services)
         {
@@ -192,10 +183,6 @@ namespace WhatsAppToDB.Services
             });
         }
 
-        
-
-        
-
         public static void RegisterDatabaseProviders(this IServiceCollection services, string folderName)
         {
             services.AddScoped<DatabaseContextService>();
@@ -205,22 +192,7 @@ namespace WhatsAppToDB.Services
             services.AddScoped<IDbProvider, Database.SqliteDbProvider>();
             services.LoadProviders<IDbProvider>(folderName, "*dbplugin.dll");            
             services.AddScoped<Database.DbProviderFactory>();
-        }
-
-        //private static void LoadLlmConfigs(this IServiceCollection services, string configPath)
-        //{
-            
-        //    if (!File.Exists(configPath))
-        //        return;
-
-        //    var configs =
-        //        JsonSerializer.Deserialize<List<LlmConfig>>(
-        //            File.ReadAllText(configPath))
-        //        ?? new();
-
-        //    services.AddSingleton(configs);
-        //    services.AddSingleton<LlmRegistry>();
-        //}
+        }        
 
         public static void RegisterLlmProviders(this IServiceCollection services, string configPath)
         {
@@ -233,42 +205,6 @@ namespace WhatsAppToDB.Services
             services.AddSingleton<LlmRegistry>();
             services.AddScoped<LlmProviderFactory>();
         }
-
-        //static void LoadLlmPlugins(IServiceCollection services)
-        //{
-        //    var pluginPath = Path.Combine(AppContext.BaseDirectory, "plugins/llm");
-
-        //    if (!Directory.Exists(pluginPath))
-        //        return;
-
-        //    var dlls = Directory.GetFiles(pluginPath, "*.dll");
-
-        //    foreach (var file in dlls)
-        //    {
-        //        try
-        //        {
-
-        //            var asm = Assembly.LoadFrom(file);
-
-        //            var types = asm.GetTypes()
-        //                .Where(t =>
-        //                    typeof(ILlmProvider).IsAssignableFrom(t) &&
-        //                    !t.IsInterface &&
-        //                    !t.IsAbstract);
-
-        //            foreach (var type in types)
-        //            {
-        //                services.AddScoped(typeof(ILlmProvider), type);
-        //                Console.WriteLine($"[LLM Plugin] Loaded: {type.Name}");
-        //            }
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            Console.WriteLine($"[LLM Plugin] Failed to load from {file}: {ex.Message}");
-        //            Console.WriteLine(ex.ToString());
-        //        }
-        //    }
-        //}
 
         static void LoadProviders<TInterface>(this IServiceCollection services, string pluginFolder, string filefilter,
             ServiceLifetime lifetime = ServiceLifetime.Scoped)

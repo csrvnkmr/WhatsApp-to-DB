@@ -72,17 +72,35 @@ namespace WhatsAppToDB.Plugin
             var schemaBuilder = new StringBuilder();
             var waNumber = kernel.Data["WhatsAppNumber"]?.ToString();                                                                                                                                                                                                                                                                                                                                                                                                       
             var userQuestion = kernel.Data["UserQuestion"]?.ToString();
-
+            var modulePrompt = "";
             var isFirstModule = true;
             //var connString = _dbSettings.ConnectionString;
             //if (!string.IsNullOrEmpty(identity.ConnectionString))
             //{
             //    connString = identity.ConnectionString;
             //}
-            
-            var templService = new TemplateService(_databaseContextService, this._logger);
+            var moduleConfigs = _jsonConfigService.GetModules(dbName);
+            var templService = new TemplateService(_databaseContextService, this._logger);            
             foreach (var module in requestedModules)
             {
+
+                
+
+                var moduleConfig = moduleConfigs.FirstOrDefault(m => m.Name.Equals(module, StringComparison.OrdinalIgnoreCase));
+                if (moduleConfig != null && !string.IsNullOrWhiteSpace(moduleConfig.Prompt))                {
+                    modulePrompt += moduleConfig.Prompt + "\n";
+                }
+                var moduleQueries = _jsonConfigService.GetModuleQueries(dbName, module);
+                if (moduleQueries != null && moduleQueries.Count > 0)
+                {
+                    modulePrompt += $"--- {module} Few-Shot Query Examples ---\n";
+                    modulePrompt += $"*CRITICAL: Use these templates as the primary logic source for the matching intent.*\n";
+                    foreach (var item in moduleQueries)
+                    {
+                        modulePrompt += $"Intent: {item.Name}\nTemplate:\n {item.Query}\n\n";
+                    }
+                }
+                
                 if (!isFirstModule)
                 {
                     schemaBuilder.AppendLine("\n--- Next Module ---\n");
@@ -90,7 +108,7 @@ namespace WhatsAppToDB.Plugin
                 isFirstModule = false;
                 // 3. Security Check: Role-Based Access Control
                 // Allow if Admin OR if the specific module is in their authorized list
-                bool isAuthorized = identity.Role.Equals("Admin", StringComparison.OrdinalIgnoreCase) ||
+                bool isAuthorized = identity.IsAdministrator() ||
                                     (identity.AuthorizedModules != null &&
                                      identity.AuthorizedModules.Contains(module, StringComparer.OrdinalIgnoreCase));
 
@@ -134,7 +152,7 @@ namespace WhatsAppToDB.Plugin
             }
 
 
-            var finalSchema = schemaBuilder.ToString();
+            var finalSchema = $"{schemaBuilder.ToString()}\n{modulePrompt}".Trim();
             return string.IsNullOrWhiteSpace(finalSchema) ? "No authorized modules found." : finalSchema;
         }
     }

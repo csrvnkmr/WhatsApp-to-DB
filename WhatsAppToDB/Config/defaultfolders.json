@@ -1,0 +1,7 @@
+[
+  {
+    "LlmProviderFolder": "C:\\Development\\AiAgents\\SemanticKernel\\Plugins\\Llm\\",
+    "DatabaseProviderFolder": "C:\\Development\\AiAgents\\SemanticKernel\\Plugins\\Database\\",
+    "ChatHistoryFolder": "C:\\Development\\AiAgents\\SemanticKernel\\ChatData\\"
+  }
+]

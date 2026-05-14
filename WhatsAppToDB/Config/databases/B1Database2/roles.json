@@ -9,5 +9,15 @@
       "Sales",
       "MasterData"
     ]
+  },
+  {
+    "Name": "Admin",
+    "Description": "administrator",
+    "Users": [
+      "admin"
+    ],
+    "Modules": [
+      "Sales"
+    ]
   }
 ]

@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Graph.Models;
 using Microsoft.SemanticKernel;
 using System;
@@ -32,11 +33,13 @@ namespace WhatsAppToDB.Plugin
         private readonly ISqlInterceptor? _sqlExtension;
         //private readonly DatabaseSettings _dbSettings;
         private readonly DatabaseContextService _databaseContextService;
+        private readonly FolderUtils _folderUtils;
 
         public DatabaseQueryPlugin(AiRequestContext ctx,
             IModulePrompt? promptExtension = null,   
             ISqlInterceptor? sqlExtension = null,
-            ILogger? logger = null, DatabaseContextService databaseContextService = null)
+            ILogger? logger = null, DatabaseContextService databaseContextService = null,
+            FolderUtils folderUtils = null, IConfiguration configuration = null)
         {
             _promptExtension = promptExtension;
             _sqlExtension = sqlExtension;
@@ -44,6 +47,8 @@ namespace WhatsAppToDB.Plugin
             //_dbSettings = dbSettings.Value;
             _ctx = ctx;
             _databaseContextService = databaseContextService;
+            _folderUtils = folderUtils;
+            //_folderUtils = folderUtils ?? new FolderUtils(configuration ?? new ConfigurationBuilder().AddInMemoryCollection(new[] { new KeyValuePair<string, string>("DataFolder", "Data") }).Build());
         }
 
         //public async Task SetDatabaseSessionAsync(IDbConnection conn, IdentityContext identity)
@@ -102,7 +107,7 @@ namespace WhatsAppToDB.Plugin
                 using IDbConnection db = _databaseContextService.CreateConnection();
                 // Ensure the connection is open before setting session context, as Dapper relies on it for the session state to be applied correctly.
                 db.Open(); 
-                if (identity != null && identity.Role?.ToLower()!= "admin")
+                if (identity != null && identity.IsAdministrator())
                 {
                     await provider.SetSessionContext(db, identity);
                 }
@@ -112,7 +117,7 @@ namespace WhatsAppToDB.Plugin
 
                 //if (!results.Any()) return "[]";
                 var jsonresult = JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true });
-                var qrpath = FolderUtls.GetQueryResultFile();
+                var qrpath = _folderUtils.GetQueryResultFile();
                 if (qrpath != null)
                 {
                     File.WriteAllText(qrpath, jsonresult);

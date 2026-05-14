@@ -1,0 +1,1 @@
+dotnet run --project .\WhatsAppToDB\WhatsAppToDB.csproj

@@ -40,7 +40,7 @@ namespace WhatsAppToDB.Services
             IdentityContext identity, string messageText, PromptExecutionSettings? pes, ILogger waLogger,
             ChatDbRepository repo, long sessionid)
         {
-            WhatsAppSettings? waSettings = null;
+            //WhatsAppSettings? waSettings = null;
             try
             {
                 using (var scope = scopeFactory.CreateScope())
@@ -56,8 +56,8 @@ namespace WhatsAppToDB.Services
                     Console.WriteLine($"[QUERY] Session={sessionId}");
                     Console.WriteLine($"[QUERY] DB={dbName}");
                     var sp = scope.ServiceProvider;
-                    var waOptions = sp.GetRequiredService<IOptions<WhatsAppSettings>>();
-                    waSettings = waOptions.Value; // Capture the actual settings object
+                    //var waOptions = sp.GetRequiredService<IOptions<WhatsAppSettings>>();
+                    //waSettings = waOptions.Value; // Capture the actual settings object
 
                     var identityService = sp.GetRequiredService<IIdentityService>();
                     //var identity = await identityService.GetIdentityAsync(usernameorphonenumber);

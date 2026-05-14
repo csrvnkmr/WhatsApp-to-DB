@@ -21,8 +21,14 @@ namespace WhatsAppToDB.Abstractions
         public string GetActiveContextKey() =>
             string.IsNullOrWhiteSpace(SessionContextKey) ? Role : SessionContextKey;
 
+        public bool IsAdministrator() =>
+            Role.Split(',').Select(r => r.Trim()).Contains("Admin", StringComparer.OrdinalIgnoreCase);
+
         // Helper to check if a user can access a specific schema module
-        public bool HasAccess(string moduleName) =>
-            Role == "Admin" || AuthorizedModules.Contains(moduleName, StringComparer.OrdinalIgnoreCase);
+        public bool HasAccess(string moduleName)
+        {
+            return (IsAdministrator() ||
+                    AuthorizedModules.Contains(moduleName, StringComparer.OrdinalIgnoreCase));
+        }
     }
 }

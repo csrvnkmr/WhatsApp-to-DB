@@ -26,7 +26,7 @@
       "ODLN",
       "DLN1"
     ],
-    "Prompt": "### SALES INVOICE SETTLEMENTS\n- Internal Reconciliation (OITR \u0026 ITR1) tables are used to track the settlement of Sales Invoices\n- Sales Invoices can be settled by Payments (ORCT), Credit Notes (ORIN), or Journal Entries through Internal Reconciliation (OITR \u0026 ITR1)\n- OITR.ReconType : 3-Payments, 0-Manual, 4-Credit Note, 7-Cancellation\n- In case of Manual Reconciliation, multiple type of documents can be used for settling each other (Any Debit entries (Invoices/Outgoing Payments/Journal Entries) against Any Credit entries (Credit Notes/Receipts/Journal Entries)\n"
+    "Prompt": "- only Items with \u0022SellItem\u0022=\u0027Y\u0027 are considered sales item. For non selling items, consider only these items\n- For Itemwise sales, consider only those invoices where DocType=\u0027I\u0027\n\n- Historical sales analysis should include both open and closed invoices unless explicitly requested otherwise.\n- Do not filter DocStatus=\u0027O\u0027 for historical analytics.\n- Exclude canceled documents using CANCELED=\u0027N\u0027.\n- Use DocStatus only when analyzing pending/open documents."
   },
   {
     "Name": "Purchase",
@@ -50,7 +50,8 @@
       "JDT1",
       "OACT",
       "OCRD"
-    ]
+    ],
+    "Prompt": "### SALES INVOICE SETTLEMENTS\n- Internal Reconciliation (OITR \u0026 ITR1) tables are used to track the settlement of Sales Invoices\n- Sales Invoices can be settled by Payments (ORCT), Credit Notes (ORIN), or Journal Entries through Internal Reconciliation (OITR \u0026 ITR1)\n- OITR.ReconType : 3-Payments, 0-Manual, 4-Credit Note, 7-Cancellation\n- In case of Manual Reconciliation, multiple type of documents can be used for settling each other (Any Debit entries (Invoices/Outgoing Payments/Journal Entries) against Any Credit entries (Credit Notes/Receipts/Journal Entries)\n"
   },
   {
     "Name": "Payments",
