@@ -6,7 +6,9 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using WhatsAppToDB.Abstractions;
 using VectorDBSync.EmbeddingService;
+using Dapper;
 
 namespace VectorDBSync.VectorDBService
 {
@@ -16,10 +18,14 @@ namespace VectorDBSync.VectorDBService
         private readonly string _basePath;
 
 
-        public SQLiteVectorDBService(Settings settings)
+        public SQLiteVectorDBService(VectorDBSettings settings)
         {
             _embeddingService = EmbeddingServiceFactory.Create(settings);
             _basePath = settings.SqliteSettings.Folder;
+            if (string.IsNullOrWhiteSpace(_basePath))
+            {
+                _basePath = settings.SqliteSettings.VectorDBFolder;
+            }
             if (!Directory.Exists(_basePath))
             {
                 Directory.CreateDirectory(_basePath);
@@ -28,12 +34,48 @@ namespace VectorDBSync.VectorDBService
         
         private string GetCollectionPath(string collectionName) => Path.Combine(_basePath, $"{collectionName}.db");
 
+        public async Task Delete(string collectionName, string id)
+        {
+            string dbPath = GetCollectionPath(collectionName);
+            if (!File.Exists(dbPath)) return;
+
+            using var connection = new SqliteConnection($"Data Source={dbPath}");
+            connection.Open();
+
+            var cmd = connection.CreateCommand();
+            cmd.CommandText = "DELETE FROM collection_data WHERE id = $id";
+            cmd.Parameters.AddWithValue("$id", id);
+            await cmd.ExecuteNonQueryAsync();
+  
+            return ;
+        }
+
         public Task Delete(string collectionName)
         {
             string dbPath = GetCollectionPath(collectionName);
             if (File.Exists(dbPath))
                 File.Delete(dbPath);
             return Task.CompletedTask;
+        }
+
+        public async Task AfterCollectionSyncCompletedAsync(string collectionName, 
+            CancellationToken cancellationToken = default)
+        {
+            // For SQLite, we can optimize the FTS index after a bulk sync
+            Console.WriteLine($"[{collectionName}] Optimizing SQLite FTS index after sync...");
+            await RebuildFtsIndex(collectionName);
+        }
+
+        public async Task RebuildFtsIndex(string collectionName)
+        {
+            string dbPath = GetCollectionPath(collectionName);
+            using var connection = new SqliteConnection($"Data Source={dbPath}");
+
+            const string sql = @"
+                INSERT INTO collection_fts(collection_fts)
+                VALUES('rebuild');
+            ";
+            await connection.ExecuteAsync(sql);
         }
 
         public async Task Add(string collectionName, List<string> ids, List<string>? documents,
@@ -46,10 +88,10 @@ namespace VectorDBSync.VectorDBService
                 var currentDocs = documents?.Skip(outer).Take(batchsize).ToList();
                 var currentMetas = metadatas?.Skip(outer).Take(batchsize).ToList();
             
-
-                Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} [SQLiteVectorDBService] Generating embeddings for {currentIds?.Count ?? 0} records...");
+                Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} [SQLiteVectorDBService] [{collectionName}] {outer+1} to {outer+currentIds.Count} of {ids.Count} - Processing batch..."    );
+                Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} [SQLiteVectorDBService] [{collectionName}] Generating embeddings for {currentIds?.Count ?? 0} records...");
                 var vectors = await GetVectors(currentDocs ?? new List<string>());
-                Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} [SQLiteVectorDBService] starting to insert {currentIds?.Count ?? 0} records.");
+                Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} [SQLiteVectorDBService] [{collectionName}] starting to insert {currentIds?.Count ?? 0} records.");
                 string dbPath = GetCollectionPath(collectionName);
                 using var connection = new SqliteConnection($"Data Source={dbPath}");
                 connection.Open();
@@ -131,62 +173,61 @@ namespace VectorDBSync.VectorDBService
         {
             try
             {
-
             
-            string dbPath = Path.Combine(_basePath, $"{collectionName}.db");
-            var results = new List<SearchResult>();
+                string dbPath = Path.Combine(_basePath, $"{collectionName}.db");
+                var results = new List<SearchResult>();
 
-            using var connection = new SqliteConnection($"Data Source={dbPath}");
-            await connection.OpenAsync();
+                using var connection = new SqliteConnection($"Data Source={dbPath}");
+                await connection.OpenAsync();
 
-            var cmd = connection.CreateCommand();
+                var cmd = connection.CreateCommand();
 
-            // 1. Handle Metadata Filters
-            string filterClause = "";
-            if (filter != null && filter.Any())
-            {
-                var clauses = new List<string>();
-                foreach (var kvp in filter)
+                // 1. Handle Metadata Filters
+                string filterClause = "";
+                if (filter != null && filter.Any())
                 {
-                    string paramName = $"$f_{kvp.Key}";
-                    // Filtering on the joined 'd' (collection_data) table
-                    clauses.Add($"json_extract(d.metadata, '$.{kvp.Key}') = {paramName}");
-                    cmd.Parameters.AddWithValue(paramName, kvp.Value.ToString());
+                    var clauses = new List<string>();
+                    foreach (var kvp in filter)
+                    {
+                        string paramName = $"$f_{kvp.Key}";
+                        // Filtering on the joined 'd' (collection_data) table
+                        clauses.Add($"json_extract(d.metadata, '$.{kvp.Key}') = {paramName}");
+                        cmd.Parameters.AddWithValue(paramName, kvp.Value.ToString());
+                    }
+                    filterClause = " AND " + string.Join(" AND ", clauses);
                 }
-                filterClause = " AND " + string.Join(" AND ", clauses);
-            }
 
-            // 2. The SQL Query
-            // We filter by both the FTS MATCH and the JSON metadata
-            cmd.CommandText = $@"
-                SELECT f.id, f.document, d.metadata, bm25(collection_fts) as rank
-                FROM collection_fts f
-                JOIN collection_data d ON f.id = d.id
-                WHERE f.document MATCH $query {filterClause}
-                ORDER BY rank
-                LIMIT $limit";
+                // 2. The SQL Query
+                // We filter by both the FTS MATCH and the JSON metadata
+                cmd.CommandText = $@"
+                    SELECT f.id, f.document, d.metadata, bm25(collection_fts) as rank
+                    FROM collection_fts f
+                    JOIN collection_data d ON f.id = d.id
+                    WHERE f.document MATCH $query {filterClause}
+                    ORDER BY rank
+                    LIMIT $limit";
 
-            //var sanitizedQuery = SanitizeFtsQuery(queryText);
-            var sanitized = Regex.Replace(queryText, @"[^\w\s]", " "); // Removes all punctuation
+                //var sanitizedQuery = SanitizeFtsQuery(queryText);
+                var sanitized = Regex.Replace(queryText, @"[^\w\s]", " "); // Removes all punctuation
 
-            cmd.Parameters.AddWithValue("$query", sanitized);
-            cmd.Parameters.AddWithValue("$limit", limit);
+                cmd.Parameters.AddWithValue("$query", sanitized);
+                cmd.Parameters.AddWithValue("$limit", limit);
 
-            using var reader = await cmd.ExecuteReaderAsync();
-            while (await reader.ReadAsync())
-            {
-                var metadataJson = reader.IsDBNull(2) ? null : reader.GetString(2);
-
-                results.Add(new SearchResult
+                using var reader = await cmd.ExecuteReaderAsync();
+                while (await reader.ReadAsync())
                 {
-                    Id = reader.GetString(0),
-                    Document = reader.IsDBNull(1) ? null : reader.GetString(1),
-                    Distance = (float)Math.Max(0, Math.Min(1, (reader.GetDouble(3) + 10) / 20)),
-                    Metadata = metadataJson != null ? JsonSerializer.Deserialize<Dictionary<string, object>>(metadataJson) : null
-                });
-            }
+                    var metadataJson = reader.IsDBNull(2) ? null : reader.GetString(2);
 
-            return results;
+                    results.Add(new SearchResult
+                    {
+                        Id = reader.GetString(0),
+                        Document = reader.IsDBNull(1) ? null : reader.GetString(1),
+                        Distance = (float)Math.Max(0, Math.Min(1, (reader.GetDouble(3) + 10) / 20)),
+                        Metadata = metadataJson != null ? JsonSerializer.Deserialize<Dictionary<string, object>>(metadataJson) : null
+                    });
+                }
+                Console.WriteLine($"FTS Search found {results.Count} results for query '{queryText}' in collection '{collectionName}'.");
+                return results;
             }
             catch (Exception ex)
             {

@@ -1,6 +1,6 @@
 [
   {
-    "DefaultDatabase": "B1Database1",
+    "DefaultDatabase": "B1Database2",
     "DefaultLlmProvider": "Ollama",
     "DefaultLlmModel": "gemma4:31b-cloud"
   }

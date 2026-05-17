@@ -14,9 +14,15 @@
     "JoinConditions": [
       "OINV.DocEntry=INV1.DocEntry",
       "OINV.CardCode=OCRD.CardCode",
+	  "OINV.SlpCode=OSLP.SlpCode",
       "INV1.Account=OACT.AcctCode",
       "INV1.WhsCode=OWHS.WhsCode",
-      "INV1.ItemCode=OITM.ItemCode"
+      "INV1.ItemCode=OITM.ItemCode",
+	  "INV1.BaseEntry=ODLN.DocEntry and INV1.BaseType='15'",
+	  "INV1.BaseEntry=ORDR.DocEntry and INV1.BaseType='17'",
+	  "INV1.BaseEntry=OQUT.DocEntry and INV1.BaseType='23'",
+	  "RIN1.BaseEntry=OINV.DocEntry and RIN1.BaseType='13'"
+	  
     ]
   },
   {
@@ -26,7 +32,8 @@
       "ORDR.CardCode=OCRD.CardCode",
       "RDR1.Account=OACT.AcctCode",
       "RDR1.WhsCode=OWHS.WhsCode",
-      "RDR1.ItemCode=OITM.ItemCode"
+      "RDR1.ItemCode=OITM.ItemCode",
+	  "RDR1.BaseEntry=OQUT.DocEntry and RDR1.BaseType='23'"
     ]
   },
   {
@@ -46,7 +53,9 @@
       "ODLN.CardCode=OCRD.CardCode",
       "DLN1.Account=OACT.AcctCode",
       "DLN1.WhsCode=OWHS.WhsCode",
-      "DLN1.ItemCode=OITM.ItemCode"
+      "DLN1.ItemCode=OITM.ItemCode",
+	  "ODLN.BaseEntry=ORDR.DocEntry and DLN1.BaseType='17'",
+	  "ODLN.BaseEntry=OQUT.DocEntry and DLN1.BaseType='23'"
     ]
   },
   {
@@ -56,7 +65,12 @@
       "OPCH.CardCode=OCRD.CardCode",
       "PCH1.Account=OACT.AcctCode",
       "PCH1.WhsCode=OWHS.WhsCode",
-      "PCH1.ItemCode=OITM.ItemCode"
+      "PCH1.ItemCode=OITM.ItemCode",
+	  "PCH1.BaseEntry=OPDN.DocEntry and PCH1.BaseType='20'",
+	  "PCH1.BaseEntry=OPOR.DocEntry and PCH1.BaseType='22'",
+	  "PCH1.BaseEntry=OPQT.DocEntry and PCH1.BaseType='23'",
+	  "RPC1.BaseEntry=OPCH.DocEntry and RPC1.BaseType='18'"
+	  
     ]
   },
   {
@@ -66,7 +80,9 @@
       "OPDN.CardCode=OCRD.CardCode",
       "PDN1.Account=OACT.AcctCode",
       "PDN1.WhsCode=OWHS.WhsCode",
-      "PDN1.ItemCode=OITM.ItemCode"
+      "PDN1.ItemCode=OITM.ItemCode",
+	  "PDN1.BaseEntry=OPOR.DocEntry and PDN1.BaseType='22'",
+	  "PDN1.BaseEntry=OPQT.DocEntry and PDN1.BaseType='540000006'"
     ]
   },
   {
@@ -86,7 +102,8 @@
       "OPOR.CardCode=OCRD.CardCode",
       "POR1.Account=OACT.AcctCode",
       "POR1.WhsCode=OWHS.WhsCode",
-      "POR1.ItemCode=OITM.ItemCode"
+      "POR1.ItemCode=OITM.ItemCode",
+	  "POR1.BaseEntry=OPQT.DocEntry and POR1.BaseType='540000006'"
     ]
   },
   {

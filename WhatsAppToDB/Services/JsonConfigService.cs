@@ -3,6 +3,7 @@ using NPOI.POIFS.Storage;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using WhatsAppToDB.Abstractions;
 using WhatsAppToDB.Database;
 using WhatsAppToDB.DbProviders.SchemaModels;
 using WhatsAppToDB.LlmProviders;
@@ -259,6 +260,29 @@ namespace WhatsAppToDB.Services
         public List<PluginSettings> GetPlugins(string database)
         {
             return LoadDatabaseConfigAndDecrypt<List<PluginSettings>>(database, Constants.ConfigFiles.Plugins);
+        }
+
+        public VectorDBSettings GetVectorDBSettings(string database)
+        {
+            var vectorDBSettingsList = 
+                LoadDatabaseConfigAndDecrypt<List<VectorDBSettings>>(database, Constants.ConfigFiles.VectordbSettings);
+            return vectorDBSettingsList?.FirstOrDefault();
+        }
+
+        public List<VectorConfiguration> GetVectorConfigurations(string database)
+        {
+            var VectorConfigurationList = 
+                LoadDatabaseConfigAndDecrypt<List<VectorConfiguration>>(database, 
+                Constants.ConfigFiles.VectorConfigurations);
+            return VectorConfigurationList ?? new List<VectorConfiguration>();
+        }
+
+        public List<VectorSyncConfig> GetVectorSyncConfigurations(string database)
+        {
+            var VectorConfigurationList = 
+                LoadDatabaseConfigAndDecrypt<List<VectorSyncConfig>>(database, 
+                Constants.ConfigFiles.VectorConfigurations);
+            return VectorConfigurationList ?? new List<VectorSyncConfig>();
         }
 
         public string GetPrompt(string database)

@@ -2,7 +2,7 @@
   {
     "Name": "chinook-sqlite",
     "Description": "Chinook SQLite Sample DB",
-    "ConnectionString": "ENC:Lpo8NdmfjpcstiFTB\u002Bukde/EMklwzy598NCmKYvLFK4sV/n\u002BgrNPaCjdXznO3pU5Sr\u002BX4W/6x/yHOQO8xhqYv9wzLyh9vVfNxsJumInmpR9qZ6y7QrNcXDcH2VCRQKie",
+    "ConnectionString": "ENC:auCRoEYTVnAvIHJKVMqP0MFszBre2896KAjoXZ2G9nlercR8uwS8mhf06MaA7gIRCSnHcvbraVxWRS7DMYS6VcPmwqKGctFbi9AK8nQwwIo5EhZ47kVvsbml0lskEzx5",
     "SchemaFile": "C:\\Development\\AiAgents\\SemanticKernel\\chinnook_schema.json",
     "DbProvider": "sqlite",
     "PromptFile": "C:\\Development\\AiAgents\\SemanticKernel\\AiPromptForChinook.txt",
@@ -11,33 +11,34 @@
   {
     "Name": "B1Database1",
     "Description": "B1 Database 1",
-    "ConnectionString": "ENC:9PTIOx8C1hDK\u002BT1GGr5zFWyUqZhcuU2IZrZj2rPWxoB827OzzSyeRXRAVcudrsFa7QCUhDKe8gH\u002BmDq2rWSuDPgDr4rsztnGHnmKBNtcs8woCN5ctWlm0BzrVdEyz1wKIIgWwldmiaP2ibaQHR6JnQSnHHEpuMQ0LvBdDm34Tmg=",
+    "ConnectionString": "ENC:Yeax4S0SiBEvLhcV5GZ8pgZPZgoSFRmHTihinCrrPMpH/I6pBGJj9KQwn1kXVM9f6u9uyvrsR\u002Bb7G17Egramgk68B0Vko29A1ATZoKORNfUpbgJ9CYm6UqUuNfULQMeNZRMpvsR1vozB6ntTuFNdCIQPlUNIeiHSfpXeQwpMQ7E=",
     "SchemaFile": "C:\\Development\\AiAgents\\SemanticKernel\\b1_schema.json",
     "DbProvider": "mssql",
     "PromptFile": "C:\\Development\\AiAgents\\SemanticKernel\\AiPromptForB1Database.txt",
-    "DefaultRole": "SalesPerson"
+    "DefaultRole": "Admin"
   },
   {
     "Name": "B1Database2",
     "Description": "B1 Database two",
-    "ConnectionString": "ENC:WCDkiNkvxKNQmW7b08NlBdXI2yyw8GAkHCvK84SyGRM/zUpol0jTOoS3LlpxQgk/RAjWXKOrvzqTv7t/RFZY5z6/rVptpcpDHWodL5fu2YKwKndJXIN1mVKrl6PBP3zd6mrjnuYLSwuNc1JW5cN5prYOb3RbVikiacJrqt5fo3o=",
+    "ConnectionString": "ENC:HpT3azZuEpdbpWam/B3XbPjKTiENk3\u002Br1vBIIGGgMETUy6TLni5Sl40G/XSpGH8dtCy1TQOmjQuujmKxWQy8FM7p/FM3Iok/ZR2g2N73v5KErlAp8AEcG3BCiYQ1M9xTdNH/\u002BbojtbkiZg\u002BXYtlJvW0p5dGBdnNZWQTNnT9Ce20=",
     "SchemaFile": "C:\\Development\\AiAgents\\SemanticKernel\\b1_schema.json",
     "DbProvider": "mssql",
     "PromptFile": "C:\\Development\\AiAgents\\SemanticKernel\\AiPromptForB1Database.txt",
-    "DefaultRole": "SalesPerson"
+    "DefaultRole": "Admin"
   },
   {
     "Name": "chinook-postgres",
     "Description": "Chinook PostgreSQL DB",
-    "ConnectionString": "ENC:c8rMeJdxKuuAMwIboxDjp6rKHYyWeGDJY1HLDxEIWHvP/RmBBcbhm9Btx1qWNX7a/ngIW63jarNvurQB9KannMQQrFyrh8L98DNOOqktGITvUizvmktUgBJd60TsM5NC",
+    "ConnectionString": "ENC:fJnHNQrpajtOX5zHDtBs4a9SxdYOz/N3GsFv8B8pSrM5JuUQDo9LQXFz7jhiXN8Feem4dljTbOf7\u002BozV/2coJbOQEL5snnN3R\u002BmthoB6OSeJFGoO3yv0zlhgAe5C7noB",
     "DbProvider": "postgres",
     "PromptFile": "C:\\Development\\AiAgents\\SemanticKernel\\AiPromptForChinookPostGres.txt",
-    "SchemaFile": "C:\\Development\\AiAgents\\SemanticKernel\\chinnook_postgres_schema.json"
+    "SchemaFile": "C:\\Development\\AiAgents\\SemanticKernel\\chinnook_postgres_schema.json",
+    "DefaultRole": "Admin"
   },
   {
     "Name": "adventureworks",
     "Description": "SQL Server AdventureWorks",
-    "ConnectionString": "ENC:fzXDS9BHFv2juzBKpURAAbUrBbEXKbDx86srOzg4bYjKqlF8Ggg4nffuVUxFJ582/l\u002Btx9Wn1YpPuSM/TZdDlDJV1CIWztg\u002BwS8QQmUBMldCj5yzwiGt\u002BDj/S8vnoPvBq23ZIJLDAfvAKMWlS3R96uV4LJUOME6qJjU5qtTmHRD1BpW5dBF8eZH8er5O25nJ",
+    "ConnectionString": "ENC:lMxKdku\u002BaQsOOvQD9lhGbde8y56ybIONaK2UD3fdZPoqyltvw/RvzDxp0Qi9phzzH2lq/zAjPSPao0KB\u002BY2qCPjIMTiiBdIJ\u002BIUrynyARMADXeh/8eULSaD8i2se7vLO62LnAPmW9qxBk6vC/tc\u002BfBAaFz4xcqhHH5TmhiOc6ByL6annZ8Qc7WUPBfuw3Ax9",
     "DbProvider": "mssql",
     "PromptFile": "C:\\Development\\AiAgents\\SemanticKernel\\AiPromptForAdventureWorks.txt",
     "SchemaFile": "C:\\Development\\AiAgents\\SemanticKernel\\aw_schema.json",

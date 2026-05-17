@@ -30,8 +30,8 @@ public class AdventureWorksTestHarness
         {
             // 1. Resolve the Kernel
             var kernel = sp.GetRequiredService<Kernel>();
-            var openaiOptions = sp.GetRequiredService<IOptions<OpenAiSettings>>();
-            var aiOptions = sp.GetRequiredService<IOptions<CommonAiSettings>>();
+            var openaiOptions = sp.GetRequiredService<IOptions<WhatsAppToDB.Settings.OpenAiSettings>>();
+            var aiOptions = sp.GetRequiredService<IOptions<WhatsAppToDB.Settings.CommonAiSettings>>();
 
             // 2. Setup Chat History with your AdventureWorks System Prompt
             var history = new Microsoft.SemanticKernel.ChatCompletion.ChatHistory();

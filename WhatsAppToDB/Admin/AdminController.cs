@@ -194,7 +194,9 @@ namespace WhatsAppToDB.Admin
                     "tables",
                     "modules",
                     "tablejoins",
-                    "fewshotqueries"
+                    "fewshotqueries",
+                    "vectorconfigurations",
+                    "vectordbsettings"
                 };
 
             if (dbSpecific.Contains(

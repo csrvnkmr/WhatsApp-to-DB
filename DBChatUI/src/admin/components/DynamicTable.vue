@@ -4,14 +4,28 @@
 
     <div class="flex items-center justify-between mb-4">
 
-        <div class="text-2xl font-bold">
-            {{ metadata?.title }}
+        <div class="flex items-center gap-6">
+            <div class="text-2xl font-bold">
+                {{ metadata?.title }}
+            </div>
+            
+            <div v-if="actions.length > 0" class="flex items-center gap-4 text-sm mt-1">
+                <button
+                    v-for="(act, i) in actions"
+                    :key="i"
+                    @click="onActionClick(act)"
+                    :disabled="isExecutingAction"
+                    class="text-user hover:underline disabled:opacity-50 disabled:cursor-not-allowed font-medium transition flex items-center gap-1">
+                    <span v-if="isExecutingAction" class="w-3 h-3 border-2 border-user border-t-transparent rounded-full animate-spin"></span>
+                    {{ act.label }}: {{ act.value }}
+                </button>
+            </div>
         </div>
 
         <button
             v-if="!metadata?.maxrecords || rows.length < metadata.maxrecords"
             @click="addNew"
-            class="px-4 py-2 rounded-xl bg-user text-white">
+            class="px-4 py-2 rounded-xl bg-user text-white shadow-sm hover:opacity-90 transition">
             + Add
         </button>
 
@@ -53,7 +67,7 @@
                             v-if="f.showinheader"
                             class="p-3">
 
-                            {{ row[f.name] }}
+                            {{ getRowValue(row, f.name) }}
 
                         </td>
                     </template>
@@ -103,7 +117,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import DynamicForm from './DynamicForm.vue'
-import { getMetadata, getData, saveData } from '@/services/api'
+import { getMetadata, getData, saveData, getActions, executeAction } from '@/services/api'
 
 const props = defineProps<{
     entity: string
@@ -112,11 +126,25 @@ const props = defineProps<{
 
 const emit = defineEmits(['data-changed'])
 
+function getRowValue(row: any, name: string) {
+    if (!row || !name) return '';
+    const parts = name.split(/[.,]/);
+    let current = row;
+    for (const part of parts) {
+        if (current === undefined || current === null) return '';
+        current = current[part];
+    }
+    return current;
+}
+
 const metadata = ref<any>(null)
 const rows = ref<any[]>([])
 const editing = ref<any>(null)
 const isNew = ref(false)
 const originalRow = ref<any>(null)
+
+const actions = ref<any[]>([])
+const isExecutingAction = ref(false)
 
 async function loadData() {
     try {
@@ -131,8 +159,44 @@ async function loadData() {
     }
 }
 
+async function loadActions() {
+    if (!props.database || !props.entity) return;
+    try {
+        const fetchedActions = await getActions(props.database, props.entity);
+        if (Array.isArray(fetchedActions)) {
+            actions.value = fetchedActions;
+        } else {
+            actions.value = [];
+        }
+    } catch (e) {
+        console.error("Failed to load actions", e);
+        actions.value = [];
+    }
+}
+
+async function onActionClick(actionItem: any) {
+    if (isExecutingAction.value) return;
+    isExecutingAction.value = true;
+    try {
+        let finalActionUrl = actionItem.action;
+        if (props.database) {
+            finalActionUrl = finalActionUrl.replace('{database}', props.database);
+        }
+        await executeAction(finalActionUrl, actionItem.method);
+    } catch (e) {
+        console.error("Action execution failed", e);
+        alert("Failed to execute action: " + (e as Error).message);
+    } finally {
+        setTimeout(async () => {
+            await loadActions();
+            isExecutingAction.value = false;
+        }, 500);
+    }
+}
+
 onMounted(() => {
     loadData()
+    loadActions()
 })
 
 function addNew() {

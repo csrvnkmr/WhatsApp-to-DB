@@ -20,6 +20,7 @@ using WhatsAppToDB.LlmProviders;
 using WhatsAppToDB.Models;
 using WhatsAppToDB.Services.WhatsAppToDB.Plugins;
 using WhatsAppToDB.Settings;
+using WhatsAppToDB.VectorStore;
 
 namespace WhatsAppToDB.Services
 {
@@ -113,7 +114,7 @@ namespace WhatsAppToDB.Services
             var defaultFolders = tempJsonConfig.GetDefaultFolders();
 
             services.Configure<WhatsAppSettings>(config.GetSection("WhatsAppSettings"));
-            services.Configure<OpenAiSettings>(config.GetSection("OpenAiSettings"));
+            services.Configure<Settings.OpenAiSettings>(config.GetSection("OpenAiSettings"));
             services.Configure<LocalAiSettings>(config.GetSection("LocalAiSettings"));
             services.Configure<MailSettings>(config.GetSection("MailSettings"));
             services.AddDynamicExtensions(config);
@@ -135,14 +136,21 @@ namespace WhatsAppToDB.Services
             
             var dbProviderPath = defaultFolders?.DatabaseProviderFolder ?? config.GetValue<string>("DatabasePluginsFolder") ?? "Plugins/DB";
             services.RegisterDatabaseProviders(dbProviderPath);
-            
-            services.AddKernel(metadata);
+
+            services.AddSingleton<VectorSyncStatusStore>();
+            services.AddSingleton<VectorSyncJobService>();
+
+            services.AddScoped<PluginLoaderService>();
+            services.AddScoped<VectorKernelFunctionFactory>();
+            services.AddScoped<KernelTestService>();
+            services.AddKernel();
 
             services.AddHttpContextAccessor();
             services.AddSession();
 
         }
 
+        /*      
         private static void LoadDatabaseConfigs(IServiceCollection services, string configPath)
         {
             if (!File.Exists(configPath))
@@ -153,7 +161,8 @@ namespace WhatsAppToDB.Services
             List<DatabaseConfig> lstDbConfigs = 
                 System.Text.Json.JsonSerializer.Deserialize<List<DatabaseConfig>>(File.ReadAllText(configPath)) ?? new List<DatabaseConfig>();
             services.AddSingleton<List<DatabaseConfig>>(lstDbConfigs);
-        }
+        } 
+        */
 
         private static void AddSwaggerGen(IServiceCollection services)
         {
@@ -188,10 +197,10 @@ namespace WhatsAppToDB.Services
             services.AddScoped<DatabaseContextService>();
             services.AddSingleton<DatabaseRegistry>();
 
-            services.AddScoped<IDbProvider, Database.MsSqlDbProvider>();
-            services.AddScoped<IDbProvider, Database.SqliteDbProvider>();
-            services.LoadProviders<IDbProvider>(folderName, "*dbplugin.dll");            
-            services.AddScoped<Database.DbProviderFactory>();
+            services.AddSingleton<IDbProvider, Database.MsSqlDbProvider>();
+            services.AddSingleton<IDbProvider, Database.SqliteDbProvider>();
+            services.LoadProviders<IDbProvider>(folderName, "*dbplugin.dll", ServiceLifetime.Singleton);            
+            services.AddSingleton<Database.DbProviderFactory>();  // Changed from AddScoped to AddSingleton
         }        
 
         public static void RegisterLlmProviders(this IServiceCollection services, string configPath)
@@ -242,7 +251,7 @@ namespace WhatsAppToDB.Services
             }
         }
 
-        public static void AddKernel(this IServiceCollection services, PluginMetadata metadata)
+        public static void AddKernelOLD(this IServiceCollection services, PluginMetadata metadata)
         {
             services.AddScoped(sp =>
             {
@@ -396,6 +405,12 @@ namespace WhatsAppToDB.Services
 
                     Console.WriteLine($"[Kernel] Added Plugin: {plugin.Name}");
                 }
+
+                var vectorFactory = sp.GetRequiredService<VectorKernelFunctionFactory>();
+
+                var vectorPlugin = vectorFactory.CreatePlugin(database);
+
+                kernelBuilder.Plugins.Add(vectorPlugin);
 
                 return kernelBuilder.Build();
             });

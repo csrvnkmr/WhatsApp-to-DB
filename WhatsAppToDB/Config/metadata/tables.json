@@ -25,6 +25,7 @@
       "showinheader": true,
       "fulllength": true,
       "type": "array<text>",
+      "description": "List of column names in the table. multiple columns can be entered in one line with ,",
       "required": true      
     }
   ]

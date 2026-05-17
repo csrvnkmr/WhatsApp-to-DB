@@ -162,6 +162,20 @@
                     <span>💡</span> Few Shot Queries
                 </RouterLink>
 
+                <RouterLink
+                    :to="`/admin/database/${db.Name}/vectorconfigurations`"
+                    @click="emit('closeMobile')"
+                    class="submenu-item flex items-center gap-2 text-xs py-1">
+                    <span>📐</span> Vector Configurations
+                </RouterLink>
+
+                <RouterLink
+                    :to="`/admin/database/${db.Name}/vectordbsettings`"
+                    @click="emit('closeMobile')"
+                    class="submenu-item flex items-center gap-2 text-xs py-1">
+                    <span>⚙️</span> Vector DB Settings
+                </RouterLink>
+
             </div>
 
         </div>

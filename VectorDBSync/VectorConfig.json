@@ -1,31 +1,46 @@
 ﻿{
   "SyncCollections": [
     {
-      "CollectionName": "OCRD",
+      "CollectionName": "OCRD",      
       "SyncSql": "SELECT CardCode as Id, CardName as Content, CardType FROM OCRD WHERE UpdateDate >= coalesce((select convert(date, LastSyncTime) from Vector_SyncTracker where CollectionName='OCRD'), '19990101')",
+      "TableName": "OCRD",
+      "KeyField": "CardCode",
+      "ContentField": "CardName",
       "MetadataFields": [ "CardType" ]
     },
     {
       "CollectionName": "FEWSHOTQUERIES",
       "SyncSql": "SELECT Id, QueryDescription as Content, QueryText FROM FewShotQueries ",
+      "TableName": "FewShotQueries",
+      "KeyField": "Id",
+      "ContentField": "QueryDescription",
       "MetadataFields": [ "QueryText" ],
       "DeleteAndCreate": true
     },
     {
       "CollectionName": "OSLP",
       "SyncSql": "SELECT SlpCode Id, SlpName as Content FROM OSLP ",
+      "TableName": "OSLP",
+      "KeyField": "SlpCode",
+      "ContentField": "SlpName",
       "MetadataFields": [],
       "DeleteAndCreate": true
     },
     {
       "CollectionName": "OITB",
       "SyncSql": "SELECT ItmsGrpCod Id, ItmsGrpNam as Content FROM OITB ",
+      "TableName": "OITB",
+      "KeyField": "ItmsGrpCod",
+      "ContentField": "ItmsGrpNam",
       "MetadataFields": [],
       "DeleteAndCreate": true
     },
     {
       "CollectionName": "OITM",
       "SyncSql": "SELECT ItemCode as Id, ItemName as Content FROM OITM WHERE UpdateDate >= coalesce((select convert(date, LastSyncTime) from Vector_SyncTracker where CollectionName='OITM'), '19990101')",
+      "TableName": "OITM",
+      "KeyField": "ItemCode",
+      "ContentField": "ItemName",
       "MetadataFields": []
     }
   ]

@@ -130,7 +130,25 @@ namespace WhatsAppToDB.Services
                             history,
                             model);
                     }
-
+                    if (!string.IsNullOrEmpty(aiContent)    )
+                    {
+                        var parsedResponse = ParsedAiResponse.ParseAiResponse(aiContent);
+                        if (parsedResponse.ChartConfig != null && parsedResponse.ChartData != null)
+                        {
+                            // If the response contains chart config and data, serialize them and include in the message
+                            var chartConfigJson = System.Text.Json.JsonSerializer.Serialize(parsedResponse.ChartConfig);
+                            var chartDataJson = System.Text.Json.JsonSerializer.Serialize(parsedResponse.ChartData);
+                            var finalContent = new {
+                                analysis_text = parsedResponse.AnalysisText, // Use the analysis text as the main content
+                                chart_config = chartConfigJson,
+                                chart_data = chartDataJson
+                            };                            
+                            // aiContent = parsedResponse.AnalysisText; // Use the analysis text as the main content
+                            // aiContent += $"\n\n[CHART_CONFIG]{chartConfigJson}[/CHART_CONFIG]";
+                            // aiContent += $"\n\n[CHART_DATA]{chartDataJson}[/CHART_DATA]";
+                            aiContent = System.Text.Json.JsonSerializer.Serialize(finalContent); // Serialize the entire content as JSON
+                        }
+                    }
                     //history.Add(aiResponse);
                     history.AddAssistantMessage(aiContent);
                     var sql = ctx.LastExecutedSql;

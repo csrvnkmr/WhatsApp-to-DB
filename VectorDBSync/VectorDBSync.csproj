@@ -24,6 +24,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\WhatsAppToDB.Abstractions\WhatsAppToDB.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="appsettings.example.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

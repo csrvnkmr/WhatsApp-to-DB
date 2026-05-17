@@ -7,11 +7,12 @@
   "fields": [
     {
       "name": "LlmProviderFolder",
-      "label": "Llm Provider Folder",
+      "label": "Llm Provider Plugins Folder",
       "type": "text",
       "showinheader": true,
       "fulllength":true,
-      "required": false
+      "required": false,
+      "description": "Default folder path for LLM provider plugins. This is where the application will look for plugin assemblies (DLL files) that implement LLM providers. Ensure this folder exists and contains the necessary plugin files for the LLM providers you intend to use."
     },
     {
       "name": "DatabaseProviderFolder",
@@ -19,7 +20,8 @@
       "showinheader": true,
       "type": "text",
       "fulllength":true,
-      "required": false
+      "required": false,
+      "description": "Default folder path for database provider plugins. This is where the application will look for plugin assemblies (DLL files) that implement database providers. Ensure this folder exists and contains the necessary plugin files for the database providers you intend to use."
     },
     {
       "name": "ChatHistoryFolder",
@@ -27,7 +29,8 @@
       "showinheader": true,
       "type": "text",
       "fulllength":true,
-      "required": true
+      "required": true,
+      "description": "Folder path for storing chat history. This is where the application will save the conversation logs and history data. Ensure this folder exists and is writable by the application to allow proper storage of chat history."
     }
   ]
 }

@@ -22,7 +22,9 @@
       "name": "Models",
       "label": "Models",
       "showinheader": true,
-      "type": "array<text>"
+      "fulllength": true,
+      "type": "array<text>",
+      "description": "List of models for the LLM provider that can be used. Each model should be specified by its name or identifier as recognized by the provider."
     }
   ]
 }

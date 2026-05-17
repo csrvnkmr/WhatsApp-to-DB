@@ -7,5 +7,7 @@ namespace WhatsAppToDB.Settings
         public string LlmProviderFolder { get; set; }
 
         public string ChatHistoryFolder { get; set; }
+
+        public string VectorDbFolder => Path.Combine(ChatHistoryFolder, "vector_db");
     }
 }

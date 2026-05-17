@@ -30,7 +30,7 @@ namespace WhatsAppToDB.LlmProviders
         }
         public void Register(IKernelBuilder builder, IServiceProvider sp, string model)
         {
-            var settings = sp.GetRequiredService<IOptions<OpenAiSettings>>().Value;
+            var settings = sp.GetRequiredService<IOptions<Settings.OpenAiSettings>>().Value;
             Console.WriteLine($"Registering {Name} model {model}");
             builder.AddOpenAIChatCompletion(
                 model,

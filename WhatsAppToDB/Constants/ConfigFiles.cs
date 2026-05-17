@@ -40,6 +40,13 @@
         public const string Plugins =
             "plugins.json";
 
+        public const string VectordbSettings =
+            "vectordbsettings.json";
+        
+        public const string VectorConfigurations =
+            "vectorconfigurations.json";
+
+
         public const string Extensions =
             "extensions.json";
 

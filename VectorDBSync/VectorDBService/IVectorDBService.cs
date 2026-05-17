@@ -11,6 +11,7 @@ namespace VectorDBSync.VectorDBService
         Task<List<ReadOnlyMemory<float>>> GetVectors(List<string> texts);
 
         Task Delete(string collectionName);
+        Task Delete(string collectionName, string id);
 
         Task Add(string collectionName, 
             List<string> ids, List<string>? documents, List<Dictionary<string, object>>? metadatas);
@@ -19,5 +20,11 @@ namespace VectorDBSync.VectorDBService
                 string queryText,
                 int limit = 5,
                 IDictionary<string, object>? filter = null);
+        Task AfterCollectionSyncCompletedAsync(
+        string collectionName,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.CompletedTask;
+        }
     }
 }

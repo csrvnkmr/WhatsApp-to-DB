@@ -10,6 +10,8 @@ using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using WhatsAppToDB.Abstractions;
+using WhatsAppToDB.Data;
 
 namespace VectorDBSync
 {
@@ -39,9 +41,9 @@ namespace VectorDBSync
             this.connectionString = connectionString;
         }        
 
-        public async Task SyncAllCollections(List<VectorSyncConfig> configs)
+        public async Task SyncAllCollections(List<VectorSyncConfig> configs, IDbProvider dbProvider)
         {
-            using IDbConnection db = new Microsoft.Data.SqlClient.SqlConnection(connectionString);
+            using IDbConnection db = dbProvider.GetConnection(connectionString);
 
             foreach (var config in configs)
             {
@@ -240,32 +242,12 @@ namespace VectorDBSync
         }      
 
     }
-    public class VectorSyncRoot
-    {
-        public List<VectorSyncConfig> SyncCollections { get; set; } = new();
-    }
 
-    public class VectorSyncConfig
-    {
-        public string CollectionName { get; set; }
-        public string SyncSql { get; set; }
-        public string UpdateTrackerSql { get; set; }
-        public List<string> MetadataFields { get; set; }
-        public bool DeleteAndCreate { get; set; } = false;
-    }
 
-    public class SearchResult
-    {
-        public string Id { get; set; }
-        public string Document { get; set; }
-        public float? Distance { get; set; } // Lower is better (more similar)
-        public Dictionary<string, object> Metadata { get; set; }
-    }
 
-    public class VectorRecord
-    {
-        public string Id { get; set; }        // SAP ItemCode or CardCode
-        public string Content { get; set; }   // Text for embedding
-        public Dictionary<string, object> Metadata { get; set; }
-    }
+
+
+
+
+
 }

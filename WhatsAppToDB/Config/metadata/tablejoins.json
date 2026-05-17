@@ -19,7 +19,8 @@
       "type": "array<text>",
       "showinheader": true,
       "fulllength": true,
-      "required": true
+      "required": true,
+      "description": "List of join conditions between tables. Each condition should specify the tables and fields involved in the join (e.g., 'TableA.Field1 = TableB.Field2')."
     }
   ]
 }

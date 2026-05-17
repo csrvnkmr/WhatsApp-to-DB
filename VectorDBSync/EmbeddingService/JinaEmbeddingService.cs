@@ -3,6 +3,7 @@ using ElBruno.LocalEmbeddings;
 using ElBruno.LocalEmbeddings.Options;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
+using WhatsAppToDB.Abstractions;
 
 namespace VectorDBSync.EmbeddingService
 {
@@ -47,7 +48,7 @@ namespace VectorDBSync.EmbeddingService
         ///             to stay with your existing local model (but then use
         ///             HuggingFace API for GetVectors instead — see note below).
         /// </param>
-        public JinaEmbeddingService(Settings settings)
+        public JinaEmbeddingService(VectorDBSettings settings)
         {
             // ── HTTP client for Jina API ──
             _http = new HttpClient { Timeout = TimeSpan.FromSeconds(60) };

@@ -35,6 +35,7 @@ namespace WhatsAppToDB.Services
                 path.StartsWith("/webhook") ||
                 path == "/login" ||
                 path.StartsWith("/css") ||
+                path.StartsWith("/debug") ||
                 path.StartsWith("/js")
             )
             {

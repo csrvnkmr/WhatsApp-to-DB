@@ -46,7 +46,8 @@
       "type": "text",
       "fulllength": true,
       "showinheader": false,
-      "required": false
+      "required": false,
+      "description": "Optional connection string for database access for this role. "
     }
   ]
 }

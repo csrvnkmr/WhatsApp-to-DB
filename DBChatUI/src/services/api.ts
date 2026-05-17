@@ -116,6 +116,38 @@ export async function saveData(entity: string, data: any, database?: string) {
   return await res.json();
 }
 
+export async function getActions(database: string, entity: string) {
+  const url = `${BASE_URL}/admin/actions/${database}/${entity}`;
+  const res = await fetch(url, {
+    method: 'GET',
+    credentials: 'include',
+    headers: authHeader()
+  });
+  if (!res.ok) {
+    throw new Error('Failed to fetch actions');
+  }
+  return await res.json();
+}
+
+export async function executeAction(actionUrl: string, method: string) {
+  const url = actionUrl.startsWith('http') ? actionUrl : `${BASE_URL}/${actionUrl.replace(/^\//, '')}`;
+  const res = await fetch(url, {
+    method: method || 'GET',
+    credentials: 'include',
+    headers: authHeader()
+  });
+  if (!res.ok) {
+    throw new Error('Action failed');
+  }
+  // Try to parse json, if empty or non-json return text
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    return text;
+  }
+}
+
 // ================================================
 // New Chat, Sidebar, Bookmark & Configuration APIs
 // ================================================

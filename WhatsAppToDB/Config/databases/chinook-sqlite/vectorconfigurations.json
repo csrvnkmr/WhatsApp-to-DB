@@ -1,0 +1,50 @@
+[
+  {
+    "CollectionName": "VectorArtist",
+    "KeyField": "ArtistId",
+    "TableName": "Artist",
+    "ContentField": "Name"
+  },
+  {
+    "CollectionName": "VectorCustomer",
+    "TableName": "Customer",
+    "KeyField": "CustomerId",
+    "ContentField": "FirstName || \u0027 \u0027 || LastName",
+    "MetadataFields": [
+      "Company"
+    ]
+  },
+  {
+    "CollectionName": "VectorGenre",
+    "TableName": "Genre",
+    "KeyField": "GenreId",
+    "ContentField": "Name"
+  },
+  {
+    "CollectionName": "VectorPlaylist",
+    "TableName": "Playlist",
+    "KeyField": "PlaylistId",
+    "ContentField": "Name"
+  },
+  {
+    "CollectionName": "VectorAlbum",
+    "TableName": "Album",
+    "KeyField": "AlbumId",
+    "ContentField": "Title",
+    "MetadataFields": [
+      "ArtistId"
+    ]
+  },
+  {
+    "CollectionName": "VectorTrack",
+    "TableName": "Track",
+    "KeyField": "TrackId",
+    "ContentField": "Name"
+  },
+  {
+    "CollectionName": "VectorEmployee",
+    "TableName": "Employee",
+    "KeyField": "EmployeeId",
+    "ContentField": "FirstName || \u0027 \u0027 || LastName"
+  }
+]

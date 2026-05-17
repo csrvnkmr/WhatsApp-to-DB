@@ -31,7 +31,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.5" />
     <PackageReference Include="Microsoft.Extensions.VectorData.Abstractions" Version="10.1.0" />
     <PackageReference Include="Microsoft.Graph" Version="5.103.0" />
-    <PackageReference Include="Microsoft.ML.Tokenizers" Version="1.0.0" />
+    <PackageReference Include="Microsoft.ML.Tokenizers" Version="2.0.0" />
     <PackageReference Include="Microsoft.OpenApi" Version="2.4.1" />
     
     <PackageReference Include="Microsoft.SemanticKernel" Version="1.74.0" />
@@ -48,6 +48,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\WhatsAppToDB.Abstractions\WhatsAppToDB.Abstractions.csproj" />
+    <ProjectReference Include="..\VectorDBSync\VectorDBSync.csproj" />
   </ItemGroup>
 
   <ItemGroup>

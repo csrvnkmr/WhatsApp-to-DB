@@ -1,22 +1,30 @@
 ﻿using Microsoft.Extensions.Configuration;
 using System.IO;
 using System.Text.Json;
+using WhatsAppToDB.Abstractions;
+using WhatsAppToDB.Data;
 using VectorDBSync;
-////var vss = new VectorDBSync.ChromaSyncService("", "", "");
-//IConfiguration config = new ConfigurationBuilder()
-//    .SetBasePath(Directory.GetCurrentDirectory())
-//    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-//    .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production"}.json", optional: true)    
-//    .Build();
+
+// Create a simple SQL Server DB provider
+IDbProvider dbProvider = new SqlServerDbProvider();
 
 var json = await File.ReadAllTextAsync("vectorConfig.json");
-var vectorConfigs = JsonSerializer.Deserialize<VectorSyncRoot>(json);
+var vectorConfigs = JsonSerializer.Deserialize<VectorSyncRoot>(json, new JsonSerializerOptions
+{
+    PropertyNameCaseInsensitive = true
+});
 
-var settings = Settings.LoadFromFile("appsettings.json");
-ISyncService vss = new VectorSyncService(settings);
+var settingsJson = await File.ReadAllTextAsync("appsettings.json");
+var settings = JsonSerializer.Deserialize<VectorDBSettings>(settingsJson, new JsonSerializerOptions
+{
+    PropertyNameCaseInsensitive = true
+}) ?? throw new JsonException("Failed to deserialize Vector DB settings from appsettings.json.");
 
-await vss.SyncAllCollections(vectorConfigs.SyncCollections);
-await TestSearchB1(vss);
+var sourceConnectionString = settings.DatabaseSettings.ConnectionString ?? string.Empty;
+ISyncService vss = new VectorSyncService(settings, sourceConnectionString);
+
+await vss.SyncAllCollections(vectorConfigs.SyncCollections, dbProvider);
+await TestSearchB1_2(vss);
 
 Console.WriteLine("Press Enter to close");
 Console.ReadLine();
@@ -54,6 +62,15 @@ async static Task TestSearchB1(ISyncService vss)
     await TestSearchCollection(vss, "OITB", "JB Printer");
     await TestSearchCollection(vss, "OSLP", "Bhaskar Lakshman");
     await TestSearchCollection(vss, "FEWSHOTQUERIES", "Itemgroupwise sales");
+}
+
+async static Task TestSearchB1_2(ISyncService vss)
+{
+    await TestSearchCollection(vss, "OCRD", "SG auto parts");
+    await TestSearchCollection(vss, "OITM", "Socket and Wire");
+    await TestSearchCollection(vss, "OITB", "Japanes vehicles");
+    await TestSearchCollection(vss, "OSLP", "kasthuri");
+    await TestSearchCollection(vss, "FEWSHOTQUERIES", "Customer Ledger");
 }
 
 

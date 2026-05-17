@@ -1,0 +1,19 @@
+[
+  {
+    "CacheFolder": "C:\\Development\\AiAgents\\SemanticKernel\\ChatData\\chinook-sqlite",
+    "EmbeddingServiceSettings": {
+      "Type": "jina"
+    },
+    "VectorProviderSettings": {
+      "Type": "sqlite"
+    },
+    "SqliteSettings": {
+      "VectorDBFolder": "C:\\Development\\AiAgents\\SemanticKernel\\ChatData\\chinook-sqlite"
+    },
+    "JinaAiSettings": {
+      "ApiModel": "jina-embeddings-v3",
+      "URL": "https://api.jina.ai/v1/embeddings",
+      "ApiKey": "jina_8e969d4237c44a0993aff2f85eb03e03xF_-9r79RR33yjaUsqtyOrUKD--0"
+    }
+  }
+]

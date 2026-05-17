@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using WhatsAppToDB.Abstractions;
 using VectorDBSync.EmbeddingService;
 
 namespace VectorDBSync.VectorDBService
@@ -19,15 +20,13 @@ namespace VectorDBSync.VectorDBService
         private readonly ChromaClient _adminClient;
         private readonly IEmbeddingService _embeddingService;
 
-        public ChromaDBService(Settings settings)
-        {            
+        public ChromaDBService(VectorDBSettings settings)
+        {
             var chromaUrl = settings.DatabaseSettings.ChromaUrl;
-            //var connectionString = config["DatabaseSettings:ConnectionString"];
 
             _config = new ChromaConfigurationOptions(chromaUrl);
             _httpClient = new HttpClient();
             _adminClient = new ChromaClient(_config, _httpClient);
-            //_embeddingClient = new OpenAIClient(apiKey).GetEmbeddingClient("text-embedding-3-small");
             _embeddingService = EmbeddingServiceFactory.Create(settings);
         }
 
@@ -48,6 +47,13 @@ namespace VectorDBSync.VectorDBService
         public async Task Delete(string collectionName)
         {
             await _adminClient.DeleteCollection(collectionName);
+        }
+
+        public async Task Delete(string collectionName, string id)
+        {
+            var collection = await _adminClient.GetOrCreateCollection(collectionName);
+            var collectionClient = new ChromaCollectionClient(collection, _config, _httpClient);
+            await collectionClient.Delete(ids: new List<string> { id });
         }
 
         public async Task<List<ReadOnlyMemory<float>>> GetVectors(List<string> texts)

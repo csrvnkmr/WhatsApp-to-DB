@@ -152,6 +152,11 @@
         </div>
     </div>
 
+    <!-- DESCRIPTION / HINT -->
+    <div v-if="field.description" class="text-xs opacity-50 mt-1">
+        {{ field.description }}
+    </div>
+
 </div>
 
 </template>
