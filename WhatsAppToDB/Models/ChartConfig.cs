@@ -4,6 +4,7 @@ public class ChartConfig
     public string? XKey { get; set; }
     public string? YKey { get; set; }
     public string? Title { get; set; }
+    public string? SeriesKey { get; set; } // new — for multi-series charts
 }
 
 public class QueryResult

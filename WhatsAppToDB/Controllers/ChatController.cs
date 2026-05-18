@@ -1,4 +1,4 @@
-﻿// ==========================================================
+// ==========================================================
 // Controllers/ChatController.cs
 // ==========================================================
 
@@ -246,6 +246,23 @@ namespace WhatsAppToDB.Controllers
 
                 mail.Body =
                     request.Body;
+
+                mail.IsBodyHtml = true;
+
+                if (!string.IsNullOrWhiteSpace(request.ChartImage))
+                {
+                    var base64Data = request.ChartImage;
+                    if (base64Data.Contains(","))
+                        base64Data = base64Data.Substring(base64Data.IndexOf(",") + 1);
+
+                    var imageBytes = Convert.FromBase64String(base64Data);
+                    var imageStream = new MemoryStream(imageBytes);
+
+                    var attachment = new System.Net.Mail.Attachment(imageStream, "chart.png", "image/png");
+                    attachment.ContentId = "chartimage";
+                    attachment.ContentDisposition.Inline = true;
+                    mail.Attachments.Add(attachment);
+                }
 
                 using var client =
                     new SmtpClient(

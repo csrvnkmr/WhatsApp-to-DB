@@ -10,7 +10,8 @@
       "label": "User name",
       "type": "text",
       "showinheader": true,
-      "required": true
+      "required": true,
+      "unique":true
     },
     {
       "name": "Password",
@@ -49,12 +50,23 @@
       "required": false
     },
     {
+      "name": "WhatsAppNumber",
+      "label": "WhatsApp Number",
+      "showinheader": true,
+      "type": "text",
+      "required": false,
+      "unique":true
+    },
+    {
       "name": "DefaultDatabase",
       "label": "Default Database",
       "showinheader": true,
       "type": "text",
       "required": false,
-      "references": "databases.Name"
+      "references": "databases.Name",
+       "requiredIf": {
+          "WhatsAppNumber": {"op": "not empty"}
+        }
     }
   ]
 }

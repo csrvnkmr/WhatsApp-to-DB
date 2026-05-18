@@ -130,6 +130,7 @@ namespace WhatsAppToDB.Services
                             history,
                             model);
                     }
+                    Console.WriteLine($"[QUERY] [{identity.WhatsAppNumber}] AI Response received for {messageText}");
                     if (!string.IsNullOrEmpty(aiContent)    )
                     {
                         var parsedResponse = ParsedAiResponse.ParseAiResponse(aiContent);

@@ -37,6 +37,7 @@ public static ParsedAiResponse ParseAiResponse(string raw)
             Title     = root.TryGetProperty("title", out var t) ? t.GetString() : null,
             XKey      = root.TryGetProperty("xKey",  out var x) ? x.GetString() : null,
             YKey      = root.TryGetProperty("yKey",  out var y) ? y.GetString() : null,
+            SeriesKey = root.TryGetProperty("seriesKey", out var sk) ? sk.GetString() : null,
         };
 
         if (root.TryGetProperty("data", out var dataEl) && dataEl.ValueKind == JsonValueKind.Array)

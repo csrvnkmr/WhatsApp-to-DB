@@ -286,7 +286,7 @@ UPDATED:
                 class="flex justify-start">
 
                 <div class="bg-panel px-4 py-3 rounded-2xl max-w-[90%] md:max-w-[75%] lg:max-w-[75%] whitespace-pre-wrap break-words">
-                    {{ msg.messageText }}
+                    {{ parseMessage(msg).text }}
 
 
                     <!-- Footer -->
@@ -328,7 +328,7 @@ UPDATED:
                         </template>
 
                         <!-- CHART -->
-                        <template v-if="msg.canShowChart">
+                        <template v-if="msg.canShowChart || parseMessage(msg).canShowChart">
                             <span class="mx-2 text-gray-300">·</span>
 
                             <a
@@ -477,10 +477,28 @@ Actions moved to bottom as premium links
 
         <!-- BODY -->
         <div
-            class="p-4 overflow-auto flex-1">
+            class="p-0 overflow-auto flex-1 relative">
 
-            <pre
-                class="text-sm whitespace-pre-wrap break-words font-mono">{{ modalContent }}</pre>
+            <template v-if="modalType === 'data' && modalData && modalData.length">
+                <table class="w-full text-sm text-left border-collapse">
+                    <thead class="bg-panel border-b sticky top-0 shadow-sm z-10">
+                        <tr>
+                            <th v-for="key in Object.keys(modalData[0])" :key="key" class="p-3 font-semibold whitespace-nowrap">
+                                {{ key }}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="(row, idx) in modalData" :key="idx" class="border-b border-soft/50 hover:bg-hover">
+                            <td v-for="key in Object.keys(modalData[0])" :key="key" class="p-3">
+                                {{ row[key] }}
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </template>
+            <pre v-else
+                class="p-4 text-sm whitespace-pre-wrap break-words font-mono">{{ modalContent }}</pre>
 
         </div>
 
@@ -544,7 +562,7 @@ Place below existing SQL/Data modal
 
 <div
     v-if="emailModalVisible"
-    class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+    class="fixed inset-0 bg-black/40 z-[60] flex items-center justify-center p-4">
 
     <div
         class="bg-base rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
@@ -697,6 +715,100 @@ Place below existing SQL/Data modal
 
 </div>
 
+<!-- =============================================
+CHART MODAL
+============================================= -->
+
+<div
+    v-if="chartModalVisible"
+    class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+
+    <div
+        ref="chartModalRef"
+        :class="['bg-base shadow-xl flex flex-col overflow-hidden transition-all duration-200', chartIsMaximized ? 'fixed inset-0 w-full h-full rounded-none' : 'w-full max-w-5xl max-h-[90vh] rounded-2xl']">
+
+        <!-- HEADER -->
+        <div
+            class="p-4 border-b flex items-center justify-between">
+
+            <div class="font-semibold text-lg">
+                {{ chartConfig?.Title || 'Chart View' }}
+            </div>
+
+            <button
+                @click="chartModalVisible = false"
+                class="text-gray-500 hover:text-black text-xl">
+                ×
+            </button>
+
+        </div>
+
+        <!-- BODY -->
+        <div class="p-4 overflow-auto flex-1 min-h-[50vh] bg-base">
+
+            <AiChartView 
+                ref="aiChartRef"
+                :chartConfig="chartConfig" 
+                :chartData="chartData" 
+            />
+
+        </div>
+
+        <!-- FOOTER -->
+        <div
+            class="p-4 border-t flex flex-wrap items-center justify-between gap-y-2 bg-base">
+
+            <!-- LEFT LINKS -->
+            <div class="flex flex-wrap items-center text-sm text-gray-500 gap-y-1">
+                <a
+                    href="#"
+                    @click.prevent="downloadChartImage"
+                    class="text-blue-600 hover:text-blue-700 hover:underline">
+                    Download Image
+                </a>
+                <span class="mx-2 text-gray-300">·</span>
+                <a
+                    href="#"
+                    @click.prevent="emailChart"
+                    class="text-blue-600 hover:text-blue-700 hover:underline">
+                    Email
+                </a>
+                <span class="mx-2 text-gray-300">·</span>
+                <a
+                    href="#"
+                    @click.prevent="toggleMaximizeChart"
+                    class="text-blue-600 hover:text-blue-700 hover:underline">
+                    {{ chartIsMaximized ? 'Restore' : 'Maximize' }}
+                </a>
+                <span class="mx-2 text-gray-300">·</span>
+                <a
+                    href="#"
+                    @click.prevent="requestFullscreenChart"
+                    class="text-blue-600 hover:text-blue-700 hover:underline">
+                    Fullscreen
+                </a>
+                <span class="mx-2 text-gray-300">·</span>
+                <a
+                    href="#"
+                    @click.prevent="openChartInNewTab"
+                    class="text-blue-600 hover:text-blue-700 hover:underline">
+                    Open in New Tab
+                </a>
+            </div>
+
+            <!-- RIGHT BUTTON -->
+            <button
+                @click="chartModalVisible = false"
+                class="px-4 py-2 rounded-xl bg-user text-white">
+                Close
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
 </template>
 
 <script setup lang="ts">
@@ -705,6 +817,7 @@ import { useChatStore } from "@/stores/chat";
 import { useThemeStore } from "@/stores/theme";
 import { useMessageModals } from "@/composables/useMessageModals";
 import { useEmailResult } from "@/composables/useEmailResult";
+import AiChartView from "./AiChartView.vue";
 import {
     getDatabasesList,
     selectActiveDatabase,
@@ -727,12 +840,112 @@ const {
     modalTitle,
     modalContent,
     modalType,
+    modalData,
+    chartModalVisible,
+    chartConfig,
+    chartData,
+    activeChartMsg,
     showSql,
     showData,
+    showChart,
     copyContent,
     downloadContent,
     downloadExcel
 } = useMessageModals();
+
+const aiChartRef = ref<any>(null);
+const chartIsMaximized = ref(false);
+const chartModalRef = ref<HTMLElement | null>(null);
+
+function parseMessage(msg: any) {
+    if (msg._parsed) return msg._parsed;
+    msg._parsed = { isJson: false, text: msg.messageText, canShowChart: false };
+    if (typeof msg.messageText === 'string' && msg.messageText.trim().startsWith('{')) {
+        try {
+            const parsed = JSON.parse(msg.messageText);
+            if (parsed.analysis_text && parsed.chart_config && parsed.chart_data) {
+                const config = typeof parsed.chart_config === 'string' ? JSON.parse(parsed.chart_config) : parsed.chart_config;
+                if (config && config.ChartType && config.ChartType.toLowerCase() !== 'none') {
+                    msg._parsed.isJson = true;
+                    msg._parsed.text = parsed.analysis_text;
+                    msg._parsed.chartConfig = config;
+                    msg._parsed.chartData = typeof parsed.chart_data === 'string' ? JSON.parse(parsed.chart_data) : parsed.chart_data;
+                    msg._parsed.canShowChart = true;
+                }
+            }
+        } catch (e) {
+            // fallback to original text if JSON parse fails
+        }
+    }
+    return msg._parsed;
+}
+
+function downloadChartImage() {
+    if (!aiChartRef.value) return;
+    const url = aiChartRef.value.getDataURL();
+    if (!url) {
+        alert("Cannot download image for this chart type.");
+        return;
+    }
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "chart.png";
+    a.click();
+}
+
+function emailChart() {
+    if (!aiChartRef.value || !activeChartMsg.value) return;
+    const url = aiChartRef.value.getDataURL();
+    if (url) {
+        emailResult(activeChartMsg.value, url);
+    } else {
+        emailResult(activeChartMsg.value);
+    }
+}
+
+function toggleMaximizeChart() {
+    chartIsMaximized.value = !chartIsMaximized.value;
+}
+
+async function requestFullscreenChart() {
+    if (!document.fullscreenElement && chartModalRef.value) {
+        await chartModalRef.value.requestFullscreen().catch(err => {
+            alert(`Error attempting to enable fullscreen mode: ${err.message}`);
+        });
+    } else if (document.fullscreenElement) {
+        await document.exitFullscreen();
+    }
+}
+
+function openChartInNewTab() {
+    if (!aiChartRef.value || !aiChartRef.value.getOption) return;
+    const option = aiChartRef.value.getOption();
+    if (!option) return;
+    
+    const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8" />
+        <title>${chartConfig.value?.Title || 'Chart Viewer'}</title>
+        <scr` + `ipt src="https://cdn.jsdelivr.net/npm/echarts@5.6.0/dist/echarts.min.js"></scr` + `ipt>
+        <style>body, html { width: 100%; height: 100%; margin: 0; padding: 0; background: #fff; } #chart { width: 100%; height: 100%; }</style>
+    </head>
+    <body>
+        <div id="chart"></div>
+        <scr` + `ipt>
+            var chart = echarts.init(document.getElementById('chart'));
+            chart.setOption(${JSON.stringify(option)});
+            window.addEventListener('resize', function() { chart.resize(); });
+        </scr` + `ipt>
+    </body>
+    </html>
+    `;
+    
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+}
 
 // Composable for email result popups
 const {
@@ -950,10 +1163,6 @@ async function sendQuestion() {
 function isUser(role: string) {
     const r = (role || "").toLowerCase().trim();
     return r === "user";
-}
-
-function showChart(msg: any) {
-    alert(`Load Chart for Message Id: ${msg.id}`);
 }
 
 const themeBtnClass = (name: string) => {

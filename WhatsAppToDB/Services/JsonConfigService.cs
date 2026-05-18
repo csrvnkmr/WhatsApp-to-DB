@@ -244,6 +244,18 @@ namespace WhatsAppToDB.Services
         {
             return LoadAndDecryptGlobal<List<LoginUser>>(Constants.ConfigFiles.Users);
         }
+        public LoginUser? GetUser(string userName)
+        {
+            var users = LoadAndDecryptGlobal<List<LoginUser>>(Constants.ConfigFiles.Users);            
+            return users.FirstOrDefault(u => u.Username.Equals(userName, StringComparison.OrdinalIgnoreCase));
+        }
+        public LoginUser? GetUserByWhatsAppNumber(string whatsAppNumber)
+        {
+            var users = LoadAndDecryptGlobal<List<LoginUser>>(Constants.ConfigFiles.Users);            
+            return users.FirstOrDefault(
+                u => u.WhatsAppNumber.Equals(whatsAppNumber, StringComparison.OrdinalIgnoreCase));
+        }
+
         public List<DatabaseTable> GetTables(string database)
         {
             return LoadDatabaseConfigAndDecrypt<List<DatabaseTable>>(database, Constants.ConfigFiles.Tables);

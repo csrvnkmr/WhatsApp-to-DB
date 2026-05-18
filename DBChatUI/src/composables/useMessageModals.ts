@@ -6,12 +6,19 @@ export function useMessageModals() {
   const modalTitle = ref("");
   const modalContent = ref("");
   const modalType = ref(""); // "sql" | "data"
+  const modalData = ref<any[] | null>(null);
+
+  const chartModalVisible = ref(false);
+  const chartConfig = ref<any>(null);
+  const chartData = ref<any[]>([]);
+  const activeChartMsg = ref<any>(null);
 
   async function showSql(msg: any) {
     modalType.value = "sql";
     try {
       modalTitle.value = "SQL";
       modalContent.value = "Loading...";
+      modalData.value = null;
       modalVisible.value = true;
 
       const json = await getMessageSql(msg.id);
@@ -27,13 +34,24 @@ export function useMessageModals() {
     try {
       modalTitle.value = "Data";
       modalContent.value = "Loading...";
+      modalData.value = null;
       modalVisible.value = true;
 
       const json = await getMessageData(msg.id);
+      modalData.value = json;
       modalContent.value = JSON.stringify(json, null, 2);
     } catch (err) {
       console.error("Error loading Data modal:", err);
       modalContent.value = "Unable to load Data.";
+    }
+  }
+
+  function showChart(msg: any) {
+    if (msg._parsed && msg._parsed.chartConfig) {
+      activeChartMsg.value = msg;
+      chartConfig.value = msg._parsed.chartConfig;
+      chartData.value = msg._parsed.chartData;
+      chartModalVisible.value = true;
     }
   }
 
@@ -90,8 +108,14 @@ export function useMessageModals() {
     modalTitle,
     modalContent,
     modalType,
+    modalData,
+    chartModalVisible,
+    chartConfig,
+    chartData,
+    activeChartMsg,
     showSql,
     showData,
+    showChart,
     copyContent,
     downloadContent,
     downloadExcel,

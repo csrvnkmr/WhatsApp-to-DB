@@ -1,16 +1,17 @@
 [
   {
     "Username": "csrvn",
-    "Password": "ENC:ka4ob4EbLioJIkWhnDVzwjUPspEf6Z6c7sq5N5i91rQ=",
+    "Password": "ENC:gp\u002BA8r6NrKJYBjI0e\u002BzBZa6vq7ApuGiHhrWp36M3UEA=",
     "Fullname": "C Saravana Kumar",
     "Role": "SalesPerson",
     "InternalUserId": "277",
     "SessionContextKey": "SalesPersonID",
-    "DefaultDatabase": "chinook-sqlite"
+    "DefaultDatabase": "chinook-sqlite",
+    "WhatsAppNumber": "234434"
   },
   {
     "Username": "admin",
-    "Password": "ENC:Vy0\u002BlEiG8fvIPBLU5aMPmJQLbaX1ZjDqWfE9b2kgw50=",
+    "Password": "ENC:BFzWFVRSfK72yB8JQuif1ziwL8JS8SfpBTNSdt1Zgms=",
     "Fullname": "Administrator",
     "Role": "Admin",
     "InternalUserId": "1",

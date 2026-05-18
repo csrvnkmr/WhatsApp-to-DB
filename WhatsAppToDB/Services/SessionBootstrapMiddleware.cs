@@ -22,7 +22,7 @@ namespace WhatsAppToDB.Services
             HttpContext context,
             IUserAuditService audit)
         {
-                var defaultSettings = _jsonConfigService.GetDefaultSettings();
+            var defaultSettings = _jsonConfigService.GetDefaultSettings();
             // Skip if not authenticated
             var userName = context.Items["UserName"]?.ToString();
             if (!string.IsNullOrWhiteSpace(userName))
@@ -30,15 +30,18 @@ namespace WhatsAppToDB.Services
 
                 var activeDb =
                     context.Session.GetString(Constants.SessionKeys.ActiveDb);
+                
 
                 // Session missing -> restore
                 if (string.IsNullOrWhiteSpace(activeDb))
                 {
+                    var loginUser = _jsonConfigService.GetUser(userName).FirstOrDefault();
+                    var defaultDb = loginUser?.DefaultDatabase ?? defaultSettings.DefaultDatabase;
                     var db =
                         await audit.GetLatestValueAsync(
                             userName,
                             AuditActions.DatabaseChanged)
-                        ?? defaultSettings.DefaultDatabase;
+                        ?? defaultDb;
 
                     var provider =
                         await audit.GetLatestValueAsync(userName, AuditActions.ProviderChanged)

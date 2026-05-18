@@ -110,6 +110,12 @@ function evaluateConditions(conditions: any) {
                 case 'not in':
                     if (Array.isArray(value) && value.includes(targetValue)) return false;
                     break;
+                case 'empty':
+                    if (targetValue !== undefined && targetValue !== null && targetValue !== '' && !(typeof targetValue === 'string' && targetValue.trim() === '')) return false;
+                    break;
+                case 'not empty':
+                    if (targetValue === undefined || targetValue === null || targetValue === '' || (typeof targetValue === 'string' && targetValue.trim() === '')) return false;
+                    break;
                 default:
                     return false;
             }

@@ -227,6 +227,23 @@ async function remove(row: any) {
 }
 
 async function save(updatedRow: any) {
+    // Validate uniqueness constraint
+    if (metadata.value?.fields) {
+        for (const field of metadata.value.fields) {
+            if (field.unique) {
+                const val = getRowValue(updatedRow, field.name);
+                if (val !== undefined && val !== null && val !== '') {
+                    // Check if any other row has this exact value
+                    const duplicate = rows.value.find(r => r !== originalRow.value && getRowValue(r, field.name) === val);
+                    if (duplicate) {
+                        alert(`The value for ${field.label || field.name} must be unique. "${val}" is already in use.`);
+                        return; // Abort save, keep form open
+                    }
+                }
+            }
+        }
+    }
+
     if (isNew.value) {
         rows.value.push(updatedRow)
     } else {

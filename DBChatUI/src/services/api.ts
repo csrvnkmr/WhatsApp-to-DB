@@ -7,6 +7,7 @@ export interface EmailPayload {
   cc: string;
   subject: string;
   body: string;
+  chartImage?: string;
 }
 
 function authHeader(extraHeaders: Record<string, string> = {}) {
@@ -236,7 +237,8 @@ export async function sendEmailResult(payload: EmailPayload) {
       to: payload.to,
       cc: payload.cc,
       subject: payload.subject,
-      body: payload.body
+      body: payload.body,
+      chartImage: payload.chartImage
     })
   });
   if (!res.ok) {

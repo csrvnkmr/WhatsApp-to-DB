@@ -10,7 +10,7 @@
         public string InternalUserId { get; set; }
         public string SessionContextKey { get; set; }
         public string DefaultDatabase { get; set; }
-        
+        public string WhatsAppNumber { get; set; }
 
     }
 

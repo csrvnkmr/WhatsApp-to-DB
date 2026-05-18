@@ -11,6 +11,7 @@ export function useEmailResult() {
   const emailCc = ref("");
   const emailSubject = ref("");
   const emailBody = ref("");
+  const emailChartImage = ref("");
   const emailMessageId = ref(0);
   const emailSending = ref(false);
 
@@ -27,8 +28,9 @@ export function useEmailResult() {
     return "InsightChat Result";
   }
 
-  function emailResult(msg: any) {
+  function emailResult(msg: any, chartImage: string = "") {
     emailMessageId.value = msg.id;
+    emailChartImage.value = chartImage;
 
     // default from
     emailFrom.value = localStorage.getItem("username") || "";
@@ -40,7 +42,19 @@ export function useEmailResult() {
     emailSubject.value = question;
 
     // default body = current answer
-    emailBody.value = msg.messageText || "";
+    let bodyText = msg.messageText || "";
+    if (msg._parsed && msg._parsed.text) {
+      bodyText = msg._parsed.text;
+    } else if (typeof bodyText === 'string' && bodyText.trim().startsWith('{')) {
+      try {
+        const parsed = JSON.parse(bodyText);
+        if (parsed.analysis_text) {
+          bodyText = parsed.analysis_text;
+        }
+      } catch (e) {}
+    }
+    
+    emailBody.value = bodyText;
     emailModalVisible.value = true;
   }
 
@@ -55,17 +69,25 @@ export function useEmailResult() {
     try {
       emailSending.value = true;
 
+      let finalBody = emailBody.value.replace(/\n/g, '<br/>');
+      if (emailChartImage.value) {
+        // Use cid: to reference the attachment sent to the backend
+        finalBody += `<br/><br/><img src="cid:chartimage" alt="Chart Image" style="max-width: 100%; height: auto;" />`;
+      }
+
       await sendEmailResult({
         messageId: emailMessageId.value,
         from: emailFrom.value,
         to: emailTo.value,
         cc: emailCc.value,
         subject: emailSubject.value,
-        body: emailBody.value,
+        body: finalBody,
+        chartImage: emailChartImage.value
       });
 
       alert("Email sent successfully.");
       emailModalVisible.value = false;
+      emailChartImage.value = "";
     } catch (err: any) {
       alert(err?.message || "Unable to send email.");
     } finally {
@@ -80,6 +102,7 @@ export function useEmailResult() {
     emailCc,
     emailSubject,
     emailBody,
+    emailChartImage,
     emailSending,
     emailResult,
     sendEmail,
