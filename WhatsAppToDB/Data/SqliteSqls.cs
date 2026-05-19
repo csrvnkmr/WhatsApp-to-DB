@@ -68,6 +68,13 @@ VALUES
 SELECT last_insert_rowid();
 ";
 
+        public const string GetWhatsAppSessionId = @"
+        SELECT Id
+        FROM ChatSession
+        WHERE UserName = @UserName
+          AND Title = @Title
+        ORDER BY Id DESC LIMIT 1 ";
+
 
         public const string GetMessageExtrasById = @"
 SELECT

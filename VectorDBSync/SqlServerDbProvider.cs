@@ -1,7 +1,7 @@
 using Microsoft.Data.SqlClient;
 using System.Data;
 using WhatsAppToDB.Abstractions;
-using WhatsAppToDB.Data;
+
 
 namespace VectorDBSync
 {

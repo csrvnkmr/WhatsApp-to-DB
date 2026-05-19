@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using WhatsAppToDB.Abstractions;
-using WhatsAppToDB.Data;
+
 
 namespace VectorDBSync
 {

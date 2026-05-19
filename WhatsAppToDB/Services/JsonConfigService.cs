@@ -251,9 +251,25 @@ namespace WhatsAppToDB.Services
         }
         public LoginUser? GetUserByWhatsAppNumber(string whatsAppNumber)
         {
-            var users = LoadAndDecryptGlobal<List<LoginUser>>(Constants.ConfigFiles.Users);            
+            var users = LoadAndDecryptGlobal<List<LoginUser>>(Constants.ConfigFiles.Users);    
+
             return users.FirstOrDefault(
-                u => u.WhatsAppNumber.Equals(whatsAppNumber, StringComparison.OrdinalIgnoreCase));
+                u => (u.WhatsAppNumber != null && 
+                (u.WhatsAppNumber.Equals(whatsAppNumber, StringComparison.OrdinalIgnoreCase)
+                || ("+" + u.WhatsAppNumber).Equals(whatsAppNumber, StringComparison.OrdinalIgnoreCase)
+                || (u.WhatsAppNumber).Equals("+" + whatsAppNumber, StringComparison.OrdinalIgnoreCase)
+                )));
+        }
+
+        public List<WhatsAppProfile>? GetWhatsAppProfiles()
+        {
+            return LoadAndDecryptGlobal<List<WhatsAppProfile>>(Constants.ConfigFiles.WhatsAppProfiles);
+        }
+
+        public WhatsAppProfile? GetWhatsAppProfile(string phoneId)
+        {
+            var profiles = LoadAndDecryptGlobal<List<WhatsAppProfile>>(Constants.ConfigFiles.WhatsAppProfiles);
+            return profiles.FirstOrDefault(p => p.PhoneId.Equals(phoneId, StringComparison.OrdinalIgnoreCase));
         }
 
         public List<DatabaseTable> GetTables(string database)

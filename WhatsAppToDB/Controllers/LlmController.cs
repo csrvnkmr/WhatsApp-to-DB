@@ -63,7 +63,7 @@ namespace WhatsAppToDB.Controllers
         {
             HttpContext.Session.SetString(Constants.SessionKeys.ActiveLlmProvider , request.Provider);
             HttpContext.Session.SetString(Constants.SessionKeys.ActiveLlmModel, request.Model);
-            var userName = HttpContext.Items["UserName"]?.ToString() ?? "";
+            var userName = HttpContext.Items[Constants.ContextItems.UserName]?.ToString() ?? "";
             await _auditService.LogAsync(userName, AuditActions.ModelChanged, $"{request.Provider}, {request.Model}");
             Console.WriteLine($"[Llm SELECT] {request.Provider}, {request.Model}");
 

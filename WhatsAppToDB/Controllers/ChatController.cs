@@ -29,18 +29,19 @@ namespace WhatsAppToDB.Controllers
         private readonly IOptions<MailSettings> _mailOptions;
         private readonly PromptExecutionSettings _promptSettings;
         private readonly IQueryService _queryService;
-
+        private readonly IIdentityContextEnricher _identityContextEnricher;
 
 
         public ChatController(
             IServiceScopeFactory scopeFactory,
             ILogger waLogger, ChatDbRepository repo, IOptions<MailSettings> mailOptions,
-            IQueryService queryService)
+            IQueryService queryService, IIdentityContextEnricher identityContextEnricher)
         {
             _scopeFactory = scopeFactory;
             _waLogger = waLogger;
             _repo = repo;
             _mailOptions = mailOptions;
+            _identityContextEnricher = identityContextEnricher;
             _promptSettings =
                 new OpenAIPromptExecutionSettings
                 {
@@ -58,7 +59,7 @@ namespace WhatsAppToDB.Controllers
             [FromBody] AskRequest request)
         {
             var userName =
-                HttpContext.Items["UserName"]?.ToString() ?? "";
+                HttpContext.Items[Constants.ContextItems.UserName]?.ToString() ?? "";
             var result =
                 UserService.ValidateUserName(userName);
 
@@ -83,6 +84,9 @@ namespace WhatsAppToDB.Controllers
 
             var identity =
                 result.identity;
+            _identityContextEnricher.EnrichFromHttpContext(
+                identity,
+                HttpContext);
 
             var response =
                 await _queryService.ExecuteQuery(
@@ -104,7 +108,7 @@ namespace WhatsAppToDB.Controllers
         public async Task<IActionResult> GetSessions()
         {
             var userName =
-                HttpContext.Items["UserName"]?.ToString() ?? "";
+                HttpContext.Items[Constants.ContextItems.UserName]?.ToString() ?? "";
             Console.WriteLine($"Getting sessions for user {userName}");
             var rows =
                 await _repo.GetSessionsAsync(userName);
@@ -133,7 +137,7 @@ namespace WhatsAppToDB.Controllers
             long messageId)
         {
             var userName =
-                HttpContext.Items["UserName"]?.ToString() ?? "";
+                HttpContext.Items[Constants.ContextItems.UserName]?.ToString() ?? "";
 
             var row =
                 await _repo.GetMessageExtrasAsync(
@@ -161,7 +165,7 @@ namespace WhatsAppToDB.Controllers
             long messageId)
         {
             var userName =
-                HttpContext.Items["UserName"]?.ToString() ?? "";
+                HttpContext.Items[Constants.ContextItems.UserName]?.ToString() ?? "";
 
             var row =
                 await _repo.GetMessageExtrasAsync(
@@ -203,7 +207,7 @@ namespace WhatsAppToDB.Controllers
             try
             {
                 var userName =
-                    HttpContext.Items["UserName"]?.ToString() ?? "";
+                    HttpContext.Items[Constants.ContextItems.UserName]?.ToString() ?? "";
 
                 var msg =
                     await _repo.GetMessageExtrasAsync(
@@ -300,7 +304,7 @@ namespace WhatsAppToDB.Controllers
         public async Task<IActionResult> ExportData(long messageId)
         {
             var userName =
-                HttpContext.Items["UserName"]?.ToString() ?? "";
+                HttpContext.Items[Constants.ContextItems.UserName]?.ToString() ?? "";
 
             var row =
                 await _repo.GetMessageExtrasAsync(
@@ -392,7 +396,7 @@ namespace WhatsAppToDB.Controllers
         public async Task<IActionResult> Search([FromQuery] string text)
         {
             var userName =
-                HttpContext.Items["UserName"]?.ToString() ?? "";
+                HttpContext.Items[Constants.ContextItems.UserName]?.ToString() ?? "";
 
             var rows =
                 await _repo.SearchMessagesAsync(userName, text);
@@ -405,7 +409,7 @@ namespace WhatsAppToDB.Controllers
         [HttpPost("sessions/filter")]
         public async Task<IActionResult> FilterSessions([FromBody] SessionFilterRequest request)
         {
-            var userName = HttpContext.Items["UserName"]?.ToString() ?? "";
+            var userName = HttpContext.Items[Constants.ContextItems.UserName]?.ToString() ?? "";
             var result =
                 await _repo.GetSessionsByDatabasesAsync(
                     userName, request.Databases);
@@ -420,7 +424,7 @@ namespace WhatsAppToDB.Controllers
         public async Task<IActionResult> GetMessagesFilter(
             long sessionId, [FromBody] SessionFilterRequest request)
         {
-            var userName = HttpContext.Items["UserName"]?.ToString() ?? "";
+            var userName = HttpContext.Items[Constants.ContextItems.UserName]?.ToString() ?? "";
             var rows =
                 await _repo.GetMessagesAsync(sessionId, request.Databases);
             return Ok(rows);

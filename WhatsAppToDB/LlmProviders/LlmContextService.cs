@@ -12,27 +12,36 @@ namespace WhatsAppToDB.LlmProviders
         private readonly LlmProviderFactory _factory;
         private readonly DefaultSettings _defaultSettings;
         private readonly IUserAuditService _userAuditService;
+        private readonly ExecutionContextService _executionContext;
 
         public LlmContextService(
             IHttpContextAccessor http,
             LlmProviderFactory factory,
             JsonConfigService jsonConfigService,
-            IUserAuditService userAuditService)
+            IUserAuditService userAuditService,
+            ExecutionContextService executionContext)
         {
             _http = http;
             _factory = factory;
             _defaultSettings = jsonConfigService.GetDefaultSettings();
             _userAuditService = userAuditService;
+            _executionContext = executionContext;
         }
 
         public string GetProviderName()
         {                
+            if (!string.IsNullOrWhiteSpace(_executionContext.LlmProvider))
+                return _executionContext.LlmProvider;
             return _http.HttpContext?.Session?.GetString(Constants.SessionKeys.ActiveLlmProvider)
                    ?? _defaultSettings.DefaultLlmProvider;
         }
 
         public string GetModel()
         {
+            
+            if (!string.IsNullOrWhiteSpace(_executionContext.LlmModel))
+                return _executionContext.LlmModel;
+
             return _http.HttpContext?.Session?.GetString(Constants.SessionKeys.ActiveLlmModel)
                    ?? _defaultSettings.DefaultLlmModel;
         }

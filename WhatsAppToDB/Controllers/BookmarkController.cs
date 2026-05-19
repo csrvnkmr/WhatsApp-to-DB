@@ -29,7 +29,7 @@ namespace WhatsAppToDB.Controllers
         public async Task<IActionResult> AddBookmark(long messageId,[FromQuery] string? text)
         {
             var userName =
-                HttpContext.Items["UserName"]?.ToString() ?? "";
+                HttpContext.Items[Constants.ContextItems.UserName]?.ToString() ?? "";
 
             if (string.IsNullOrWhiteSpace(text))
                 text = "Saved bookmark";
@@ -59,7 +59,7 @@ namespace WhatsAppToDB.Controllers
         public async Task<IActionResult> GetBookmarks()
         {
             var userName =
-                HttpContext.Items["UserName"]?.ToString() ?? "";
+                HttpContext.Items[Constants.ContextItems.UserName]?.ToString() ?? "";
 
             Console.WriteLine($"Getting bookmarks for user {userName}");
             var rows =

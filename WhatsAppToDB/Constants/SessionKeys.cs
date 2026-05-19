@@ -10,5 +10,7 @@
 
         public const string ActiveLlmModel =
             "activeLlmModel";
+
+        public const string IsWhatsAppRequest = "IsWhatsAppRequest";
     }
 }

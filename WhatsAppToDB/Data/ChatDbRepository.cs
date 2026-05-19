@@ -145,6 +145,38 @@ namespace WhatsAppToDB.Data
             return id;
         }
 
+        public async Task<long> GetWhatsAppSessionIdAsync(
+            string userName)
+        {
+            using var conn = GetConnection();
+            await conn.OpenAsync();
+
+            var title = "WhatsApp Session";
+
+            var sql = SqliteSqls.GetWhatsAppSessionId;
+            var existingId = await conn.QueryFirstOrDefaultAsync<long?>(sql, 
+                new { UserName = userName, Title = title });
+
+            var now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            if (existingId.HasValue)
+            {
+                await logger.LogInfoAsync($"Existing WhatsApp session found for user {userName}, Id: {existingId.Value}");
+                return existingId.Value;
+            }
+
+            var id = await conn.ExecuteScalarAsync<long>(
+                SqliteSqls.InsertChatSession,
+                new
+                {
+                    UserName = userName,
+                    Title = title,
+                    CreatedOn = now,
+                    UpdatedOn = now
+                });
+
+            return id;
+        }
+
         // ======================================================
         // INSERT MESSAGE
         // ======================================================
@@ -155,6 +187,15 @@ namespace WhatsAppToDB.Data
             string? databaseName = null, string? llmProvider = null,
             string? llmModel = null, string? moduleName = null)
         {
+
+
+            if (sessionId <= 0)
+            {
+                /// TODO: handle whatsapp sessions
+                await logger.LogErrorAsync($"Invalid sessionId: {sessionId}");
+                return -1;
+            }
+
             using var conn = GetConnection();
             await conn.OpenAsync();
 

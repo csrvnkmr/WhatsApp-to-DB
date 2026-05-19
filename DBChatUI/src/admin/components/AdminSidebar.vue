@@ -48,6 +48,13 @@
         </RouterLink>
 
         <RouterLink
+            to="/admin/whatsappprofiles"
+            @click="emit('closeMobile')"
+            class="menu-item flex items-center gap-2">
+            <span>📱</span> WhatsApp Profiles
+        </RouterLink>
+
+        <RouterLink
             to="/admin/users"
             @click="emit('closeMobile')"
             class="menu-item flex items-center gap-2">

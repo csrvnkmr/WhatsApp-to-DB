@@ -27,6 +27,14 @@ export default [
       },
 
       {
+        path: 'whatsappprofiles',
+        component: EntityPage,
+        props: {
+          entity: 'whatsappprofiles'
+        }
+      },
+
+      {
         path: 'users',
         component: EntityPage,
         props: {

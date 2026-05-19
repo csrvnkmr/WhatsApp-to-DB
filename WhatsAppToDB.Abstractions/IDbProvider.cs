@@ -1,7 +1,7 @@
 ﻿using System.Data;
 using WhatsAppToDB.Abstractions;
 
-namespace WhatsAppToDB.Data
+namespace WhatsAppToDB.Abstractions
 {
     public interface IDbProvider
     {

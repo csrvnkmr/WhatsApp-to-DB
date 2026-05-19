@@ -9,6 +9,9 @@
         public const string Users =
             "users.json";
 
+        public const string WhatsAppProfiles =
+            "whatsappprofiles.json";
+
         public const string Databases =
             "databases.json";
 

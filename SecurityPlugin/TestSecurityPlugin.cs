@@ -13,7 +13,7 @@ namespace SecurityPlugin
         public Task<string> GetModuleConstraintAsync(IdentityContext identity, string moduleName, string userQuestion)
         {
             Console.WriteLine($"[TestSecurityPlugin] GetModuleConstraintAsync called with WhatsAppNumber: " +
-                $"{identity.WhatsAppNumber}, ModuleName: {moduleName}, UserQuestion: {userQuestion}");
+                $"{identity.UserName}, ModuleName: {moduleName}, UserQuestion: {userQuestion}");
             //return "";
             return Task.FromResult($"");
             /*

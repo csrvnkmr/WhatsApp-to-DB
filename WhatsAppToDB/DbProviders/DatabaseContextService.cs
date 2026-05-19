@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using Microsoft.Extensions.Options;
 using System.Data;
+using WhatsAppToDB.Abstractions;
 using WhatsAppToDB.Data;
 using WhatsAppToDB.Services;
 using WhatsAppToDB.Settings;
@@ -15,24 +16,36 @@ namespace WhatsAppToDB.Database
         private readonly DefaultSettings _defaultSettings;
 
         private readonly JsonConfigService _jsonConfigService;
+        private readonly ExecutionContextService _executionContext;
 
         public DatabaseContextService(
             IHttpContextAccessor http,
             DatabaseRegistry registry,
             DbProviderFactory factory,
-            JsonConfigService jsonConfigService)
+            JsonConfigService jsonConfigService,
+            ExecutionContextService executionContext)
         {
             _http = http;
             _registry = registry;
             _factory = factory;
             _jsonConfigService = jsonConfigService;
+            _executionContext = executionContext;
             _defaultSettings = _jsonConfigService.GetDefaultSettings();
         }   
 
         public DatabaseConfig GetCurrentConfig()
         {
-            var dbName = _http.HttpContext?.Session?.GetString(Constants.SessionKeys.ActiveDb)
+
+            string dbName;
+            if (!string.IsNullOrWhiteSpace(_executionContext?.Database))
+            {
+                dbName = _executionContext.Database;
+            }
+            else
+            {
+                dbName = _http.HttpContext?.Session?.GetString(Constants.SessionKeys.ActiveDb)
                          ?? _defaultSettings.DefaultDatabase;
+            }
 
             return _registry.GetDatabaseConfig(dbName);
         }

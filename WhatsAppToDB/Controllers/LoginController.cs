@@ -33,7 +33,7 @@ namespace WhatsAppToDB.Controllers
         [HttpPost("/logout")]
         public async Task<IActionResult> Logout()
         {
-            var userName = HttpContext.Items["UserName"]?.ToString() ?? "";
+            var userName = HttpContext.Items[Constants.ContextItems.UserName]?.ToString() ?? "";
             HttpContext.Session.Clear();
             await _auditService.LogAsync(userName, AuditActions.Logout, "Successful");
             return Ok(new { Message = "Logout Successful" });

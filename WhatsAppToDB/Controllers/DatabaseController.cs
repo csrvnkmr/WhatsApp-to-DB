@@ -63,7 +63,7 @@ namespace WhatsAppToDB.Controllers
         {
             HttpContext.Session.SetString(Constants.SessionKeys.ActiveDb, name);
             var saved = HttpContext.Session.GetString(Constants.SessionKeys.ActiveDb);
-            var userName = HttpContext.Items["UserName"]?.ToString() ?? "";
+            var userName = HttpContext.Items[Constants.ContextItems.UserName]?.ToString() ?? "";
             await _auditService.LogAsync(userName, AuditActions.DatabaseChanged, name);
             Console.WriteLine($"[DB SELECT] Saved DB = {saved}");
             Console.WriteLine($"[DB SELECT] Session={HttpContext.Session.Id}");

@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 using VectorDBSync.EmbeddingService;
 using VectorDBSync.VectorDBService;
 using WhatsAppToDB.Abstractions;
-using WhatsAppToDB.Data;
+
 
 namespace VectorDBSync
 {

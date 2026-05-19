@@ -99,7 +99,7 @@ public class AdventureWorksTestHarness
 
                 history.AddUserMessage(messageText);
                 kernel.Data["UserIdentity"] = identity;
-                kernel.Data["WhatsAppNumber"] = identity.WhatsAppNumber; // senderPhone;
+                kernel.Data["WhatsAppNumber"] = identity.UserName; // senderPhone;
                 kernel.Data["UserQuestion"] = messageText;
                 var settings = new Microsoft.SemanticKernel.Connectors.OpenAI.OpenAIPromptExecutionSettings
                 {
@@ -163,7 +163,7 @@ public class AdventureWorksTestHarness
                 InternalUserId = "277",
                 AuthorizedModules = new List<string> { "Sales", "Person" },
                 SessionContextKey = "SalesPersonID",
-                WhatsAppNumber= "919876543210"
+                UserName= "919876543210"
             },
             ["919000000000"] = new IdentityContext
             {
@@ -171,7 +171,7 @@ public class AdventureWorksTestHarness
                 InternalUserId = "16",
                 AuthorizedModules = new List<string> { "HumanResources" },
                 SessionContextKey = "EmployeeId",
-                WhatsAppNumber = "919000000000"
+                UserName = "919000000000"
             },
             ["911234567890"] = new IdentityContext
             {
@@ -179,7 +179,7 @@ public class AdventureWorksTestHarness
                 InternalUserId = "26564",
                 AuthorizedModules = new List<string> { "Sales" },
                 SessionContextKey = "CustomerID",
-                WhatsAppNumber = "911234567890"
+                UserName = "911234567890"
             },
             ["919092044002"] = new IdentityContext
             {
@@ -187,7 +187,7 @@ public class AdventureWorksTestHarness
                 InternalUserId = "1",
                 AuthorizedModules = new List<string> { "*" },
                 SessionContextKey = "EmployeeId",
-                WhatsAppNumber = "919092044002"
+                UserName = "919092044002"
             }
         };
         builder.Services.AddSingleton<IIdentityService>(new TestIdentityService(testData));

@@ -1,4 +1,5 @@
 ﻿using Dapper;
+using Microsoft.Graph.Models.CallRecords;
 using WhatsAppToDB.Abstractions;
 using WhatsAppToDB.Database;
 using WhatsAppToDB.Models;
@@ -8,22 +9,18 @@ namespace WhatsAppToDB.Services
 {
     public class IdentityService : IIdentityService
     {
-        private readonly JsonConfigService _json;
+        private readonly JsonConfigService _jsonConfigService;
         private readonly ILogger _logger;
         private readonly DatabaseContextService _databaseContextService;
 
         public IdentityService(
-            JsonConfigService json,
+            JsonConfigService jsonConfigService,
             DatabaseContextService databaseContextService,
             ILogger? logger = null)
         {
-            _json = json;
-
-            _logger =
-                logger ?? new AppLogger();
-
-            _databaseContextService =
-                databaseContextService;
+            _jsonConfigService = jsonConfigService;
+            _logger = logger ?? new AppLogger();
+            _databaseContextService = databaseContextService;
         }
 
         // ==================================================
@@ -35,10 +32,12 @@ namespace WhatsAppToDB.Services
         {
             await _logger.LogInfoAsync(
                 $"Fetching identity for mobile number: {mobileNumber}");
+            
+            var loginUser =  _jsonConfigService.GetUserByWhatsAppNumber(mobileNumber);
 
             var ic= new IdentityContext
             {
-                WhatsAppNumber = mobileNumber
+                UserName =  loginUser?.ToString(),                
             };
             HydrateRolePermissions( ic );
             return ic;
@@ -76,11 +75,11 @@ namespace WhatsAppToDB.Services
         public void HydrateRolePermissions(IdentityContext identity)
         {
             _logger.LogInfo(
-                $"Fetching Roles for name: {identity.WhatsAppNumber}");
+                $"Fetching Roles for name: {identity.UserName}");
 
             var database = _databaseContextService.GetCurrentDatabaseName();
 
-            var roles = _json.GetRoles(database);
+            var roles = _jsonConfigService.GetRoles(database);
 
             // ============================================
             // FIND USER ROLES
@@ -92,7 +91,7 @@ namespace WhatsAppToDB.Services
                         r.Users != null &&
                         r.Users.Any(u =>
                             u.Equals(
-                                identity.WhatsAppNumber,
+                                identity.UserName,
                                 StringComparison.OrdinalIgnoreCase)))
                     .ToList();
             if (!matchedRoles.Any())

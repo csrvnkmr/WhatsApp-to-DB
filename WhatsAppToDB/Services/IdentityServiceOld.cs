@@ -74,10 +74,10 @@ namespace WhatsAppToDB.Services
 
             if (result == null)
             {
-                return new IdentityContext { WhatsAppNumber = mobileNumber, Role = "Guest" };
+                return new IdentityContext { UserName = mobileNumber, Role = "Guest" };
             }
 
-            result.WhatsAppNumber = mobileNumber;
+            result.UserName = mobileNumber;
             return result;
         }
         /*
@@ -92,7 +92,7 @@ namespace WhatsAppToDB.Services
             var defaultRole = _config.GetValue<string>("RoleSettings:DefaultRole");
             if (!File.Exists(jsonFile))
             {
-                return new IdentityContext { WhatsAppNumber = mobileNumber, Role = defaultRole };
+                return new IdentityContext { UserName = mobileNumber, Role = defaultRole };
             }
 
             try
@@ -103,13 +103,13 @@ namespace WhatsAppToDB.Services
                     PropertyNameCaseInsensitive = true
                 });
 
-                var user = mappings?.FirstOrDefault(m => m.WhatsAppNumber == mobileNumber);
+                var user = mappings?.FirstOrDefault(m => m.UserName == mobileNumber);
 
-                return user ?? new IdentityContext { WhatsAppNumber = mobileNumber, Role = defaultRole };
+                return user ?? new IdentityContext { UserName = mobileNumber, Role = defaultRole };
             }
             catch
             {
-                return new IdentityContext { WhatsAppNumber = mobileNumber, Role = defaultRole };
+                return new IdentityContext { UserName = mobileNumber, Role = defaultRole };
             }
         }
 

@@ -8,11 +8,21 @@ namespace WhatsAppToDB.Abstractions
 {
     public class IdentityContext
     {
-        public string WhatsAppNumber { get; set; } = string.Empty;
+        public string UserName { get; set; } = string.Empty;
+
         public string Role { get; set; } = "Guest";
         public string InternalUserId { get; set; } = string.Empty;
         public string ConnectionString { get; set; } = string.Empty;
         public List<string> AuthorizedModules { get; set; } = new();
+
+        public string Database { get; set; } = "";
+        public string LlmProvider { get; set; } = "";
+        public string LlmModel { get; set; } = "";
+
+        public bool IsWhatsAppRequest { get; set; }
+
+        public string WhatsAppNumber { get; set; } = "";
+        public string WhatsAppProfileId { get; set; } = "";
 
         // The key used for DB session context (e.g., 'SalesPersonID', 'EmpID')
         public string SessionContextKey { get; set; } = string.Empty;

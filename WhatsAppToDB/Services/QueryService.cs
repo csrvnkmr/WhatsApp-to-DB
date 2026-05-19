@@ -45,15 +45,27 @@ namespace WhatsAppToDB.Services
             {
                 using (var scope = scopeFactory.CreateScope())
                 {
-                    var dbName = _http.HttpContext?.Session?.GetString(Constants.SessionKeys.ActiveDb) ?? "chinook-sqlite";
+                    //var dbName = _http.HttpContext?.Session?.GetString(Constants.SessionKeys.ActiveDb) ?? "chinook-sqlite";
+
+                    //var dbName = httpContext.Session.GetString(Constants.SessionKeys.ActiveDb);
+                    var dbName = identity.Database;
+
+                    if (string.IsNullOrWhiteSpace(dbName))
+                    {
+                        throw new Exception(
+                            $"[ExecuteQuery] ActiveDb is NULL/EMPTY. ");                   }
+
+                    var execContext =
+                        scope.ServiceProvider.GetRequiredService<ExecutionContextService>();
+
+                    execContext.SetFromIdentity(identity);
 
                     var dbConfig = _dbRegistry.GetDatabaseConfig(dbName);
-                    var sessionId = _http.HttpContext?.Session?.Id;
 
                     //var schema = File.ReadAllText(dbConfig.SchemaFile);
                     //var prompt = File.ReadAllText(dbConfig.PromptFile);
 
-                    Console.WriteLine($"[QUERY] Session={sessionId}");
+                    //Console.WriteLine($"[QUERY] Session={sessionId}");
                     Console.WriteLine($"[QUERY] DB={dbName}");
                     var sp = scope.ServiceProvider;
                     //var waOptions = sp.GetRequiredService<IOptions<WhatsAppSettings>>();
@@ -70,7 +82,7 @@ namespace WhatsAppToDB.Services
                     }
                     ctx.Identity = identity;
                     ctx.UserQuestion = messageText;
-                    ctx.WhatsAppNumber = identity.WhatsAppNumber;
+                    ctx.WhatsAppNumber = identity.UserName;
                     ctx.SessionId = sessionid;
                     var modules = ctx.ModuleName;
                     var modulePrompt = "";
@@ -89,7 +101,8 @@ namespace WhatsAppToDB.Services
                     }
 
                     kernel.Data["UserIdentity"] = identity;
-                    kernel.Data["WhatsAppNumber"] = identity.WhatsAppNumber;
+                    kernel.Data[Constants.ContextItems.WhatsAppNumber] = identity.WhatsAppNumber;
+                    kernel.Data[Constants.ContextItems.UserName] = identity.WhatsAppNumber;
                     kernel.Data["UserQuestion"] = messageText;
 
                     var history = new ChatHistory();
@@ -130,7 +143,7 @@ namespace WhatsAppToDB.Services
                             history,
                             model);
                     }
-                    Console.WriteLine($"[QUERY] [{identity.WhatsAppNumber}] AI Response received for {messageText}");
+                    Console.WriteLine($"[QUERY] [{identity.UserName}] AI Response received for {messageText}");
                     if (!string.IsNullOrEmpty(aiContent)    )
                     {
                         var parsedResponse = ParsedAiResponse.ParseAiResponse(aiContent);
@@ -157,7 +170,7 @@ namespace WhatsAppToDB.Services
                     var datafilepath = ctx.DataFileName;
                     var msgid = await repo.InsertMessageAsync(sessionid, "Assistant", aiContent, sql, datafilepath, dbName, 
                         provider.Name, model, moduleName);
-                    await waLogger.LogAsync(identity.WhatsAppNumber, $"Sending response to {identity.WhatsAppNumber} {aiContent}");
+                    await waLogger.LogAsync(identity.UserName, $"Sending response to {identity.UserName} {aiContent}");
                     var response = new ChatMessageDto
                     {
                         Id = msgid,
@@ -173,7 +186,7 @@ namespace WhatsAppToDB.Services
             }
             catch (Exception ex)
             {
-                await waLogger.LogAsync(identity.WhatsAppNumber, "Exception when querying and sending message " + ex.ToString());
+                await waLogger.LogAsync(identity.UserName, "Exception when querying and sending message " + ex.ToString());
                 Console.WriteLine($"Background Error: {ex}");
                 var errmsg = "Sorry, I encountered an error while accessing Database. Please try again.";
                 var response = new ChatMessageDto

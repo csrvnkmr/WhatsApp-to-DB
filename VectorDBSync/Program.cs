@@ -2,7 +2,7 @@
 using System.IO;
 using System.Text.Json;
 using WhatsAppToDB.Abstractions;
-using WhatsAppToDB.Data;
+
 using VectorDBSync;
 
 // Create a simple SQL Server DB provider

@@ -16,6 +16,7 @@ using WhatsAppToDB.Abstractions;
 using WhatsAppToDB.Audit;
 using WhatsAppToDB.Data;
 using WhatsAppToDB.Database;
+using WhatsAppToDB.DbProviders;
 using WhatsAppToDB.LlmProviders;
 using WhatsAppToDB.Models;
 using WhatsAppToDB.Services.WhatsAppToDB.Plugins;
@@ -137,9 +138,11 @@ namespace WhatsAppToDB.Services
             var dbProviderPath = defaultFolders?.DatabaseProviderFolder ?? config.GetValue<string>("DatabasePluginsFolder") ?? "Plugins/DB";
             services.RegisterDatabaseProviders(dbProviderPath);
 
+            services.AddScoped<IIdentityContextEnricher, IdentityContextEnricher>();
+            services.AddScoped<ExecutionContextService>();
+
             services.AddSingleton<VectorSyncStatusStore>();
             services.AddSingleton<VectorSyncJobService>();
-
             services.AddScoped<PluginLoaderService>();
             services.AddScoped<VectorKernelFunctionFactory>();
             services.AddScoped<KernelTestService>();
@@ -199,6 +202,8 @@ namespace WhatsAppToDB.Services
 
             services.AddSingleton<IDbProvider, Database.MsSqlDbProvider>();
             services.AddSingleton<IDbProvider, Database.SqliteDbProvider>();
+            services.AddSingleton<ISchemaProvider, SqlServerSchemaProvider>();
+            services.AddSingleton<ISchemaProvider, SqliteSchemaProvider>();
             services.LoadProviders<IDbProvider>(folderName, "*dbplugin.dll", ServiceLifetime.Singleton);            
             services.AddSingleton<Database.DbProviderFactory>();  // Changed from AddScoped to AddSingleton
         }        

@@ -49,7 +49,7 @@ namespace WhatsAppToDB.Services
             ic.InternalUserId = session.InternalUserId;
             ic.Role = session.Role;
             ic.SessionContextKey = session.SessionContextKey;
-            ic.WhatsAppNumber = session.Username;            
+            ic.UserName = session.Username;            
             
             return (true, ic);
         }

@@ -19,7 +19,7 @@ namespace WhatsAppToDB.Testing
             }
 
             // Fallback for unknown test numbers
-            return Task.FromResult(new IdentityContext { WhatsAppNumber = mobileNumber, Role = "Guest" });
+            return Task.FromResult(new IdentityContext { UserName = mobileNumber, Role = "Guest" });
         }
 
         public void HydrateRolePermissions(IdentityContext identity)

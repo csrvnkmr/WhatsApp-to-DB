@@ -23,20 +23,22 @@ namespace WhatsAppToDB.Controllers
         private readonly ChatDbRepository _repo;
         private readonly PromptExecutionSettings _promptSettings;
         private readonly IQueryService _queryService;
-
+        private readonly IIdentityContextEnricher _identityContextEnricher;
         
         public WhatsAppController(
             IServiceScopeFactory scopeFactory,
             ILogger waLogger,
             IOptions<WhatsAppSettings> waOptions,
             ChatDbRepository repo,
-            IQueryService queryService)
+            IQueryService queryService,
+            IIdentityContextEnricher identityContextEnricher)
         {
             _scopeFactory = scopeFactory;
             _waLogger = waLogger;
             _waOptions = waOptions;
             _repo = repo;
             _queryService = queryService;
+            _identityContextEnricher = identityContextEnricher;
             _promptSettings =
                 new OpenAIPromptExecutionSettings
                 {
@@ -78,59 +80,65 @@ namespace WhatsAppToDB.Controllers
         [HttpPost("/webhook")]
         public async Task<IActionResult> ReceiveWebhook()
         {
-            using var reader =
-                new StreamReader(Request.Body);
+            using var reader = new StreamReader(Request.Body);
 
-            var body =
-                await reader.ReadToEndAsync();
+            var body = await reader.ReadToEndAsync();
 
-            var waService =
-                new WhatsAppService();
+            var waService = new WhatsAppService();
 
-            var result =
-                await waService.GetWhatsAppMessage(
-                    body,
-                    _waLogger);
+            var result = await waService.GetWhatsAppMessage(
+                    body, _waLogger);
 
             if (!result.isSuccess)
                 return Ok();
 
-            var senderPhone =
-                result.to;
+            var senderPhone = result.to;
 
-            var messageText =
-                result.message;
+            var messageText = result.message;
 
-            using var scope =
-                _scopeFactory.CreateScope();
+            using var scope = _scopeFactory.CreateScope();
 
-            var sp =
-                scope.ServiceProvider;
+            var sp = scope.ServiceProvider;
 
-            var identityService =
-                sp.GetRequiredService<IIdentityService>();
+            var identityService = sp.GetRequiredService<IIdentityService>();
 
-            var identity =
-                await identityService
+            var identity = await identityService
                     .GetIdentityAsync(senderPhone);
+                _identityContextEnricher.EnrichFromHttpContext(
+                identity,
+                HttpContext);
 
             _ = Task.Run(async () =>
             {
+                using var bgScope =
+                _scopeFactory.CreateScope();
+
+                var queryService =
+                    bgScope.ServiceProvider.GetRequiredService<IQueryService>();
+
+                var repo =
+                bgScope.ServiceProvider.GetRequiredService<ChatDbRepository>();
+
                 await waService.SendWhatsAppResponse(
                     senderPhone,
                     "_Analyzing your request and querying database... Please wait a moment._ 🔍",
                     _waOptions.Value,
                     _waLogger);
 
+
+                var sessionId =
+                    await repo.GetWhatsAppSessionIdAsync(identity.UserName);
+
+
                 var response =
-                    await _queryService.ExecuteQuery(
+                    await queryService.ExecuteQuery(
                         _scopeFactory,
                         identity,
                         messageText,
                         _promptSettings,
                         _waLogger,
                         _repo,
-                        -1);
+                        sessionId);
 
                 await waService.SendWhatsAppResponse(
                     senderPhone,
