@@ -24,6 +24,7 @@ namespace WhatsAppToDB.Controllers
         private readonly PromptExecutionSettings _promptSettings;
         private readonly IQueryService _queryService;
         private readonly IIdentityContextEnricher _identityContextEnricher;
+        private readonly JsonConfigService _jsonConfigService;
         
         public WhatsAppController(
             IServiceScopeFactory scopeFactory,
@@ -31,7 +32,8 @@ namespace WhatsAppToDB.Controllers
             IOptions<WhatsAppSettings> waOptions,
             ChatDbRepository repo,
             IQueryService queryService,
-            IIdentityContextEnricher identityContextEnricher)
+            IIdentityContextEnricher identityContextEnricher,
+            JsonConfigService jsonConfigService)
         {
             _scopeFactory = scopeFactory;
             _waLogger = waLogger;
@@ -39,6 +41,7 @@ namespace WhatsAppToDB.Controllers
             _repo = repo;
             _queryService = queryService;
             _identityContextEnricher = identityContextEnricher;
+            _jsonConfigService = jsonConfigService;
             _promptSettings =
                 new OpenAIPromptExecutionSettings
                 {
@@ -119,10 +122,12 @@ namespace WhatsAppToDB.Controllers
                 var repo =
                 bgScope.ServiceProvider.GetRequiredService<ChatDbRepository>();
 
+                var waProfile =  _jsonConfigService.GetWhatsAppProfile(identity.WhatsAppProfileId);
+
                 await waService.SendWhatsAppResponse(
                     senderPhone,
                     "_Analyzing your request and querying database... Please wait a moment._ 🔍",
-                    _waOptions.Value,
+                    waProfile,
                     _waLogger);
 
 
@@ -143,7 +148,7 @@ namespace WhatsAppToDB.Controllers
                 await waService.SendWhatsAppResponse(
                     senderPhone,
                     response.MessageText,
-                    _waOptions.Value,
+                    waProfile,
                     _waLogger);
             });
 

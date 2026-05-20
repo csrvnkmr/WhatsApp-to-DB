@@ -6,8 +6,10 @@ using System.Threading.Tasks;
 
 namespace OllamaLlmPlugin
 {
+    using Microsoft.Extensions.DependencyInjection;
     using Microsoft.SemanticKernel;
     using WhatsAppToDB.Abstractions;
+    using WhatsAppToDB.LlmProviders;
 
     namespace OllamaLlmPlugin
     {
@@ -17,16 +19,6 @@ namespace OllamaLlmPlugin
 
             public bool SupportsKernel => true;
 
-            public List<string> GetModels()
-            {
-                return new()
-                {
-                    "gpt-oss:120b-cloud",
-                    "gemma4:31b-cloud",
-                    "devstral-2:123b-cloud"
-                };
-            }
-
             public Task<string> GenerateAsync(
                 Microsoft.SemanticKernel.ChatCompletion.ChatHistory history,
                 string model)
@@ -34,19 +26,18 @@ namespace OllamaLlmPlugin
                 throw new NotImplementedException();
             }
 
-            public void Register(
-                IKernelBuilder builder,
-                IServiceProvider sp,
+            public void Register(IKernelBuilder builder, 
+                LlmConfig config,
                 string model)
             {
                 var client = new HttpClient
                 {
-                    BaseAddress = new Uri("http://localhost:11434/v1")
+                    BaseAddress = new  Uri(config.HttpEndPoint) //Uri("http://localhost:11434/v1")
                 };
 
-                builder.AddOpenAIChatCompletion(
+                builder.AddOpenAIChatCompletion(                    
                     modelId: model,
-                    apiKey: "ollama",
+                    apiKey: config.ApiKey,
                     httpClient: client);
             }
         }

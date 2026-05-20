@@ -19,7 +19,7 @@ using WhatsAppToDB.Database;
 using WhatsAppToDB.DbProviders;
 using WhatsAppToDB.LlmProviders;
 using WhatsAppToDB.Models;
-using WhatsAppToDB.Services.WhatsAppToDB.Plugins;
+using WhatsAppToDB.Plugins;
 using WhatsAppToDB.Settings;
 using WhatsAppToDB.VectorStore;
 
@@ -27,65 +27,6 @@ namespace WhatsAppToDB.Services
 {
     public static class ServiceCollectionExtension
     {
-        public static IServiceCollection AddDynamicExtensions(this IServiceCollection services, IConfiguration config)
-        {
-
-            using var tempProvider = services.BuildServiceProvider();
-            var logger = tempProvider.GetService<ILogger>();
-            logger.WriteToConsole= true;
-
-            // Load paths from AppSettings
-            var promptDll = config["Extensions:PromptInjector:DllPath"];
-            var interceptorDll = config["Extensions:SqlInterceptor:DllPath"];
-            var sqlTemplateDll = config["Extensions:SqlTemplateExtension:DllPath"];
-
-            // Registering your Schema/Prompt Injector
-            services.RegisterExtensionFromDll<IModulePrompt>(promptDll, logger);
-
-            // Registering your SQL Template Provider
-            services.RegisterExtensionFromDll<ISqlTemplateExtension>(sqlTemplateDll, logger);
-
-            // Registering your SQL Interceptor Layer
-            services.RegisterExtensionFromDll<ISqlInterceptor>(interceptorDll, logger);
-            return services;
-        }
-
-        private static IServiceCollection RegisterExtensionFromDll<TInterface>(
-            this IServiceCollection services, string dllPath, ILogger logger) where TInterface : class
-
-        {
-            if (string.IsNullOrEmpty(dllPath) || !File.Exists(dllPath))
-            {
-                logger.LogAsync($"[Extension] Skipping load: Path null or file not found at {dllPath}");
-                return services;
-            }
-
-            try
-            {
-                var assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(Path.GetFullPath(dllPath));
-
-                // Find implementation of the generic TInterface
-                var type = assembly.GetTypes().FirstOrDefault(t =>
-                    typeof(TInterface).IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract);
-
-                if (type != null)
-                {
-                    // Register the found type against the Interface
-                    services.AddScoped(typeof(TInterface), type);
-                    logger.LogAsync($"[Extension] Successfully registered {typeof(TInterface).Name}: {type.Name}");
-                }
-                else
-                {
-                    logger.LogAsync($"[Extension] No implementation of {typeof(TInterface).Name} found in {dllPath}");
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.LogAsync($"[Extension] Error loading {typeof(TInterface).Name} from {dllPath}: {ex.Message}");
-            }
-
-            return services;
-        }
 
         public static void ConfigureAllServices(this IServiceCollection services, IConfiguration config, PluginMetadata metadata)
         {
@@ -114,13 +55,11 @@ namespace WhatsAppToDB.Services
             var tempJsonConfig = new JsonConfigService(config, new AppLogger());
             var defaultFolders = tempJsonConfig.GetDefaultFolders();
 
-            services.Configure<WhatsAppSettings>(config.GetSection("WhatsAppSettings"));
             services.Configure<Settings.OpenAiSettings>(config.GetSection("OpenAiSettings"));
             services.Configure<LocalAiSettings>(config.GetSection("LocalAiSettings"));
-            services.Configure<MailSettings>(config.GetSection("MailSettings"));
-            services.AddDynamicExtensions(config);
+            //services.AddDynamicExtensions(tempJsonConfig);
 
-            services.AddPlugin(config, metadata);
+            //services.AddPlugin(config, metadata);
 
             services.AddScoped<IIdentityService, IdentityService>();
             services.AddScoped<Plugin.DatabaseQueryPlugin>();
@@ -153,8 +92,7 @@ namespace WhatsAppToDB.Services
 
         }
 
-        /*      
-        private static void LoadDatabaseConfigs(IServiceCollection services, string configPath)
+        /* private static void LoadDatabaseConfigs(IServiceCollection services, string configPath)
         {
             if (!File.Exists(configPath))
             {
@@ -256,7 +194,7 @@ namespace WhatsAppToDB.Services
             }
         }
 
-        public static void AddKernelOLD(this IServiceCollection services, PluginMetadata metadata)
+/*      public static void AddKernelOLD(this IServiceCollection services, PluginMetadata metadata)
         {
             services.AddScoped(sp =>
             {
@@ -296,8 +234,9 @@ namespace WhatsAppToDB.Services
                 return kernelBuilder.Build();
             });
         }
+ */
 
-        public static void AddPlugin(this IServiceCollection services, IConfiguration config, PluginMetadata metadata)
+/*      public static void AddPlugin(this IServiceCollection services, IConfiguration config, PluginMetadata metadata)
         {
             using var tempProvider = services.BuildServiceProvider();
             var logger = tempProvider.GetService<ILogger>();
@@ -361,7 +300,7 @@ namespace WhatsAppToDB.Services
                 }
                 services.AddSingleton(metadata);
             }
-        }
+        } */
 
         public static void AddKernel(this IServiceCollection services)
         {
@@ -373,12 +312,14 @@ namespace WhatsAppToDB.Services
 
                 var kernelBuilder = Kernel.CreateBuilder();
                 var llmContext = sp.GetRequiredService<LlmContextService>();
+                var llmRegistry = sp.GetRequiredService<LlmRegistry>();
 
                 var provider = llmContext.GetProvider();
+                var llmConfig = llmRegistry.Get(provider.Name);
 
                 var model = llmContext.GetModel();
 
-                provider.Register(kernelBuilder, sp, model);
+                provider.Register(kernelBuilder, llmConfig, model);
 
                 //var aiSettings = sp.GetRequiredService<IOptions<CommonAiSettings>>().Value;
                 //var llmfactory = sp.GetRequiredService<LlmProviderFactory>();

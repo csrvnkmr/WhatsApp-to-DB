@@ -9,7 +9,7 @@ namespace WhatsAppToDB.Models
         public IdentityContext? Identity { get; set; }
 
         public string UserQuestion { get; set; } = "";
-        public string WhatsAppNumber { get; set; } = "";
+        public string UserName { get; set; } = "";
 
         // SQL Execution Metadata
         public string LastExecutedSql { get; set; } = "";

@@ -1,21 +1,31 @@
 [
   {
     "Username": "csrvn",
-    "Password": "ENC:gp\u002BA8r6NrKJYBjI0e\u002BzBZa6vq7ApuGiHhrWp36M3UEA=",
+    "Password": "ENC:\u002Bkp4cxBnPkb3Qk8F6TqK5LAOLHPTS2Y6wnwl\u002BdFyA/s=",
     "Fullname": "C Saravana Kumar",
     "Role": "SalesPerson",
     "InternalUserId": "277",
     "SessionContextKey": "SalesPersonID",
     "DefaultDatabase": "chinook-sqlite",
-    "WhatsAppNumber": "234434"
+    "WhatsAppNumber": "919092044002"
   },
   {
     "Username": "admin",
-    "Password": "ENC:BFzWFVRSfK72yB8JQuif1ziwL8JS8SfpBTNSdt1Zgms=",
+    "Password": "ENC:kKM0dCf7Odajyyr1Hfv0py9/siGhIYomGPCX5fBtljY=",
     "Fullname": "Administrator",
     "Role": "Admin",
     "InternalUserId": "1",
     "SessionContextKey": "EmployeeID",
-    "DefaultDatabase": "B1Database2"
+    "DefaultDatabase": "B1Database2",
+    "WhatsAppNumber": "123456"
+  },
+  {
+    "Username": "aiuser",
+    "Password": "ENC:S8p0pDmznOhCWthFKDz1\u002B1WTHAAQ7NJ2UoBSFQDyx7c=",
+    "Fullname": "AI User",
+    "Role": "Sales",
+    "InternalUserId": "1",
+    "SessionContextKey": " SlpCode",
+    "DefaultDatabase": "B1Database1"
   }
 ]

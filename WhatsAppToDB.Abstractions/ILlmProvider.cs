@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using WhatsAppToDB.LlmProviders;
 
 namespace WhatsAppToDB.Abstractions
 {
@@ -12,13 +13,10 @@ namespace WhatsAppToDB.Abstractions
     {
         string Name { get; }
 
-        List<string> GetModels();
-
         bool SupportsKernel { get; }
 
-        void Register(
-            IKernelBuilder builder,
-            IServiceProvider sp,
+        void Register(IKernelBuilder builder, 
+            LlmConfig config,
             string model);
 
         Task<string> GenerateAsync(

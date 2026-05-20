@@ -3,12 +3,15 @@
     "Name": "SalesPerson",
     "Description": "Sales Perosn",
     "Users": [
-      "csrvn"
+      "csrvn",
+      "aiuser"
     ],
     "Modules": [
       "Sales",
       "MasterData"
-    ]
+    ],
+    "s": "Server=srvn7530u;Database=SBODemoIn;User Id=aiuser;Password=StrongPassword@123;TrustServerCertificate=True",
+    "ConnectionString": "Server=srvn7530u;Database=SBODemoIn;User Id=ai_reader;Password=StrongPassword@123;TrustServerCertificate=True"
   },
   {
     "Name": "Admin",

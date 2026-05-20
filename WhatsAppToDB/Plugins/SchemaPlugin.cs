@@ -7,6 +7,7 @@ using WhatsAppToDB.Abstractions;
 using WhatsAppToDB.Data;
 using WhatsAppToDB.Database;
 using WhatsAppToDB.Services;
+using WhatsAppToDB.Plugins;
 using WhatsAppToDB.Settings;
 
 namespace WhatsAppToDB.Plugin
@@ -16,29 +17,20 @@ namespace WhatsAppToDB.Plugin
     {
 
         private readonly SchemaService _schemaService;
-        private readonly IModulePrompt? _promptExtension;
-        private readonly ISqlInterceptor? _sqlExtension;
-        private readonly ISqlTemplateExtension? _sqlTemplateExtension;
         private readonly ILogger _logger;
-
         private readonly DatabaseContextService _databaseContextService;
         private readonly JsonConfigService _jsonConfigService;
         private readonly string dbName;
         private readonly DatabaseConfig _dbConfig;
+                private readonly PluginLoaderService _pluginLoaderService;
 
-        public SchemaPlugin(
-           JsonConfigService jsonConfigService,
-           IModulePrompt? promptExtension = null,
-           ISqlInterceptor? sqlExtension = null,
-           ISqlTemplateExtension? sqlTemplateExtension = null,
-           ILogger? logger = null, DatabaseContextService databaseContextService = null
-           )
+
+        public SchemaPlugin(JsonConfigService jsonConfigService,
+           ILogger? logger = null, DatabaseContextService databaseContextService = null, PluginLoaderService pluginLoaderService = null)           
         {
-            _promptExtension = promptExtension;
-            _sqlExtension = sqlExtension;
-            _sqlTemplateExtension = sqlTemplateExtension;
             _logger = logger ?? new AppLogger();
             _databaseContextService = databaseContextService;
+            _pluginLoaderService = pluginLoaderService;
             dbName = _databaseContextService.GetCurrentDatabaseName();
             _dbConfig = _databaseContextService.GetCurrentConfig();
             _jsonConfigService = jsonConfigService;
@@ -79,13 +71,31 @@ namespace WhatsAppToDB.Plugin
             //{
             //    connString = identity.ConnectionString;
             //}
+            var dbName = _databaseContextService.GetCurrentDatabaseName();
             var moduleConfigs = _jsonConfigService.GetModules(dbName);
-            var templService = new TemplateService(_databaseContextService, this._logger);            
+            var templService = new TemplateService(_databaseContextService, this._logger);    
+                            
+
+            var extn = _jsonConfigService.GetExtension(dbName);
+            IModulePrompt promptExtension = null;
+            ISqlTemplateExtension sqlTemplateExtension = null;
+            if (extn != null)
+            {
+                var promptInjector = _pluginLoaderService.CreatePluginInstance(extn.PromptInjectorDLL, extn.PromptInjectorClass);
+                if (promptInjector != null && promptInjector is IModulePrompt )
+                {
+                    promptExtension = (IModulePrompt)promptInjector;
+                }
+                var sqlTemplateInjector = _pluginLoaderService.CreatePluginInstance(extn.SqlTemplateExtensionDLL, extn.SqlTemplateExtensionClass);
+                if (sqlTemplateInjector != null && sqlTemplateInjector is ISqlTemplateExtension)
+                {
+                    sqlTemplateExtension = (ISqlTemplateExtension)sqlTemplateInjector;
+                }
+            }
+        
             foreach (var module in requestedModules)
             {
-
                 
-
                 var moduleConfig = moduleConfigs.FirstOrDefault(m => m.Name.Equals(module, StringComparison.OrdinalIgnoreCase));
                 if (moduleConfig != null && !string.IsNullOrWhiteSpace(moduleConfig.Prompt))                {
                     modulePrompt += moduleConfig.Prompt + "\n";
@@ -120,20 +130,41 @@ namespace WhatsAppToDB.Plugin
 
                 // 4. Fetch Base Schema
                 var moduleSchema = _schemaService.GetModuleSchema(dbName, module);
-
-                // 5. Apply Dynamic Constraints (Row Level Security / Prompt Extensions)
-                if (_promptExtension != null )
+                
+                if (promptExtension != null )
                 {
-                    var xtensionText = await _promptExtension.GetModuleConstraintAsync(identity, module, userQuestion);
-                    // Wrap the schema with the constraints to ensure the LLM prioritizes them
-                    moduleSchema = $"--- {module} Security Constraints ---\n{xtensionText}\n\n--- {module} Schema ---\n{moduleSchema}";
+                    try
+                    {
+                        var xtensionText = await promptExtension.GetModuleConstraintAsync(identity, module, userQuestion);
+                        // Wrap the schema with the constraints to ensure the LLM prioritizes them
+                        if (!string.IsNullOrWhiteSpace(xtensionText))
+                        {
+                            moduleSchema = $"--- {module} Security Constraints ---\n{xtensionText}\n\n--- {module} Schema ---\n{moduleSchema}";
+                        }
+                    }
+                    catch(Exception ex)
+                    {
+                        _logger.LogError($"Error in Module Prompt Extension execution: {ex}"); 
+                    }
                 }
-                if (_sqlTemplateExtension != null)
+                if (sqlTemplateExtension != null)
                 {
-                    var templateText = await _sqlTemplateExtension.GetSqlTemplateAsync(identity, module, userQuestion);
-                    // Wrap the schema with the templates to ensure the LLM prioritizes them
-                    moduleSchema = $"--- {module} SQL Templates ---\n{templateText}\n\n--- {module} Schema ---\n{moduleSchema}";
+                    try
+                    {
+                        var templateText = await sqlTemplateExtension.GetSqlTemplateAsync(identity, module, userQuestion);
+                        // Wrap the schema with the templates to ensure the LLM prioritizes them
+                        if (!string.IsNullOrWhiteSpace(templateText))
+                        {
+                            moduleSchema = $"--- {module} SQL Templates ---\n{templateText}\n\n--- {module} Schema ---\n{moduleSchema}";                        
+                        }                        
+                    }
+                    catch(Exception ex)
+                    {
+                        _logger.LogError($"Error in SQL Template Extension execution: {ex}"); 
+                    }
                 }
+                                
+ 
                 schemaBuilder.AppendLine(moduleSchema);
                 /* instead of sending all queries, we will just send the most relevant ones in the SQL Template extension
                 var lstQueries = await templService.GetTemplatesByModule(module);

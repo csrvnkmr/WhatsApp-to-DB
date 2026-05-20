@@ -13,6 +13,23 @@ namespace WhatsAppToDB.Admin
     [Route("admin/api")]
     public class AdminController : ControllerBase
     {
+
+        string[] dbSpecific =
+                {
+                    "roles",
+                    "schema",
+                    "systemprompt",
+                    "plugins",
+                    "extensions",
+                    "mailsettings",
+                    "tables",
+                    "modules",
+                    "tablejoins",
+                    "fewshotqueries",
+                    "vectorconfigurations",
+                    "vectordbsettings",
+                    "extensions"
+                };
         private readonly IWebHostEnvironment _env;
         private readonly string ConfigRoot;
         private readonly JsonConfigService _configService;
@@ -182,22 +199,7 @@ namespace WhatsAppToDB.Admin
             // -----------------------------
             // DATABASE-SPECIFIC
             // -----------------------------
-            var dbSpecific =
-                new[]
-                {
-                    "roles",
-                    "schema",
-                    "systemprompt",
-                    "plugins",
-                    "extensions",
-                    "mailsettings",
-                    "tables",
-                    "modules",
-                    "tablejoins",
-                    "fewshotqueries",
-                    "vectorconfigurations",
-                    "vectordbsettings"
-                };
+
 
             if (dbSpecific.Contains(
                 entity,

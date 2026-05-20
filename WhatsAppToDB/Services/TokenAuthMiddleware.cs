@@ -207,7 +207,7 @@ namespace WhatsAppToDB.Services
                 }
 
                 var profile =
-                    jsonConfigService.GetWhatsAppProfile(parsed.PhoneId);
+                    jsonConfigService.GetWhatsAppProfileFromPhoneId(parsed.PhoneId);
 
                 if (profile == null)
                 {

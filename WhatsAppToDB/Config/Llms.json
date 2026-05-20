@@ -5,7 +5,8 @@
     "Models": [
       "gpt-5.4-mini",
       "gpt-4"
-    ]
+    ],
+    "ApiKey": "ENC:1XWmMHbiaZPW/KL5Wdcy8zeOdXmevmFv6MaX2564iUpxu1Xa7jiIKZhD41NfQ0iG2rlX0QPuJpBt5sWH9wV9uBcgvjsBiwS\u002B2YO12yqhfqWxxgJf49uN2IPbLtRLIWaw5KpoSmwpk5oSnJwqmrI8zPDTolXYbWNDKC6r1K1GrYI9Pb3LdQm9A8gGGx1bhEuhIG7AO7EPMLZkYUexT\u002B5rkYhR82f2U9d2PmpueRLOF2jBNRNNffpP7oGJrLFS5fw5"
   },
   {
     "Provider": "Ollama",
@@ -13,7 +14,9 @@
     "Models": [
       "gpt-oss:120b-cloud",
       "gemma4:31b-cloud",
-      "devstral-2:123b-cloud"      
-    ]
+      "devstral-2:123b-cloud"
+    ],
+    "HttpEndPoint": "ENC:LBuVRRV8IMafWMozl0/5ySeRLtRyCpo9ryg0h7WUdp1WVKIu1uTCSjFZrMiMSBzP",
+    "ApiKey": "ENC:MboL1k5YDPA6dtrslq4zWLR\u002By6hX4huV89IRQ0X\u002B\u002BSA="
   }
 ]

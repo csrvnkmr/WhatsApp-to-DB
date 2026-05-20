@@ -50,7 +50,7 @@
                         </th>
                     </template>
 
-                    <th class="w-32"></th>
+                    <th class="w-32 sticky right-0 bg-panel z-10 shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.05)]"></th>
 
                 </tr>
             </thead>
@@ -60,7 +60,7 @@
                 <tr
                     v-for="(row, index) in rows"
                     :key="index"
-                    class="border-b border-soft hover:bg-hover transition">
+                    class="group border-b border-soft hover:bg-hover transition">
 
                     <template v-for="f in metadata?.fields" :key="f.name">
                         <td
@@ -72,7 +72,7 @@
                         </td>
                     </template>
 
-                    <td class="p-3">
+                    <td class="p-3 sticky right-0 bg-panel group-hover:bg-hover z-10 shadow-[-4px_0_10px_-4px_rgba(0,0,0,0.05)]">
 
                         <div class="flex gap-2">
 

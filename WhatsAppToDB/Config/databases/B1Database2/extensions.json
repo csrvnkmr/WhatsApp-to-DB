@@ -1,7 +1,10 @@
 [
   {
-    "PromptInjectorDLL": "C:\\Development\\AiAgents\\SemanticKernel\\Plugins\\SecurityPlugin.dll",
-    "SqlInterceptorDLL": "C:\\Development\\AiAgents\\SemanticKernel\\Plugins\\SecurityPlugin.dll",
-    "SqlTemplateExtensionDLL": "C:\\Development\\AiAgents\\SemanticKernel\\Plugins\\SecurityPlugin.dll"
+    "PromptInjectorDLL": "C:\\Development\\AiAgents\\SemanticKernel\\Plugins\\Extensions\\SecurityPlugin.dll",
+    "SqlInterceptorDLL": "C:\\Development\\AiAgents\\SemanticKernel\\Plugins\\Extensions\\SecurityPlugin.dll",
+    "SqlTemplateExtensionDLL": "C:\\Development\\AiAgents\\SemanticKernel\\Plugins\\Extensions\\SecurityPlugin.dll",
+    "PromptInjectorClass": "SecurityPlugin.SecurityExtension",
+    "SqlInterceptorClass": "SecurityPlugin.SecurityExtension",
+    "SqlTemplateExtensionClass": "SecurityPlugin.SecurityExtension"
   }
 ]

@@ -82,7 +82,7 @@ namespace WhatsAppToDB.Services
                     }
                     ctx.Identity = identity;
                     ctx.UserQuestion = messageText;
-                    ctx.WhatsAppNumber = identity.UserName;
+                    ctx.UserName = identity.UserName;
                     ctx.SessionId = sessionid;
                     var modules = ctx.ModuleName;
                     var modulePrompt = "";
@@ -144,23 +144,34 @@ namespace WhatsAppToDB.Services
                             model);
                     }
                     Console.WriteLine($"[QUERY] [{identity.UserName}] AI Response received for {messageText}");
+                    var whatsAppReplyText = aiContent;
+                    var isWhatsAppRequest = identity != null && identity.IsWhatsAppRequest;
                     if (!string.IsNullOrEmpty(aiContent)    )
                     {
                         var parsedResponse = ParsedAiResponse.ParseAiResponse(aiContent);
                         if (parsedResponse.ChartConfig != null && parsedResponse.ChartData != null)
                         {
-                            // If the response contains chart config and data, serialize them and include in the message
+                            
+
+                            if (isWhatsAppRequest)
+                            {
+                                whatsAppReplyText = parsedResponse.AnalysisText;
+                                // For WhatsApp, we can only send text, so we can serialize the chart config and data as JSON strings
+                                // and include them in the response text with special markers
+                            } 
+
                             var chartConfigJson = System.Text.Json.JsonSerializer.Serialize(parsedResponse.ChartConfig);
                             var chartDataJson = System.Text.Json.JsonSerializer.Serialize(parsedResponse.ChartData);
                             var finalContent = new {
                                 analysis_text = parsedResponse.AnalysisText, // Use the analysis text as the main content
                                 chart_config = chartConfigJson,
                                 chart_data = chartDataJson
-                            };                            
+                            };           
                             // aiContent = parsedResponse.AnalysisText; // Use the analysis text as the main content
                             // aiContent += $"\n\n[CHART_CONFIG]{chartConfigJson}[/CHART_CONFIG]";
                             // aiContent += $"\n\n[CHART_DATA]{chartDataJson}[/CHART_DATA]";
                             aiContent = System.Text.Json.JsonSerializer.Serialize(finalContent); // Serialize the entire content as JSON
+                            
                         }
                     }
                     //history.Add(aiResponse);
@@ -174,7 +185,7 @@ namespace WhatsAppToDB.Services
                     var response = new ChatMessageDto
                     {
                         Id = msgid,
-                        MessageText = aiContent,
+                        MessageText = (isWhatsAppRequest ? whatsAppReplyText : aiContent),
                         CanShowSql = ctx.ShowSql,
                         CanShowData = ctx.ShowData,
                         CanShowChart = ctx.ShowChart,

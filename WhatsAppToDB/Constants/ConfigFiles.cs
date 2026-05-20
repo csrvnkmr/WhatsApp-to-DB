@@ -24,6 +24,9 @@
         public const string DefaultFolders =
             "defaultfolders.json";
 
+        public const string Extensions =
+            "extensions.json";
+
         // =========================================
         // DATABASE-SPECIFIC
         // =========================================
@@ -48,10 +51,6 @@
         
         public const string VectorConfigurations =
             "vectorconfigurations.json";
-
-
-        public const string Extensions =
-            "extensions.json";
 
         public const string MailSettings =
             "mailsettings.json";

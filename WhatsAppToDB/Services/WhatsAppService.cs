@@ -5,12 +5,13 @@ namespace WhatsAppToDB.Services
 {
     public class WhatsAppService
     {
-        public async Task SendWhatsAppResponse(string to, string text, WhatsAppSettings waSettings, ILogger waLogger)
+        public async Task SendWhatsAppResponse(string to, string text, WhatsAppProfile waProfile, ILogger waLogger)
         {            
             try
             {
                 using var client = new HttpClient();
-                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", waSettings.Token);
+                client.DefaultRequestHeaders.Authorization = 
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", waProfile.Token);
 
                 var payload = new
                 {
@@ -22,7 +23,7 @@ namespace WhatsAppToDB.Services
                 Console.WriteLine($"WhatsApp {to} {text}");
                 if (to != "000")
                 {
-                    await client.PostAsJsonAsync($"https://graph.facebook.com/v16.0/{waSettings.PhoneId}/messages", payload);
+                    await client.PostAsJsonAsync($"https://graph.facebook.com/v16.0/{waProfile.PhoneId}/messages", payload);
                 }
             }
             catch (Exception ex)

@@ -29,6 +29,7 @@
       "type": "text",
       "showinheader": false,
       "fulllength": true,
+      "sensitive": true,
       "required": true,
         "unique": true
     },
@@ -38,6 +39,7 @@
       "type": "textarea",
       "showinheader": false,
       "fulllength": true,
+      "sensitive": true,
       "required": true
     },
     {
@@ -45,6 +47,7 @@
       "label": "Business ID",
       "type": "text",
       "showinheader": false,
+      "sensitive": true,
       "fulllength": true,
       "required": true
     },
@@ -53,6 +56,7 @@
       "label": "Verify Token",
       "type": "text",
       "showinheader": false,
+      "sensitive": true,
       "fulllength": true,
       "required": true
     },

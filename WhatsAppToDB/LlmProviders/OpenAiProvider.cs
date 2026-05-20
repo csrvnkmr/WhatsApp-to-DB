@@ -16,25 +16,23 @@ namespace WhatsAppToDB.LlmProviders
         {
             throw new NotImplementedException();
         }
-
-        public List<string> GetModels()
-        {
-            return new List<string>
-            {
-                "gpt-3.5-turbo",
-                "gpt-4",
-                "gpt-4-0613",
-                "gpt-4-32k",
-                "gpt-4-32k-0613"
-            };
-        }
+        
         public void Register(IKernelBuilder builder, IServiceProvider sp, string model)
         {
-            var settings = sp.GetRequiredService<IOptions<Settings.OpenAiSettings>>().Value;
+            var llmRegistry = sp.GetRequiredService<LlmRegistry>();
+            var llmConfig = llmRegistry.Get(Name); // Ensure config is loaded
+
             Console.WriteLine($"Registering {Name} model {model}");
             builder.AddOpenAIChatCompletion(
-                model,
-                settings.ApiKey
+                model, llmConfig.ApiKey                
+            );
+        }
+
+        public void Register(IKernelBuilder builder, LlmConfig config, string model)
+        {
+            Console.WriteLine($"Registering {Name} model {model}");
+            builder.AddOpenAIChatCompletion(
+                model, config.ApiKey                
             );
         }
     }

@@ -863,14 +863,17 @@ function parseMessage(msg: any) {
     if (typeof msg.messageText === 'string' && msg.messageText.trim().startsWith('{')) {
         try {
             const parsed = JSON.parse(msg.messageText);
-            if (parsed.analysis_text && parsed.chart_config && parsed.chart_data) {
-                const config = typeof parsed.chart_config === 'string' ? JSON.parse(parsed.chart_config) : parsed.chart_config;
-                if (config && config.ChartType && config.ChartType.toLowerCase() !== 'none') {
-                    msg._parsed.isJson = true;
-                    msg._parsed.text = parsed.analysis_text;
-                    msg._parsed.chartConfig = config;
-                    msg._parsed.chartData = typeof parsed.chart_data === 'string' ? JSON.parse(parsed.chart_data) : parsed.chart_data;
-                    msg._parsed.canShowChart = true;
+            if (parsed.analysis_text) {
+                msg._parsed.isJson = true;
+                msg._parsed.text = parsed.analysis_text;
+
+                if (parsed.chart_config && parsed.chart_data) {
+                    const config = typeof parsed.chart_config === 'string' ? JSON.parse(parsed.chart_config) : parsed.chart_config;
+                    if (config && config.ChartType && config.ChartType.toLowerCase() !== 'none') {
+                        msg._parsed.chartConfig = config;
+                        msg._parsed.chartData = typeof parsed.chart_data === 'string' ? JSON.parse(parsed.chart_data) : parsed.chart_data;
+                        msg._parsed.canShowChart = true;
+                    }
                 }
             }
         } catch (e) {

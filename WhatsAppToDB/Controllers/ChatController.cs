@@ -13,6 +13,7 @@ using System.Net.Mail;
 using WhatsAppToDB.Abstractions;
 using WhatsAppToDB.Audit;
 using WhatsAppToDB.Data;
+using WhatsAppToDB.Database;
 using WhatsAppToDB.LlmProviders;
 using WhatsAppToDB.Models;
 using WhatsAppToDB.Services;
@@ -26,21 +27,23 @@ namespace WhatsAppToDB.Controllers
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger _waLogger;
         private readonly ChatDbRepository _repo;
-        private readonly IOptions<MailSettings> _mailOptions;
         private readonly PromptExecutionSettings _promptSettings;
         private readonly IQueryService _queryService;
         private readonly IIdentityContextEnricher _identityContextEnricher;
+        private readonly JsonConfigService _jsonConfigService;
+        private readonly DatabaseContextService _databaseContextService;
 
 
         public ChatController(
             IServiceScopeFactory scopeFactory,
-            ILogger waLogger, ChatDbRepository repo, IOptions<MailSettings> mailOptions,
-            IQueryService queryService, IIdentityContextEnricher identityContextEnricher)
+            ILogger waLogger, ChatDbRepository repo, JsonConfigService jsonConfigService,
+            IQueryService queryService, IIdentityContextEnricher identityContextEnricher, 
+            DatabaseContextService databaseContextService)
         {
             _scopeFactory = scopeFactory;
             _waLogger = waLogger;
             _repo = repo;
-            _mailOptions = mailOptions;
+            _jsonConfigService = jsonConfigService;
             _identityContextEnricher = identityContextEnricher;
             _promptSettings =
                 new OpenAIPromptExecutionSettings
@@ -49,6 +52,7 @@ namespace WhatsAppToDB.Controllers
                         FunctionChoiceBehavior.Auto()
                 };
             _queryService = queryService;
+            _databaseContextService = databaseContextService;
         }
        
         // ==================================================
@@ -217,8 +221,9 @@ namespace WhatsAppToDB.Controllers
                 if (msg == null)
                     return NotFound();
 
-                var settings =
-                    _mailOptions.Value;
+                var dbName = _databaseContextService.GetCurrentDatabaseName();
+
+                var settings = _jsonConfigService.GetMailSettings(dbName);
 
                 using var mail =
                     new MailMessage();
@@ -271,7 +276,7 @@ namespace WhatsAppToDB.Controllers
                 using var client =
                     new SmtpClient(
                         settings.SmtpServer,
-                        settings.Port)
+                        int.Parse(settings.Port))
                     {
                         EnableSsl =
                             settings.EnableSsl,

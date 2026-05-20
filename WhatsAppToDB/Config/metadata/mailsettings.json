@@ -7,7 +7,7 @@
 
   "fields": [
     {
-      "name": "smtpServer",
+      "name": "SmtpServer",
       "label": "SMTP Server",
       "type": "text",
       "showinheader": true,
@@ -21,14 +21,14 @@
       "required": true
     },
     {
-      "name": "username",
+      "name": "UserName",
       "label": "User Name",
       "type": "text",
       "showinheader": true,
       "required": true
     },
     {
-      "name": "password",
+      "name": "Password",
       "label": "Password",
       "type": "password",
       "showinheader": false,
@@ -36,7 +36,7 @@
       "sensitive": true
     },
     {
-      "name": "EnableSSL",
+      "name": "EnableSsl",
       "label": "Enable SSL",
       "type": "boolean",
       "showinheader": true,

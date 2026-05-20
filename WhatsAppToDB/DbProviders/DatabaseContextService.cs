@@ -56,12 +56,16 @@ namespace WhatsAppToDB.Database
             return _factory.GetDbProvider(config.DbProvider);
         }
 
-        public IDbConnection CreateConnection()
+        public IDbConnection CreateConnection(string connectionString = null)
         {
             var config = GetCurrentConfig();
             var provider = _factory.GetDbProvider(config.DbProvider);
+            if (string.IsNullOrWhiteSpace(connectionString))
+            {
+                connectionString = config.ConnectionString;
+            }
 
-            return provider.GetConnection(config.ConnectionString);
+            return provider.GetConnection(connectionString);
         }
 
         public string GetCurrentDatabaseName()

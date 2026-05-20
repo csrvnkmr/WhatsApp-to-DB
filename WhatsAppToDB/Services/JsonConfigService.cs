@@ -39,7 +39,9 @@ namespace WhatsAppToDB.Services
         // ============================================
 
         public T Load<T>(
-            string fileName, [CallerFilePath] string callerfile="", [CallerMemberName] string callermember="", [CallerLineNumber] int callerlinenum=-1)
+            string fileName, [CallerFilePath] string callerfile="", 
+            [CallerMemberName] string callermember="", [CallerLineNumber] int callerlinenum=-1)
+            where T : class
         {
             try
             {
@@ -61,7 +63,7 @@ namespace WhatsAppToDB.Services
             catch(Exception ex)
             {
                 _logger.LogInfo($"Exception in {nameof(Load)} in {nameof(JsonConfigService)} {ex}, {callerfile}.{callermember} at {callerlinenum}");
-                throw;
+                return null;
             }
         }
 
@@ -71,7 +73,9 @@ namespace WhatsAppToDB.Services
 
         public T LoadDatabaseConfig<T>(
             string database,
-            string fileName, [CallerFilePath] string callerfile = "", [CallerMemberName] string callermember = "", [CallerLineNumber] int callerlinenum = -1)
+            string fileName, [CallerFilePath] string callerfile = "", 
+            [CallerMemberName] string callermember = "", [CallerLineNumber] int callerlinenum = -1)
+            where T : class
         {
             try
             {
@@ -83,7 +87,7 @@ namespace WhatsAppToDB.Services
                         fileName);
 
                 if (!File.Exists(path))
-                {
+                {                    
                     throw new Exception(
                         $"Config file not found: {path}");
                 }
@@ -99,7 +103,7 @@ namespace WhatsAppToDB.Services
             catch (Exception ex)
             {
                 _logger.LogInfo($"Exception in {nameof(LoadDatabaseConfig)} in {nameof(JsonConfigService)} {ex}, {callerfile}.{callermember} at {callerlinenum}");
-                throw;
+                return null;
             }
         }
 
@@ -266,7 +270,13 @@ namespace WhatsAppToDB.Services
             return LoadAndDecryptGlobal<List<WhatsAppProfile>>(Constants.ConfigFiles.WhatsAppProfiles);
         }
 
-        public WhatsAppProfile? GetWhatsAppProfile(string phoneId)
+        public WhatsAppProfile? GetWhatsAppProfile(string profileId)
+        {
+            var profiles = LoadAndDecryptGlobal<List<WhatsAppProfile>>(Constants.ConfigFiles.WhatsAppProfiles);
+            return profiles.FirstOrDefault(p => p.ProfileId.Equals(profileId, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public WhatsAppProfile? GetWhatsAppProfileFromPhoneId(string phoneId)
         {
             var profiles = LoadAndDecryptGlobal<List<WhatsAppProfile>>(Constants.ConfigFiles.WhatsAppProfiles);
             return profiles.FirstOrDefault(p => p.PhoneId.Equals(phoneId, StringComparison.OrdinalIgnoreCase));
@@ -356,6 +366,26 @@ namespace WhatsAppToDB.Services
             if (folders != null && folders.Count > 0)
             {
                 return folders[0];
+            }            
+            return null;
+        }
+
+        public MailSettings GetMailSettings(string database)
+        {
+            var mailSettings = LoadDatabaseConfigAndDecrypt<List<MailSettings>>(database, Constants.ConfigFiles.MailSettings);
+            if (mailSettings != null && mailSettings.Count > 0)
+            {
+                return mailSettings[0];
+            }            
+            return null;
+        }
+
+        public Extension GetExtension(string database)
+        {
+            var extension = LoadDatabaseConfigAndDecrypt<List<Extension>>(database, Constants.ConfigFiles.Extensions);
+            if (extension != null && extension.Count > 0)
+            {
+                return extension[0];
             }            
             return null;
         }

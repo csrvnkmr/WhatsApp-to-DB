@@ -41,7 +41,7 @@
       "references": "modules.Name"
     },
     {
-      "name": "s",
+      "name": "ConnectionString",
       "label": "Connection String",
       "type": "text",
       "fulllength": true,

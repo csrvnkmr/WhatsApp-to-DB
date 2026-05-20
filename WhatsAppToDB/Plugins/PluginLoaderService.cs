@@ -1,6 +1,4 @@
-﻿namespace WhatsAppToDB.Services
-{
-    using global::WhatsAppToDB.Settings;
+﻿    using global::WhatsAppToDB.Settings;
     using System.Reflection;
     using System.Runtime.Loader;
     
@@ -31,13 +29,21 @@
             // CREATE PLUGIN INSTANCE
             // ============================================
 
-            public object? CreatePluginInstance(PluginSettings pluginSettings)
+            public object? CreatePluginInstance(string assemblyPath, string fullyQualifiedClassName)
             {
                 try
                 {
+                    if (string.IsNullOrWhiteSpace(assemblyPath) ||
+                        string.IsNullOrWhiteSpace(fullyQualifiedClassName))
+                    {
+                        _logger.LogError(
+                            $"Invalid plugin parameters. AssemblyPath and FullyQualifiedClassName are required.");
+
+                        return null;
+                    }
                     var assembly =
                         GetAssembly(
-                            pluginSettings.AssemblyPath);
+                            assemblyPath);
 
                     if (assembly == null)
                         return null;
@@ -48,12 +54,12 @@
 
                     var pluginType =
                         assembly.GetType(
-                            pluginSettings.PluginClassName);
+                            fullyQualifiedClassName);
 
                     if (pluginType == null)
                     {
                         _logger.LogError(
-                            $"Plugin type not found: {pluginSettings.PluginClassName}");
+                            $"Plugin type not found: {fullyQualifiedClassName}");
 
                         return null;
                     }
@@ -69,24 +75,41 @@
                     if (instance == null)
                     {
                         _logger.LogError(
-                            $"Failed to create plugin instance: {pluginSettings.PluginClassName}");
+                            $"Failed to create plugin instance: {fullyQualifiedClassName}");
 
                         return null;
                     }
 
                     _logger.LogInfo(
-                        $"Plugin loaded: {pluginSettings.Name}");
+                        $"Plugin loaded: {fullyQualifiedClassName}");
 
                     return instance;
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(
-                        $"Failed loading plugin {pluginSettings.Name}",
+                        $"Failed loading plugin {fullyQualifiedClassName}",
                         ex);
 
                     return null;
                 }
+            }
+
+
+            public object? CreatePluginInstance(PluginSettings pluginSettings)
+            {
+
+                if (pluginSettings == null ||
+                    (string.IsNullOrWhiteSpace(pluginSettings.AssemblyPath) ||
+                    string.IsNullOrWhiteSpace(pluginSettings.PluginClassName)))
+                {
+                    _logger.LogError(
+                        $"Plugin settings incomplete for plugin: {pluginSettings.Name}");
+
+                    return null;
+                }
+                return CreatePluginInstance(pluginSettings.AssemblyPath, pluginSettings.PluginClassName);
+
             }
 
             // ============================================
@@ -210,4 +233,3 @@
             }
         }
     }
-}

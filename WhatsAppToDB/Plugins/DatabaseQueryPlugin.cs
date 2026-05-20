@@ -16,7 +16,8 @@ using WhatsAppToDB.Abstractions;
 using WhatsAppToDB.Data;
 using WhatsAppToDB.Database;
 using WhatsAppToDB.Models;
-using WhatsAppToDB.Settings;
+using WhatsAppToDB.Services;
+using WhatsAppToDB.Plugins;
 
 namespace WhatsAppToDB.Plugin
 {
@@ -30,24 +31,30 @@ namespace WhatsAppToDB.Plugin
         private readonly AiRequestContext _ctx;
 
         private readonly IModulePrompt? _promptExtension;
-        private readonly ISqlInterceptor? _sqlExtension;
         //private readonly DatabaseSettings _dbSettings;
         private readonly DatabaseContextService _databaseContextService;
         private readonly FolderUtils _folderUtils;
+        private readonly JsonConfigService _jsonConfigService;
+        private readonly PluginLoaderService _pluginLoaderService;
+
 
         public DatabaseQueryPlugin(AiRequestContext ctx,
             IModulePrompt? promptExtension = null,   
-            ISqlInterceptor? sqlExtension = null,
             ILogger? logger = null, DatabaseContextService databaseContextService = null,
-            FolderUtils folderUtils = null, IConfiguration configuration = null)
+            FolderUtils folderUtils = null, 
+            JsonConfigService jsonConfigService = null,
+            IConfiguration configuration = null,
+            PluginLoaderService pluginLoaderService = null
+            )
         {
             _promptExtension = promptExtension;
-            _sqlExtension = sqlExtension;
             _logger = logger ?? new AppLogger();
             //_dbSettings = dbSettings.Value;
             _ctx = ctx;
             _databaseContextService = databaseContextService;
             _folderUtils = folderUtils;
+            _jsonConfigService = jsonConfigService;
+            _pluginLoaderService = pluginLoaderService;
             //_folderUtils = folderUtils ?? new FolderUtils(configuration ?? new ConfigurationBuilder().AddInMemoryCollection(new[] { new KeyValuePair<string, string>("DataFolder", "Data") }).Build());
         }
 
@@ -74,9 +81,9 @@ namespace WhatsAppToDB.Plugin
             if (!sql.TrimStart().StartsWith("SELECT", StringComparison.OrdinalIgnoreCase))
                 return "Error: Only SELECT queries are permitted.";
 
-            string waNumber ="", userQuestion="", moduleName="";
+            string userName ="", userQuestion="", moduleName="";
 
-            waNumber = _ctx.WhatsAppNumber;
+            userName = _ctx.UserName;
             userQuestion = _ctx.UserQuestion;
 
             //if (kernel.Data.ContainsKey("WhatsAppNumber")) waNumber = kernel.Data["WhatsAppNumber"]?.ToString();
@@ -96,15 +103,30 @@ namespace WhatsAppToDB.Plugin
             }
             try
             {
-                Console.WriteLine($"PhoneNumber: {waNumber}, Question: {userQuestion}, module {moduleName}");
+                await _logger.LogInfoAsync($"[DatabaseQueryPlugin] UserName: {userName}, Question: {userQuestion}, module {moduleName}");
+                var dbName = _databaseContextService.GetCurrentDatabaseName();
+
+                var extn = _jsonConfigService.GetExtension(dbName);
+                if (extn != null)
+                {
+                    var sqlInterceptor = _pluginLoaderService.CreatePluginInstance(extn.SqlInterceptorDLL, extn.SqlInterceptorClass);
+                    if (sqlInterceptor != null && sqlInterceptor is ISqlInterceptor interceptor)
+                    {
+                        sql = await interceptor.OnBeforeExecuteAsync(identity, userName, sql);
+                    }
+                }
+
+                /*
                 if (_sqlExtension != null)
                 {
-                    sql = await _sqlExtension.OnBeforeExecuteAsync(identity, waNumber?.ToString(), sql);
+                    sql = await _sqlExtension.OnBeforeExecuteAsync(identity, userName?.ToString(), sql);
                 }
+                */
+
                 Console.WriteLine($"[SAP EXECUTION]: {sql}");
                 kernel.Data["LastExecutedSql"] = sql;
                 var provider = _databaseContextService.GetProvider();
-                using IDbConnection db = _databaseContextService.CreateConnection();
+                using IDbConnection db = _databaseContextService.CreateConnection(currentConnectionString);
                 // Ensure the connection is open before setting session context, as Dapper relies on it for the session state to be applied correctly.
                 db.Open(); 
                 if (identity != null && identity.IsAdministrator())

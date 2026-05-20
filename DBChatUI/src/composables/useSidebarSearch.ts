@@ -66,6 +66,9 @@ export function useSidebarSearch() {
 
     chat.viewMode = "chat";
     chat.selectedSessionId = sessionId;
+    
+    // Clear search text to revert sidebar list back to normal
+    searchText.value = "";
 
     nextTick(() => {
       const el = document.getElementById(`msg-${messageId}`);

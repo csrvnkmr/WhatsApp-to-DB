@@ -17,22 +17,33 @@ namespace WhatsAppToDB.LlmProviders
             throw new NotImplementedException();
         }
 
-        public List<string> GetModels() => new()
-    {
-        "llama3",
-        "mistral"
-    };
-
         public void Register(IKernelBuilder builder, IServiceProvider sp, string model)
         {
-            var settings = sp.GetRequiredService<IOptions<LocalAiSettings>>().Value;
+            var llmRegistry = sp.GetRequiredService<LlmRegistry>();
+            var llmConfig = llmRegistry.Get(Name); // Ensure config is loaded
+
             Console.WriteLine($"Registering {Name} model {model}");
             builder.AddOpenAIChatCompletion(
                 modelId: model,
-                apiKey: settings.ApiKey,
+                apiKey: llmConfig.ApiKey,
                 httpClient: new HttpClient
                 {
-                    BaseAddress = new Uri(settings.HttpEndPoint)
+                    BaseAddress = new Uri(llmConfig.HttpEndPoint)
+                }
+            );
+
+            Console.WriteLine("[Kernel] Local AI connected via OpenAI-Compatible HTTP Endpoint.");
+        }
+
+        public void Register(IKernelBuilder builder, LlmConfig config, string model)
+        {
+            Console.WriteLine($"Registering {Name} model {model}");
+            builder.AddOpenAIChatCompletion(
+                modelId: model,
+                apiKey: config.ApiKey,
+                httpClient: new HttpClient
+                {
+                    BaseAddress = new Uri(config.HttpEndPoint)
                 }
             );
 

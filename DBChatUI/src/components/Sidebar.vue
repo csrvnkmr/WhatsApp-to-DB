@@ -60,56 +60,61 @@
             Loading...
         </div>
 
-        <div
-            v-for="item in filteredSessions"
-            :key="item.id"
-            @click="openSession(item.id)"
-            class="p-2 mb-1 rounded-xl cursor-pointer border transition"
-            :class="Number(chat.selectedSessionId) === Number(item.id)
-                ? 'bg-selected border-blue-400 shadow-sm'
-                : 'bg-panel hover:bg-hover border-gray-200'">
+        <!-- REGULAR CHATS (When not searching) -->
+        <div v-if="!searchText">
+            <div
+                v-for="item in filteredSessions"
+                :key="item.id"
+                @click="openSession(item.id)"
+                class="p-2 mb-1 rounded-xl cursor-pointer border transition"
+                :class="Number(chat.selectedSessionId) === Number(item.id)
+                    ? 'bg-selected border-blue-400 shadow-sm'
+                    : 'bg-panel hover:bg-hover border-gray-200'">
 
-            <div class="font-medium text-sm truncate">
-                {{ item.title }}
+                <div class="font-medium text-sm truncate">
+                    {{ item.title }}
+                </div>
+
+                <div class="text-xs mt-1 opacity-60">
+                    {{ item.updatedOn }}
+                </div>
+
             </div>
-
-            <div class="text-xs mt-1 opacity-60">
-                {{ item.updatedOn }}
+            <div
+                v-if="filteredSessions.length === 0 && !chat.loading"
+                class="text-sm text-gray-400 p-2">
+                No chats found.
             </div>
-
-        </div>
-        <div
-            v-if="filteredSessions.length === 0 && !chat.loading"
-            class="text-sm text-gray-400 p-2">
-            No chats found.
         </div>
 
-        <div v-if="searchText">
+        <!-- SEARCH RESULTS (When searching) -->
+        <div v-else>
+            <div
+                v-for="s in groupedResults"
+                :key="s.sessionId"
+                class="mb-3">
 
-    <div
-        v-for="s in groupedResults"
-        :key="s.SessionId"
-        class="mb-3">
+                <!-- SESSION HEADER -->
+                <div class="font-semibold text-sm px-2 py-1 text-gray-700">
+                    {{ s.title }}
+                </div>
 
-        <!-- SESSION HEADER -->
-        <div class="font-semibold text-sm px-2 py-1 text-gray-700">
-            {{ s.title }}
+                <!-- QUESTIONS -->
+                <div
+                    v-for="m in s.messages"
+                    :key="m.MessageId"
+                    @click="openSearchResult(s.sessionId, m.MessageId)"
+                    class="text-sm px-3 py-1 cursor-pointer rounded bg-panel hover:bg-hover transition">
+                    {{ m.MessageText }}
+                </div>
+
+            </div>
+            <div
+                v-if="groupedResults.length === 0 && !chat.loading"
+                class="text-sm text-gray-400 p-2">
+                No matching messages found.
+            </div>
         </div>
-
-        <!-- QUESTIONS -->
-        <div
-            v-for="m in s.messages"
-            :key="m.MessageId"
-            @click="openSearchResult(s.sessionId, m.MessageId)"
-            class="text-sm px-3 py-1 cursor-pointer rounded bg-panel hover:bg-hover transition">
-
-            {{ m.MessageText }}
-
-        </div>
-
-    </div>
-
-</div>
     </div>
 
 </div>
