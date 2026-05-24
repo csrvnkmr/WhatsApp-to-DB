@@ -1,0 +1,17 @@
+[
+  {
+    "Name": "Posts",
+    "Details": "Posts module",
+    "Tables": [
+      "PostLinks",
+      "Posts",
+      "PostTypes",
+      "Votes",
+      "VoteTypes",
+      "Users",
+      "Badges",
+      "Comments",
+      "LinkTypes"
+    ]
+  }
+]

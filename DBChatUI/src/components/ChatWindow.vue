@@ -146,7 +146,7 @@ UPDATED:
 
               </div>
 
-            <div class="relative">
+            <div ref="llmMenuRef" class="relative">
 
               <button
                   @click="showLlmMenu = !showLlmMenu"
@@ -185,7 +185,7 @@ UPDATED:
           </div>
 
             <!-- DATABASE DROPDOWN -->
-            <div class="relative">
+            <div ref="dbMenuRef" class="relative">
 
                 <!-- Selected DB -->
                 <button
@@ -1031,16 +1031,16 @@ function navigateHistory(direction: "up" | "down") {
         if (historyIndex.value === -1) {
             unsentQuestion.value = question.value;
             historyIndex.value = questionHistory.value.length - 1;
-            question.value = questionHistory.value[historyIndex.value];
+            question.value = questionHistory.value[historyIndex.value] || "";
         } else if (historyIndex.value > 0) {
             historyIndex.value--;
-            question.value = questionHistory.value[historyIndex.value];
+            question.value = questionHistory.value[historyIndex.value] || "";
         }
     } else if (direction === "down") {
         if (historyIndex.value !== -1) {
             if (historyIndex.value < questionHistory.value.length - 1) {
                 historyIndex.value++;
-                question.value = questionHistory.value[historyIndex.value];
+                question.value = questionHistory.value[historyIndex.value] || "";
             } else if (historyIndex.value === questionHistory.value.length - 1) {
                 historyIndex.value = -1;
                 question.value = unsentQuestion.value;
@@ -1352,7 +1352,9 @@ watch(activeDbName, (db) => {
     }
 });
 
-const dbFilterRef = ref();
+const dbFilterRef = ref<HTMLElement | null>(null);
+const llmMenuRef = ref<HTMLElement | null>(null);
+const dbMenuRef = ref<HTMLElement | null>(null);
 
 onMounted(() => {
     document.addEventListener('click', handleOutsideClick);
@@ -1365,6 +1367,12 @@ onBeforeUnmount(() => {
 function handleOutsideClick(e: any) {
     if (!dbFilterRef.value?.contains(e.target)) {
         showDbFilter.value = false;
+    }
+    if (!llmMenuRef.value?.contains(e.target)) {
+        showLlmMenu.value = false;
+    }
+    if (!dbMenuRef.value?.contains(e.target)) {
+        showDbMenu.value = false;
     }
 }
 </script>

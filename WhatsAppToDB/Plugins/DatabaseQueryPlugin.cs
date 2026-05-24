@@ -58,21 +58,6 @@ namespace WhatsAppToDB.Plugin
             //_folderUtils = folderUtils ?? new FolderUtils(configuration ?? new ConfigurationBuilder().AddInMemoryCollection(new[] { new KeyValuePair<string, string>("DataFolder", "Data") }).Build());
         }
 
-        //public async Task SetDatabaseSessionAsync(IDbConnection conn, IdentityContext identity)
-        //{
-        //    // Determine the key: Mapped Key -> Fallback to Role
-        //    string contextKey = identity.GetActiveContextKey();
-
-        //    // In SQL Server, we set the session context
-        //    string sql = "EXEC sp_set_session_context @Key, @Value, @read_only = 1;";
-
-        //    await conn.ExecuteAsync(sql, new
-        //    {
-        //        Key = contextKey,
-        //        Value = identity.InternalUserId
-        //    });
-        //}
-
         [KernelFunction]
         [Description("Executes a READ-ONLY SQL SELECT query against the database.")]
         public async Task<string> ExecuteSql([Description("The T-SQL SELECT statement")] string sql, Kernel kernel)
@@ -123,7 +108,7 @@ namespace WhatsAppToDB.Plugin
                 }
                 */
 
-                Console.WriteLine($"[SAP EXECUTION]: {sql}");
+                await _logger.LogDebugAsync($"[DatabaseQueryPlugin] SQL : {sql}");
                 kernel.Data["LastExecutedSql"] = sql;
                 var provider = _databaseContextService.GetProvider();
                 using IDbConnection db = _databaseContextService.CreateConnection(currentConnectionString);
@@ -164,10 +149,11 @@ namespace WhatsAppToDB.Plugin
             {
                 if (_logger != null)
                 {
-                    await _logger.LogErrorAsync("Error in Execute SQL", ex);
-                } else
+                    await _logger.LogErrorAsync("[DatabaseQueryPlugin] Error in Execute SQL", ex);
+                }
+                else
                 {
-                    Console.WriteLine($"Error in Execute SQL {ex}");
+                    await new AppLogger().LogErrorAsync($"[DatabaseQueryPlugin] Error in Execute SQL", ex);
                 }
 
 

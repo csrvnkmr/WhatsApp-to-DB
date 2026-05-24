@@ -5,7 +5,7 @@
     <div class="w-full max-w-3xl bg-panel rounded-2xl p-6 border border-soft max-h-[90vh] overflow-auto">
 
         <div class="text-xl font-bold mb-6">
-            Edit
+            {{ isNewRecord ? 'Add' : 'Edit' }} {{ metadata?.title || 'Item' }}
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -16,6 +16,7 @@
                 :field="field"
                 :modelValue="getModelValue(field.name)"
                 @update:modelValue="val => setModelValue(field.name, val)"
+                @row-editing-change="val => activeRowEditors[field.name] = val"
                 :model="localModel"
                 :database="props.database"
                 :class="{'md:col-span-2': field.fulllength}" />
@@ -26,13 +27,15 @@
 
             <button
                 @click="$emit('cancel')"
-                class="px-4 py-2 rounded-xl border border-soft">
+                :disabled="isAnyRowEditing"
+                class="px-4 py-2 rounded-xl border border-soft disabled:opacity-40 disabled:cursor-not-allowed transition">
                 Cancel
             </button>
 
             <button
                 @click="save"
-                class="px-4 py-2 rounded-xl bg-user text-white">
+                :disabled="isAnyRowEditing"
+                class="px-4 py-2 rounded-xl bg-user text-white disabled:opacity-40 disabled:cursor-not-allowed transition">
                 Save
             </button>
 
@@ -56,6 +59,15 @@ const props = defineProps<{
 
 const emit = defineEmits(['save', 'cancel'])
 
+const isNewRecord = computed(() => {
+    return !props.model || Object.keys(props.model).length === 0
+})
+
+const activeRowEditors = ref<Record<string, boolean>>({})
+const isAnyRowEditing = computed(() => {
+    return Object.values(activeRowEditors.value).some(val => val)
+})
+
 const localModel = ref(JSON.parse(JSON.stringify(props.model || {})))
 
 watch(() => props.model, (newVal) => {
@@ -67,7 +79,8 @@ function getModelValue(name: string) {
     let current = localModel.value;
     for (let i = 0; i < parts.length; i++) {
         if (current === undefined || current === null) return undefined;
-        current = current[parts[i]];
+        const key = parts[i] as string;
+        current = current[key];
     }
     return current;
 }
@@ -76,19 +89,32 @@ function setModelValue(name: string, value: any) {
     const parts = name.split(/[.,]/);
     let current = localModel.value;
     for (let i = 0; i < parts.length - 1; i++) {
-        if (current[parts[i]] === undefined || current[parts[i]] === null) {
-            current[parts[i]] = {};
+        const key = parts[i] as string;
+        if (current[key] === undefined || current[key] === null) {
+            current[key] = {};
         }
-        current = current[parts[i]];
+        current = current[key];
     }
-    current[parts[parts.length - 1]] = value;
+    const lastKey = parts[parts.length - 1] as string;
+    current[lastKey] = value;
 }
 
 function evaluateConditions(conditions: any) {
     if (!conditions) return true;
-    for (const key in conditions) {
+    
+    let parsedConditions = conditions;
+    if (typeof conditions === 'string') {
+        try {
+            parsedConditions = JSON.parse(conditions);
+        } catch (e) {
+            console.warn("Condition string is not valid JSON:", conditions);
+            return true;
+        }
+    }
+    
+    for (const key in parsedConditions) {
         const targetValue = getModelValue(key);
-        const condition = conditions[key];
+        const condition = parsedConditions[key];
         
         if (condition && typeof condition === 'object' && !Array.isArray(condition) && 'op' in condition) {
             const { op, value } = condition;
@@ -128,10 +154,18 @@ function evaluateConditions(conditions: any) {
 }
 
 const processedFields = computed(() => {
-    if (!props.metadata || !props.metadata.fields) return [];
+    if (!props.metadata || !props.metadata.fields) {
+        console.log("[DynamicForm debug] No metadata or fields found:", props.metadata);
+        return [];
+    }
     
-    return props.metadata.fields.filter((field: any) => {
-        return evaluateConditions(field.showIf);
+    console.log("[DynamicForm debug] All metadata fields:", props.metadata.fields);
+    console.log("[DynamicForm debug] Current model:", props.model);
+
+    const filtered = props.metadata.fields.filter((field: any) => {
+        const show = evaluateConditions(field.showIf);
+        console.log(`[DynamicForm debug] Field: ${field.name}, showIf:`, field.showIf, "-> show:", show);
+        return show;
     }).map((field: any) => {
         let isRequired = field.required;
         if (field.requiredIf) {
@@ -139,6 +173,9 @@ const processedFields = computed(() => {
         }
         return { ...field, required: isRequired };
     });
+
+    console.log("[DynamicForm debug] Processed/rendered fields:", filtered.map((f: any) => f.name));
+    return filtered;
 });
 
 function save() {

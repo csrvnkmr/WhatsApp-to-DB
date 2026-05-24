@@ -113,7 +113,7 @@ namespace WhatsAppToDB.Controllers
         {
             var userName =
                 HttpContext.Items[Constants.ContextItems.UserName]?.ToString() ?? "";
-            Console.WriteLine($"Getting sessions for user {userName}");
+            _waLogger.LogInfo($"[ChatController] Getting sessions for user {userName}");
             var rows =
                 await _repo.GetSessionsAsync(userName);
 

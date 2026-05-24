@@ -1,0 +1,11 @@
+[
+  {
+    "TableName": "HumanResources.Department",
+    "CollectionName": "VectorDepartment",
+    "KeyField": "DepartmentID",
+    "ContentField": "Name",
+    "MetadataFields": [
+      "GroupName"
+    ]
+  }
+]

@@ -1,4 +1,4 @@
-﻿using ChromaDB.Client;
+﻿
 using Dapper;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
@@ -20,7 +20,7 @@ namespace DBSearchHelperPlugin
         private const string CollectionNameProduct = "AW-Product";
         private const string CollectionNameStore = "AW-Store";
 
-        private VectorDBSync.DynamicVectorSyncService dvss;
+        private VectorDBSync.VectorSyncService dvss;
         private VectorDBSync.VectorSyncService vss;
         private VectorDBSync.ISyncService syncService; 
         private string chromaUrl, connectionString, apiKey;
@@ -33,7 +33,7 @@ namespace DBSearchHelperPlugin
             connectionString = config["DatabaseSettings:ConnectionString"] ?? "";
             Console.WriteLine($"[SearchHelperPluginAW] Initialized with ChromaUrl: {chromaUrl}, ConnectionString: {connectionString}, " +
                 $"ApiKey: {(string.IsNullOrEmpty(apiKey) ? "Not Set" : "Set")}");
-            dvss = new VectorDBSync.DynamicVectorSyncService(apiKey, chromaUrl, connectionString);
+            dvss = new VectorDBSync.VectorSyncService(null, connectionString);
             syncService = dvss;
 
         }

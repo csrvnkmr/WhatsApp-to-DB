@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WhatsAppToDB.Abstractions\WhatsAppToDB.Abstractions.csproj" />
+  </ItemGroup>
+
+  <Target Name="CopyToVectorDBPluginFolder" AfterTargets="Build">
+    <PropertyGroup>
+      <VectorDBPluginOutput>$(MSBuildProjectDirectory)\..\WhatsAppToDB\bin\$(Platform)\$(Configuration)\$(TargetFramework)\Plugins\VectorDB\</VectorDBPluginOutput>
+      <VectorDBSyncPluginOutput>$(MSBuildProjectDirectory)\..\VectorDBSync\bin\$(Platform)\$(Configuration)\$(TargetFramework)\Plugins\VectorDB\</VectorDBSyncPluginOutput>
+    </PropertyGroup>
+    <MakeDir Directories="$(VectorDBPluginOutput)" />
+    <MakeDir Directories="$(VectorDBSyncPluginOutput)" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(VectorDBPluginOutput)" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(VectorDBSyncPluginOutput)" />
+  </Target>
+
+</Project>

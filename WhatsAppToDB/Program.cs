@@ -1,14 +1,7 @@
-﻿using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
-using System.Text.Json;
-
-using WhatsAppToDB;
-using WhatsAppToDB.Abstractions;
-using WhatsAppToDB.Data;
+﻿using WhatsAppToDB.Data;
 using WhatsAppToDB.Database;
 using WhatsAppToDB.Services;
 using WhatsAppToDB.Settings;
-using WhatsAppToDB.VectorStore;
 using VectorDBSync;
 
 var builder = Microsoft.AspNetCore.Builder.WebApplication.CreateBuilder(args);
@@ -35,15 +28,11 @@ builder.Services.AddCors(options =>
             .AllowCredentials();
     });
 });
-//await TestSqliteExecution();
-//await AdventureWorksTestHarness.RunTestMessages(builder);
-//await AdventureWorksTestHarness.RunSecurityTests(builder);
 
 var app = builder.Build();
 app.UseRouting();
 app.UseCors("AllowAll");
 app.UseSession();
-
 
 app.UseSwagger();
 app.UseSwaggerUI();
@@ -104,28 +93,10 @@ async Task TestVectorSync(WebApplication app, string database = "B1Database2")
 
         Console.WriteLine($"✓ Loaded VectorDBSettings");
         Console.WriteLine($"  - Embedding Service: {vectorDbSettings.EmbeddingServiceSettings.Type}");
-        Console.WriteLine($"  - Vector DB Type: {vectorDbSettings.VectorDBProvider.Type}");
+        Console.WriteLine($"  - Vector DB Type: {vectorDbSettings.VectorDBProviderSettings.Type}");
         Console.WriteLine($"  - Cache Folder: {vectorDbSettings.CacheFolder}");
-        Console.WriteLine($"  - SQLite VectorDB Folder: {vectorDbSettings.SqliteSettings.VectorDBFolder}");
+        Console.WriteLine($"  - SQLite VectorDB Folder: {vectorDbSettings.VectorDBProviderSettings.VectorDBFolder}");
 
-        /*
-        // Load VectorSyncConfig array from vectorconfiguration.json
-        string baseConfigPath = $"Config/databases/{database}";
-        string configPath = Path.Combine(baseConfigPath, "vectorconfiguration.json");
-
-        if (!File.Exists(configPath))
-        {
-            Console.WriteLine($"ERROR: Configuration file not found: {configPath}");
-            return;
-        }
-
-        Console.WriteLine($"\nLoading configurations from: {configPath}");
-        var configJson = await File.ReadAllTextAsync(configPath);
-        var syncConfigs = JsonSerializer.Deserialize<List<VectorSyncConfig>>(configJson, new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        });
-        */
         var syncConfigs = jsonConfigService.GetVectorSyncConfigurations(database);
 
         if (syncConfigs == null )

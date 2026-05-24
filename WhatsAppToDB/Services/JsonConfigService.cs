@@ -304,7 +304,14 @@ namespace WhatsAppToDB.Services
         {
             var vectorDBSettingsList = 
                 LoadDatabaseConfigAndDecrypt<List<VectorDBSettings>>(database, Constants.ConfigFiles.VectordbSettings);
-            return vectorDBSettingsList?.FirstOrDefault();
+            var firstvalue= vectorDBSettingsList?.FirstOrDefault();
+            if (firstvalue != null)
+            {
+                firstvalue.VectorDBProviderSettings = firstvalue.VectorDBProviderSettings ?? new VectorDBProviderSettings();
+                firstvalue.VectorDBProviderSettings.Database = database;
+                firstvalue.VectorDBProviderSettings.TenantName = "database";
+            }
+            return firstvalue;
         }
 
         public List<VectorConfiguration> GetVectorConfigurations(string database)

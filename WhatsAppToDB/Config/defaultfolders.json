@@ -2,6 +2,8 @@
   {
     "LlmProviderFolder": "C:\\Development\\AiAgents\\SemanticKernel\\Plugins\\Llm\\",
     "DatabaseProviderFolder": "C:\\Development\\AiAgents\\SemanticKernel\\Plugins\\Database\\",
-    "ChatHistoryFolder": "C:\\Development\\AiAgents\\SemanticKernel\\ChatData\\"
+    "ChatHistoryFolder": "C:\\Development\\AiAgents\\SemanticKernel\\ChatData\\",
+    "EmbeddingProviderFolder": "C:\\Development\\AiAgents\\SemanticKernel\\Plugins\\Embedding\\",
+    "VectorDBProviderFolder": "C:\\Development\\AiAgents\\SemanticKernel\\Plugins\\VectorDB\\"
   }
 ]

@@ -1,0 +1,117 @@
+[
+  {
+    "Name": "Badges",
+    "Description": "",
+    "Columns": [
+      "Id",
+      "Name",
+      "UserId",
+      "Date"
+    ]
+  },
+  {
+    "Name": "Comments",
+    "Description": "",
+    "Columns": [
+      "Id",
+      "CreationDate",
+      "PostId",
+      "Score",
+      "Text",
+      "UserId"
+    ]
+  },
+  {
+    "Name": "LinkTypes",
+    "Description": "",
+    "Columns": [
+      "Id",
+      "Type"
+    ]
+  },
+  {
+    "Name": "PostLinks",
+    "Description": "",
+    "Columns": [
+      "Id",
+      "CreationDate",
+      "PostId",
+      "RelatedPostId",
+      "LinkTypeId"
+    ]
+  },
+  {
+    "Name": "Posts",
+    "Description": "",
+    "Columns": [
+      "Id",
+      "AcceptedAnswerId",
+      "AnswerCount",
+      "Body",
+      "ClosedDate",
+      "CommentCount",
+      "CommunityOwnedDate",
+      "CreationDate",
+      "FavoriteCount",
+      "LastActivityDate",
+      "LastEditDate",
+      "LastEditorDisplayName",
+      "LastEditorUserId",
+      "OwnerUserId",
+      "ParentId",
+      "PostTypeId",
+      "Score",
+      "Tags",
+      "Title",
+      "ViewCount"
+    ]
+  },
+  {
+    "Name": "PostTypes",
+    "Description": "",
+    "Columns": [
+      "Id",
+      "Type"
+    ]
+  },
+  {
+    "Name": "Users",
+    "Description": "",
+    "Columns": [
+      "Id",
+      "AboutMe",
+      "Age",
+      "CreationDate",
+      "DisplayName",
+      "DownVotes",
+      "EmailHash",
+      "LastAccessDate",
+      "Location",
+      "Reputation",
+      "UpVotes",
+      "Views",
+      "WebsiteUrl",
+      "AccountId"
+    ]
+  },
+  {
+    "Name": "Votes",
+    "Description": "",
+    "Columns": [
+      "Id",
+      "PostId",
+      "UserId",
+      "BountyAmount",
+      "VoteTypeId",
+      "CreationDate"
+    ]
+  },
+  {
+    "Name": "VoteTypes",
+    "Description": "",
+    "Columns": [
+      "Id",
+      "Name"
+    ]
+  }
+]

@@ -1,0 +1,8 @@
+[
+  {
+    "CollectionName": "VectorUser",
+    "TableName": "users",
+    "KeyField": "Id",
+    "ContentField": "DisplayName"
+  }
+]

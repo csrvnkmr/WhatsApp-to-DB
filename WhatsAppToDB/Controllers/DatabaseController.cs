@@ -46,7 +46,7 @@ namespace WhatsAppToDB.Controllers
             var dbConfig = _registry.GetDatabaseConfig(activeDb); // validate active db exists, will throw if not
             if (dbConfig != null)
             {
-                Console.WriteLine($"[DB GET] Active DB = {activeDb}");
+                _waLogger.LogInfo($"[DatabaseController] DB GET: Active DB = {activeDb}");
                 activeDbDescription = dbConfig.Description;
             }
 
@@ -65,8 +65,8 @@ namespace WhatsAppToDB.Controllers
             var saved = HttpContext.Session.GetString(Constants.SessionKeys.ActiveDb);
             var userName = HttpContext.Items[Constants.ContextItems.UserName]?.ToString() ?? "";
             await _auditService.LogAsync(userName, AuditActions.DatabaseChanged, name);
-            Console.WriteLine($"[DB SELECT] Saved DB = {saved}");
-            Console.WriteLine($"[DB SELECT] Session={HttpContext.Session.Id}");
+            _waLogger.LogInfo($"[DatabaseController] DB SELECT: Saved DB = {saved}");
+            _waLogger.LogInfo($"[DatabaseController] DB SELECT: Session={HttpContext.Session.Id}");
             return Ok();
         }
 

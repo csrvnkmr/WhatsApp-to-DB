@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using WhatsAppToDB.Abstractions;
 
 namespace VectorDBSync.EmbeddingService
 {
@@ -30,6 +31,16 @@ namespace VectorDBSync.EmbeddingService
         {
             var result = await _embeddingClient.GenerateEmbeddingAsync(text);
             return result.Value.ToFloats();
+        }
+    }
+
+    public class OpenAiEmbeddingServiceProvider : IEmbeddingServiceProvider
+    {
+        public string Type => "openai";
+
+        public IEmbeddingService CreateEmbeddingService(EmbeddingServiceSettings settings)
+        {
+            return new OpenAiEmbeddingService(settings.Model, settings.ApiKey);
         }
     }
 }

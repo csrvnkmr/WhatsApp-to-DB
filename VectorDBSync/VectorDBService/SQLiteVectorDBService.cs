@@ -20,12 +20,8 @@ namespace VectorDBSync.VectorDBService
 
         public SQLiteVectorDBService(VectorDBSettings settings)
         {
-            _embeddingService = EmbeddingServiceFactory.Create(settings);
-            _basePath = settings.SqliteSettings.Folder;
-            if (string.IsNullOrWhiteSpace(_basePath))
-            {
-                _basePath = settings.SqliteSettings.VectorDBFolder;
-            }
+            _embeddingService = EmbeddingServiceFactory.Create(settings.EmbeddingServiceSettings);
+            _basePath = settings.VectorDBProviderSettings.VectorDBFolder;
             if (!Directory.Exists(_basePath))
             {
                 Directory.CreateDirectory(_basePath);
@@ -168,14 +164,14 @@ namespace VectorDBSync.VectorDBService
         }
 
 
-        private async Task<List<SearchResult>> GetFtsResults(string collectionName, string queryText, int limit,
+        private async Task<List<VectorSearchResult>> GetFtsResults(string collectionName, string queryText, int limit,
             IDictionary<string, object>? filter = null)
         {
             try
             {
             
                 string dbPath = Path.Combine(_basePath, $"{collectionName}.db");
-                var results = new List<SearchResult>();
+                var results = new List<VectorSearchResult>();
 
                 using var connection = new SqliteConnection($"Data Source={dbPath}");
                 await connection.OpenAsync();
@@ -218,7 +214,7 @@ namespace VectorDBSync.VectorDBService
                 {
                     var metadataJson = reader.IsDBNull(2) ? null : reader.GetString(2);
 
-                    results.Add(new SearchResult
+                    results.Add(new VectorSearchResult
                     {
                         Id = reader.GetString(0),
                         Document = reader.IsDBNull(1) ? null : reader.GetString(1),
@@ -233,7 +229,7 @@ namespace VectorDBSync.VectorDBService
             {
                 
                 Console.WriteLine($"Error in GetFtsResults: {ex}");
-                return new List<SearchResult>();
+                return new List<VectorSearchResult>();
             }
         }
 
@@ -253,7 +249,7 @@ namespace VectorDBSync.VectorDBService
             return query.Trim();
         }
 
-        public async Task<List<SearchResult>> SearchCollection(string collectionName, string queryText, int limit = 5,            
+        public async Task<List<VectorSearchResult>> SearchCollection(string collectionName, string queryText, int limit = 5,            
                 IDictionary<string, object>? filter = null)
         {
 
@@ -268,7 +264,7 @@ namespace VectorDBSync.VectorDBService
             // If "Linda Mitchel" is an FTS match, it will jump to #1 even if Smith is a closer vector.
             var combined = vectorMatches.Union(ftsMatches)
                 .GroupBy(x => x.Id)
-                .Select(g => new SearchResult
+                .Select(g => new VectorSearchResult
                 {
                     Id = g.Key,
                     Document = g.First().Document,
@@ -283,20 +279,20 @@ namespace VectorDBSync.VectorDBService
             return combined;
         }
 
-        public async Task<List<SearchResult>> GetVectorResults(
+        public async Task<List<VectorSearchResult>> GetVectorResults(
             string collectionName,
             string queryText,
             int limit = 5,
             IDictionary<string, object>? filter = null)
         {
             string dbPath = Path.Combine(_basePath, $"{collectionName}.db");
-            if (!File.Exists(dbPath)) return new List<SearchResult>();
+            if (!File.Exists(dbPath)) return new List<VectorSearchResult>();
 
             // 1. Get the vector for the query text
             var queryVector = await _embeddingService.GetVector(queryText);
             var querySpan = queryVector.Span;
 
-            var allResults = new List<SearchResult>();
+            var allResults = new List<VectorSearchResult>();
 
             using var connection = new SqliteConnection($"Data Source={dbPath}");
             connection.Open();
@@ -321,7 +317,7 @@ namespace VectorDBSync.VectorDBService
                 // 3. Calculate Cosine Similarity
                 //double similarity = CalculateCosineSimilarity(queryVector.Span, storedVector);
                 double similarity = CalculateCosineSimilarity(queryVector, storedVector);
-                allResults.Add(new SearchResult
+                allResults.Add(new VectorSearchResult
                 {
                     Id = id,
                     Document = document,

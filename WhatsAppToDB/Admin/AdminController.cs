@@ -13,6 +13,7 @@ namespace WhatsAppToDB.Admin
     [Route("admin/api")]
     public class AdminController : ControllerBase
     {
+        private readonly ILogger _logger;
 
         string[] dbSpecific =
                 {
@@ -40,17 +41,16 @@ namespace WhatsAppToDB.Admin
             };
 
         public AdminController(
-            IWebHostEnvironment env,IConfiguration config,
-            JsonConfigService configService)
-
+            IWebHostEnvironment env, IConfiguration config,
+            JsonConfigService configService, ILogger logger)
         {
-            
+            _logger = logger;
             ConfigRoot = config.GetValue<string>("ConfigRootFolder");
             if (string.IsNullOrWhiteSpace(ConfigRoot))
             {
                 var appRoot = Path.Combine(AppContext.BaseDirectory, "config");
                 ConfigRoot = appRoot;
-                Console.WriteLine($"Default config folder not in the appsettings.json. Using {appRoot}");
+                _logger.LogInfo($"[AdminController] Default config folder not in the appsettings.json. Using {appRoot}");
             }
             _env = env;
             _configService = configService;
@@ -115,11 +115,15 @@ namespace WhatsAppToDB.Admin
             // Auto-create empty file if missing
             if (!System.IO.File.Exists(filePath))
             {
+            /* create folder only in SaveData, not here. 
+            Otherwise, we end up with empty files for all entities in the root folder.
                 var folder = System.IO.Path.GetDirectoryName(filePath)!;
                 if (!Directory.Exists(folder))
                     Directory.CreateDirectory(folder);
  
                 System.IO.File.WriteAllText(filePath, "[]");
+
+            */                
                 return Content("[]", "application/json");
             }
  
@@ -188,6 +192,63 @@ namespace WhatsAppToDB.Admin
         }
 
         
+        // ======================================================
+        // SAVE METADATA
+        // POST /admin/api/metadata/{entity}
+        // Always save directly into the metadata folder. Before
+        // overwriting, take (backup) the current file.
+        // ======================================================
+
+        [HttpPost("metadata/{entity}")]
+        public async Task<IActionResult> SaveMetadata(
+            string entity)
+        {
+            using var reader = new StreamReader(Request.Body);
+
+            var body = await reader.ReadToEndAsync();
+
+            // validate json
+            try
+            {
+                JsonDocument.Parse(body);
+            }
+            catch
+            {
+                return BadRequest(new
+                {
+                    message = "Invalid JSON"
+                });
+            }
+
+            var folder = MetadataRoot;
+
+            if (!Directory.Exists(folder))
+            {
+                Directory.CreateDirectory(folder);
+            }
+
+            var file = Path.Combine(folder, $"{entity}.json");
+
+            // Backup current file (take the current file) before updating
+            if (System.IO.File.Exists(file))
+            {
+                var backups = Path.Combine(folder, "backups");
+                if (!Directory.Exists(backups))
+                    Directory.CreateDirectory(backups);
+
+                var timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
+                var backupFile = Path.Combine(backups, $"{entity}.{timestamp}.json");
+                System.IO.File.Copy(file, backupFile);
+            }
+
+            // Pretty-print and save directly into metadata
+            var parsed = JsonSerializer.Deserialize<object>(body);
+            var pretty = JsonSerializer.Serialize(parsed, _jsonOptions);
+            await System.IO.File.WriteAllTextAsync(file, pretty);
+
+            return Ok(new { success = true });
+        }
+
         // ======================================================
         // PATH RESOLUTION
         // ======================================================

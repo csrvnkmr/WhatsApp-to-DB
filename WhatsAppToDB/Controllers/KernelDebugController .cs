@@ -8,27 +8,29 @@ namespace WhatsAppToDB.Controllers
     public class KernelDebugController : ControllerBase
     {
         private readonly Kernel _kernel;
+        private readonly ILogger _logger;
 
-        public KernelDebugController(Kernel kernel)
+        public KernelDebugController(Kernel kernel, ILogger logger)
         {
             _kernel = kernel;
+            _logger = logger;
         }
 
         private void DumpKernelFunctions(string source)
         {
-            Console.WriteLine($"===== Kernel Functions Dump: {source} =====");
+            _logger.LogInfo($"[KernelDebugController] ===== Kernel Functions Dump: {source} =====");
 
             foreach (var plugin in _kernel.Plugins)
             {
-                Console.WriteLine($"Plugin: {plugin.Name}");
+                _logger.LogInfo($"[KernelDebugController] Plugin: {plugin.Name}");
 
                 foreach (var function in plugin)
                 {
-                    Console.WriteLine($"  Function: {function.Name}");
+                    _logger.LogInfo($"[KernelDebugController]   Function: {function.Name}");
                 }
             }
 
-            Console.WriteLine("===========================================");
+            _logger.LogInfo("[KernelDebugController] ===========================================");
         }
 
         [HttpGet("functions")]

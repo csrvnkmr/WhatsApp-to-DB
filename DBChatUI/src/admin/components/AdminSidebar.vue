@@ -106,6 +106,13 @@
 
                 <div class="pl-3 flex flex-col gap-0.5">
                     <RouterLink
+                        :to="`/admin/database/${db.Name}/schemacurator`"
+                        @click="emit('closeMobile')"
+                        class="submenu-item flex items-center gap-2 text-xs py-1 font-medium text-user">
+                        <span>🧭</span> Schema Curator
+                    </RouterLink>
+
+                    <RouterLink
                         :to="`/admin/database/${db.Name}/modules`"
                         @click="emit('closeMobile')"
                         class="submenu-item flex items-center gap-2 text-xs py-1">

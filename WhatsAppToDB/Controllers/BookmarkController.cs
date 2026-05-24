@@ -61,7 +61,7 @@ namespace WhatsAppToDB.Controllers
             var userName =
                 HttpContext.Items[Constants.ContextItems.UserName]?.ToString() ?? "";
 
-            Console.WriteLine($"Getting bookmarks for user {userName}");
+            _waLogger.LogInfo($"[BookmarkController] Getting bookmarks for user {userName}");
             var rows =
                 await _repo.GetBookmarksAsync(userName);
 

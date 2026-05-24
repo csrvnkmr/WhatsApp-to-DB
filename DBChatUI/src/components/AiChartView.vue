@@ -111,13 +111,27 @@ const option = computed(() => {
 
     // Build quick lookup table: lookup[seriesValue][xValue] = yValue
     const lookup: Record<string, Record<string, number>> = {};
-    uniqueSeries.forEach(s => lookup[s] = {});
+    uniqueSeries.forEach(s => {
+      if (s) lookup[s] = {};
+    });
     data.forEach(d => {
-      lookup[d[seriesKey.value]][d[xKey.value]] = d[yKey.value];
+      const sVal = d[seriesKey.value];
+      const xVal = d[xKey.value];
+      if (sVal && xVal && lookup[sVal]) {
+        lookup[sVal]![xVal] = d[yKey.value];
+      }
     });
 
     const seriesArray = uniqueSeries.map(s => {
-      const sData = uniqueX.map(x => lookup[s][x] ?? 0);
+      const sData = uniqueX.map(x => {
+        if (s && x) {
+          const entry = lookup[s];
+          if (entry) {
+            return entry[x] ?? 0;
+          }
+        }
+        return 0;
+      });
       return {
         name: s,
         type: type === 'line_multi' ? 'line' : 'bar',

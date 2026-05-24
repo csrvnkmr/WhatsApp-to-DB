@@ -9,54 +9,11 @@
         public string VerifyToken { get; set; } = string.Empty; 
     }
 
-    public class DatabaseSettings
-    {
-        public string ConnectionString { get; set; } = string.Empty;
-        public string ChromaUrl { get; set; } = string.Empty;
-        public string SchemaDefinitionFile { get; set; } = string.Empty;
-        public string DatabasePluginsFolder { get; set; } = string.Empty;
-        public string DatabaseConfigFile { get; set; } = string.Empty;
-
-    }
-
-    public class CommonAiSettings
-    {
-        public string SystemPromptFile { get; set; } = string.Empty;
-        public string Provider { get; set; } = string.Empty;
-        public string Model { get; set; } = string.Empty;
-        // Helper property to get the full prompt
-        public string FullSystemPrompt => File.ReadAllText(SystemPromptFile);// string.Join(" ", SystemPromptParts);
-
-    }
-    public class LocalAiSettings
-    {
-        public string Model { get; set; } = string.Empty;
-        public string ApiKey { get; set; } = string.Empty;
-        public string HttpEndPoint { get; set; } = string.Empty;
-    }
-
-    public class OpenAiSettings
-    {
-        public string Model { get; set; } = string.Empty;
-        public string ApiKey { get; set; } = string.Empty;
-
-    }
-
     public class PluginSettings
     {
         public string Name { get; set; } = string.Empty;
         public string AssemblyPath { get; set; } = string.Empty;
         public string PluginClassName { get; set; } = string.Empty;
-    }
-
-    // Root myDeserializedClass = JsonConvert.DeserializeObject<Root>(myJsonResponse);
-    public class ConnectionStrings
-    {
-        public string AdminConnection { get; set; }
-        public string SalesPersonConnection { get; set; }
-        public string EmployeeConnection { get; set; }
-        public string FinanceConnection { get; set; }
-        public string GuestConnection { get; set; }
     }
 
 

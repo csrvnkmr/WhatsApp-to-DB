@@ -94,6 +94,17 @@ export async function getMetadata(entity: string) {
   return ret;
 }
 
+export async function saveMetadata(entity: string, data: any) {
+  const res = await fetch(`${BASE_URL}/admin/api/metadata/${entity}`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: authHeader(),
+    body: JSON.stringify(data)
+  });
+  return await res.json();
+}
+
+
 export async function getData(entity: string, database?: string) {
   let url = `${BASE_URL}/admin/api/data/${entity}`;
   if (database) url += `?database=${database}`;

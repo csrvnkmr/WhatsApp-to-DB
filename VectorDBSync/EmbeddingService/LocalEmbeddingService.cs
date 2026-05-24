@@ -9,12 +9,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using WhatsAppToDB.Abstractions;
 
 namespace VectorDBSync.EmbeddingService
 {
 
 
-    internal class LocalEmbeddingService : IEmbeddingService, IDisposable, IProgress<(int done, int total)>
+    internal class ElBrunoEmbeddingService : IEmbeddingService, IDisposable, IProgress<(int done, int total)>
     {
         private readonly LocalEmbeddingGenerator _generator;
         // ── Tune these for your machine ─────────────────────────────────────
@@ -26,7 +27,7 @@ namespace VectorDBSync.EmbeddingService
         // Delay between batches (ms) — gives CPU/RAM time to breathe.
         // Set to 0 if you want max speed and don't mind high CPU.
         private const int BatchDelayMs = 50;
-        public LocalEmbeddingService(string modelName = "sentence-transformers/all-MiniLM-L6-v2")
+        public ElBrunoEmbeddingService(string modelName = "sentence-transformers/all-MiniLM-L6-v2")
         {
             // The library handles model downloading/loading automatically.
             // all-MiniLM-L6-v2 is the default and produces 384-dimension vectors.
@@ -108,5 +109,14 @@ namespace VectorDBSync.EmbeddingService
             Console.WriteLine($"Progress: {value.done}/{value.total} ({(value.done * 100) / value.total}%)");
         }
     }
-}
 
+    public class ElBrunoEmbeddingServiceProvider : IEmbeddingServiceProvider
+    {
+        public string Type => "local";
+
+        public IEmbeddingService CreateEmbeddingService(EmbeddingServiceSettings settings)
+        {
+            return new ElBrunoEmbeddingService(settings.Model);
+        }
+    }
+}

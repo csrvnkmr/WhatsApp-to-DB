@@ -1,9 +1,7 @@
 {
   "entity": "vectorconfigurations",
   "title": "Vector DB Configurations",
-
   "targetFile": "vectorconfigurations.json",
-
   "fields": [
     {
       "name": "CollectionName",
@@ -39,8 +37,14 @@
       "name": "MetadataFields",
       "label": "Metadata Fields",
       "showinheader": true,
-      "type": "array<text>",
+      "type": "array\u003Ctext\u003E",
       "description": "A list of fields that contain metadata associated with each record. "
+    },
+    {
+      "name": "DeleteAndCreate",
+      "label": "Delete and Create",
+      "type": "boolean",
+      "showinheader": true
     }
   ]
 }

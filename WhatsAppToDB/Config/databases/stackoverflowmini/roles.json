@@ -1,0 +1,13 @@
+[
+  {
+    "Name": "admin",
+    "Description": "admin",
+    "Users": [
+      "admin",
+      "csrvn"
+    ],
+    "Modules": [
+      "Posts"
+    ]
+  }
+]

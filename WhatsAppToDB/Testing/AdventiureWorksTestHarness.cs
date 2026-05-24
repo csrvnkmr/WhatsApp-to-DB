@@ -30,12 +30,10 @@ public class AdventureWorksTestHarness
         {
             // 1. Resolve the Kernel
             var kernel = sp.GetRequiredService<Kernel>();
-            var openaiOptions = sp.GetRequiredService<IOptions<WhatsAppToDB.Settings.OpenAiSettings>>();
-            var aiOptions = sp.GetRequiredService<IOptions<WhatsAppToDB.Settings.CommonAiSettings>>();
 
             // 2. Setup Chat History with your AdventureWorks System Prompt
             var history = new Microsoft.SemanticKernel.ChatCompletion.ChatHistory();
-            history.AddSystemMessage(aiOptions.Value.FullSystemPrompt);
+            history.AddSystemMessage("You are a helpful assistant.");
             history.AddUserMessage(userQuery);
 
             // 3. Execution Settings (Enable Tool Calling)
@@ -81,10 +79,9 @@ public class AdventureWorksTestHarness
                 {
                     kernel.FunctionInvocationFilters.Add(new FunctionCallLogger());
                 }
-                var aiOptions = sp.GetRequiredService<IOptions<CommonAiSettings>>();
                 var history = new ChatHistory();
                 var chatService = kernel.GetRequiredService<IChatCompletionService>();
-                var systemPrompt = aiOptions.Value.FullSystemPrompt;
+                var systemPrompt = "You are a helpful assistant.";
 
                 if (identity != null)
                 {

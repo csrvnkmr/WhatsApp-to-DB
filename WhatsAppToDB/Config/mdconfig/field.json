@@ -1,0 +1,93 @@
+{
+  "entity": "field",
+  "title": "Field Definition",
+
+  "targetFile": "field.json",
+
+  "fields": [
+    {
+      "name": "name",
+      "label": "Field Name",
+      "type": "text",
+      "showinheader": true,
+      "required": true,
+      "unique":true
+    },
+    {
+      "name": "label",
+      "label": "Field Label",
+      "type": "text",
+      "showinheader": true,
+      "required": true
+    },
+    {
+      "name": "type",
+      "label": "Field data type",
+      "showinheader": true,
+      "type": "text",
+      "required": true
+    },
+    {
+      "name": "showinheader",
+      "label": "Show in Header",
+      "showinheader": true,
+      "type": "bool",
+      "required": false
+    },
+    {
+      "name": "required",
+      "label": "Required",
+      "showinheader": false,
+      "type": "bool",
+      "required": false
+    },
+    {
+      "name": "fulllength",
+      "label": "Full Length",
+      "showinheader": false,
+      "type": "boolean",
+      "required": false
+    },
+    {
+      "name": "sensitive",
+      "label": "Is Sensitive",
+      "description": "Indicates if the field contains sensitive information that should be handled securely.",
+      "showinheader": false,
+      "type": "boolean",
+      "required": false
+    },
+    {
+      "name": "references",
+      "label": "References",
+      "showinheader": false,
+      "description": "Indicates the entity that this field references, if it's a foreign key. Format: 'entityname.fieldname'",
+      "type": "text",
+      "required": false
+    },
+    {
+      "name": "options",
+      "label": "Options",
+      "showinheader": false,
+      "description": "Defines the available options for the field, if it's a select",
+      "type": "array<text>",
+      "required": false
+    },
+    {
+      "name": "showIf",
+      "label": "Show If Condition",
+      "showinheader": false,
+      "description": "Condition under which the field should be displayed in the UI. Format: { 'sourcefieldname': { 'op': '==', 'value': 'somevalue' } }",
+      "type": "text",
+      "required": false
+    },
+    {
+      "name": "requiredIf",
+      "label": "Required If Condition",
+      "showinheader": false,
+      "description": "Condition under which the field should be required. Format: { 'sourcefieldname': { 'op': '==', 'value': 'somevalue' } }",
+      "type": "text",
+      "required": false
+    }    
+    
+  ]
+}

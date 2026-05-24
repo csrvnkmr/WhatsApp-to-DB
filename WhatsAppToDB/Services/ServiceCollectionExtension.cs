@@ -22,11 +22,19 @@ using WhatsAppToDB.Models;
 using WhatsAppToDB.Plugins;
 using WhatsAppToDB.Settings;
 using WhatsAppToDB.VectorStore;
+using VectorDBSync.EmbeddingService;
+using VectorDBSync.VectorDBService;
 
 namespace WhatsAppToDB.Services
 {
     public static class ServiceCollectionExtension
     {
+        private static readonly ILogger _logger;
+
+        static ServiceCollectionExtension()
+        {
+            _logger = new AppLogger { WriteToConsole = true };
+        }
 
         public static void ConfigureAllServices(this IServiceCollection services, IConfiguration config, PluginMetadata metadata)
         {
@@ -55,8 +63,6 @@ namespace WhatsAppToDB.Services
             var tempJsonConfig = new JsonConfigService(config, new AppLogger());
             var defaultFolders = tempJsonConfig.GetDefaultFolders();
 
-            services.Configure<Settings.OpenAiSettings>(config.GetSection("OpenAiSettings"));
-            services.Configure<LocalAiSettings>(config.GetSection("LocalAiSettings"));
             //services.AddDynamicExtensions(tempJsonConfig);
 
             //services.AddPlugin(config, metadata);
@@ -70,6 +76,12 @@ namespace WhatsAppToDB.Services
             
             var llmProviderPath = defaultFolders?.LlmProviderFolder ?? config.GetValue<string>("LlmPluginsFolder") ?? "Plugins/LLM";
             services.RegisterLlmProviders(llmProviderPath);
+
+            var embeddingProviderPath = defaultFolders?.EmbeddingProviderFolder ?? config.GetValue<string>("EmbeddingPluginsFolder") ?? "Plugins/Embedding";
+            services.RegisterEmbeddingServiceProviders(embeddingProviderPath);
+
+            var vectorDbProviderPath = defaultFolders?.VectorDBProviderFolder ?? config.GetValue<string>("VectorDBPluginsFolder") ?? "Plugins/VectorDB";
+            services.RegisterVectorDBProviders(vectorDbProviderPath);
 
             services.AddDistributedMemoryCache();
             services.AddScoped<IQueryService, QueryService>();
@@ -140,9 +152,10 @@ namespace WhatsAppToDB.Services
 
             services.AddSingleton<IDbProvider, Database.MsSqlDbProvider>();
             services.AddSingleton<IDbProvider, Database.SqliteDbProvider>();
-            services.AddSingleton<ISchemaProvider, SqlServerSchemaProvider>();
+            services.AddSingleton<ISchemaProvider, MsSqlSchemaProvider>();
             services.AddSingleton<ISchemaProvider, SqliteSchemaProvider>();
             services.LoadProviders<IDbProvider>(folderName, "*dbplugin.dll", ServiceLifetime.Singleton);            
+            services.LoadProviders<ISchemaProvider>(folderName, "*dbplugin.dll", ServiceLifetime.Singleton);            
             services.AddSingleton<Database.DbProviderFactory>();  // Changed from AddScoped to AddSingleton
         }        
 
@@ -156,6 +169,39 @@ namespace WhatsAppToDB.Services
 
             services.AddSingleton<LlmRegistry>();
             services.AddScoped<LlmProviderFactory>();
+        }
+
+        public static void RegisterEmbeddingServiceProviders(this IServiceCollection services, string folderName)
+        {
+            var builtIns = new IEmbeddingServiceProvider[]
+            {
+                new ElBrunoEmbeddingServiceProvider(),
+                new OpenAiEmbeddingServiceProvider()
+            };
+
+            foreach (var provider in builtIns)
+            {
+                services.AddSingleton<IEmbeddingServiceProvider>(provider);
+                EmbeddingServiceFactory.Register(provider);
+            }
+
+            LoadEmbeddingProviders(services, folderName, "*embeddingprovider.dll");
+        }
+
+        public static void RegisterVectorDBProviders(this IServiceCollection services, string folderName)
+        {
+            var builtIns = new IVectorDBServiceProvider[]
+            {
+                new SQLiteVectorDBServiceProvider()
+            };
+
+            foreach (var provider in builtIns)
+            {
+                services.AddSingleton<IVectorDBServiceProvider>(provider);
+                VectorDBServiceFactory.Register(provider);
+            }
+
+            LoadVectorDBProviders(services, folderName, "*vectordbprovider.dll");
         }
 
         static void LoadProviders<TInterface>(this IServiceCollection services, string pluginFolder, string filefilter,
@@ -183,13 +229,89 @@ namespace WhatsAppToDB.Services
                     {
                         services.Add(new ServiceDescriptor(typeof(TInterface), type, lifetime));
 
-                        Console.WriteLine($"[Plugin:{typeof(TInterface).Name}] Loaded: {type.Name}");
+                        _logger.LogInfo($"[Plugin:{typeof(TInterface).Name}] Loaded: {type.Name}");
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[Plugin:{typeof(TInterface).Name}] Failed: {file}");
-                    Console.WriteLine(ex.Message);
+                    _logger.LogError($"[Plugin:{typeof(TInterface).Name}] Failed: {file}");
+                    _logger.LogError(ex.Message);
+                }
+            }
+        }
+
+        static void LoadEmbeddingProviders(this IServiceCollection services, string pluginFolder, string filefilter)
+        {
+            if (string.IsNullOrWhiteSpace(pluginFolder) || !Directory.Exists(pluginFolder))
+                return;
+
+            var dlls = Directory.GetFiles(pluginFolder, filefilter);
+
+            foreach (var file in dlls)
+            {
+                try
+                {
+                    var asm = Assembly.LoadFrom(file);
+
+                    var types = asm.GetTypes()
+                        .Where(t =>
+                            typeof(IEmbeddingServiceProvider).IsAssignableFrom(t) &&
+                            !t.IsInterface &&
+                            !t.IsAbstract);
+
+                    foreach (var type in types)
+                    {
+                        if (Activator.CreateInstance(type) is not IEmbeddingServiceProvider provider)
+                            continue;
+
+                        services.AddSingleton<IEmbeddingServiceProvider>(provider);
+                        EmbeddingServiceFactory.Register(provider);
+
+                        _logger.LogInfo($"[EmbeddingProvider] Loaded: {type.Name} ({provider.Type})");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"[EmbeddingProvider] Failed: {file}");
+                    _logger.LogError(ex.Message);
+                }
+            }
+        }
+
+        static void LoadVectorDBProviders(this IServiceCollection services, string pluginFolder, string filefilter)
+        {
+            if (string.IsNullOrWhiteSpace(pluginFolder) || !Directory.Exists(pluginFolder))
+                return;
+
+            var dlls = Directory.GetFiles(pluginFolder, filefilter);
+
+            foreach (var file in dlls)
+            {
+                try
+                {
+                    var asm = Assembly.LoadFrom(file);
+
+                    var types = asm.GetTypes()
+                        .Where(t =>
+                            typeof(IVectorDBServiceProvider).IsAssignableFrom(t) &&
+                            !t.IsInterface &&
+                            !t.IsAbstract);
+
+                    foreach (var type in types)
+                    {
+                        if (Activator.CreateInstance(type) is not IVectorDBServiceProvider provider)
+                            continue;
+
+                        services.AddSingleton<IVectorDBServiceProvider>(provider);
+                        VectorDBServiceFactory.Register(provider);
+
+                        _logger.LogInfo($"[VectorDBProvider] Loaded: {type.Name} ({provider.Type})");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError($"[VectorDBProvider] Failed: {file}");
+                    _logger.LogError(ex.Message);
                 }
             }
         }
@@ -308,7 +430,7 @@ namespace WhatsAppToDB.Services
             {
                 // Use a unique ID to track this specific resolution in the console
                 var requestId = Guid.NewGuid().ToString().Substring(0, 4);
-                Console.WriteLine($"[WhatsAppToDB] [{requestId}] Building Kernel...");                                
+                _logger.LogInfo($"[WhatsAppToDB] [{requestId}] Building Kernel...");                                
 
                 var kernelBuilder = Kernel.CreateBuilder();
                 var llmContext = sp.GetRequiredService<LlmContextService>();
@@ -349,7 +471,7 @@ namespace WhatsAppToDB.Services
 
                     kernelBuilder.Plugins.AddFromObject(pluginInstance);
 
-                    Console.WriteLine($"[Kernel] Added Plugin: {plugin.Name}");
+                    _logger.LogInfo($"[Kernel] Added Plugin: {plugin.Name}");
                 }
 
                 var vectorFactory = sp.GetRequiredService<VectorKernelFunctionFactory>();

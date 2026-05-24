@@ -2,12 +2,19 @@
 
 <div>
 
-    <div class="flex items-center justify-between mb-4">
+    <div v-if="!editing && !isEditingMetadata" class="flex items-center justify-between mb-4">
 
         <div class="flex items-center gap-6">
             <div class="text-2xl font-bold">
                 {{ metadata?.title }}
             </div>
+            
+            <button
+                v-if="metadata"
+                @click="startEditMetadata"
+                class="text-user hover:underline text-sm font-medium transition">
+                Edit Metadata
+            </button>
             
             <div v-if="actions.length > 0" class="flex items-center gap-4 text-sm mt-1">
                 <button
@@ -33,7 +40,7 @@
 
     <!-- TABLE -->
 
-    <div class="overflow-auto border border-soft rounded-2xl bg-panel">
+    <div v-if="!editing && !isEditingMetadata" class="overflow-auto border border-soft rounded-2xl bg-panel">
 
         <table class="w-full text-sm">
 
@@ -110,6 +117,15 @@
         @save="save"
         @cancel="editing = null" />
 
+    <!-- METADATA FORM -->
+
+    <DynamicForm
+        v-if="isEditingMetadata"
+        :metadata="metadataSchema"
+        :model="metadataModel"
+        @save="saveMetadataForm"
+        @cancel="isEditingMetadata = false" />
+
 </div>
 
 </template>
@@ -117,7 +133,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import DynamicForm from './DynamicForm.vue'
-import { getMetadata, getData, saveData, getActions, executeAction } from '@/services/api'
+import { getMetadata, getData, saveData, getActions, executeAction, saveMetadata } from '@/services/api'
 
 const props = defineProps<{
     entity: string
@@ -145,6 +161,33 @@ const originalRow = ref<any>(null)
 
 const actions = ref<any[]>([])
 const isExecutingAction = ref(false)
+
+const isEditingMetadata = ref(false)
+const metadataSchema = ref<any>(null)
+const metadataModel = ref<any>(null)
+
+async function startEditMetadata() {
+    try {
+        metadataSchema.value = await getMetadata('metadata')
+        metadataModel.value = await getMetadata(props.entity)
+        isEditingMetadata.value = true
+    } catch (e) {
+        console.error("Failed to load metadata for editing", e)
+        alert("Failed to load metadata details.")
+    }
+}
+
+async function saveMetadataForm(updatedMetadata: any) {
+    try {
+        await saveMetadata(props.entity, updatedMetadata)
+        isEditingMetadata.value = false
+        await loadData()
+        await loadActions()
+    } catch (e) {
+        console.error("Failed to save metadata", e)
+        alert("Failed to save metadata.")
+    }
+}
 
 async function loadData() {
     try {

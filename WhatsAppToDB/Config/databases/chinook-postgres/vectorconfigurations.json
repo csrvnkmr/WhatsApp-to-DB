@@ -1,0 +1,57 @@
+[
+  {
+    "CollectionName": "VectorArtist",
+    "KeyField": "artist_id",
+    "TableName": "artist",
+    "ContentField": "name",
+    "DeleteAndCreate": true
+  },
+  {
+    "CollectionName": "VectorCustomer",
+    "TableName": "customer",
+    "KeyField": "customer_id",
+    "ContentField": "first_name || \u0027 \u0027 || last_name",
+    "MetadataFields": [
+      "company"
+    ],
+    "DeleteAndCreate": true
+  },
+  {
+    "CollectionName": "VectorGenre",
+    "TableName": "genre",
+    "KeyField": "genre_id",
+    "ContentField": "name",
+    "DeleteAndCreate": true
+  },
+  {
+    "CollectionName": "VectorPlaylist",
+    "TableName": "playlist",
+    "KeyField": "playlist_id",
+    "ContentField": "name",
+    "DeleteAndCreate": true
+  },
+  {
+    "CollectionName": "VectorAlbum",
+    "TableName": "album",
+    "KeyField": "album_id",
+    "ContentField": "title",
+    "MetadataFields": [
+      "artist_id"
+    ],
+    "DeleteAndCreate": true
+  },
+  {
+    "CollectionName": "VectorTrack",
+    "TableName": "track",
+    "KeyField": "track_id",
+    "ContentField": "name",
+    "DeleteAndCreate": true
+  },
+  {
+    "CollectionName": "VectorEmployee",
+    "TableName": "employee",
+    "KeyField": "employee_id",
+    "ContentField": "first_name || \u0027 \u0027 || last_name",
+    "DeleteAndCreate": true
+  }
+]

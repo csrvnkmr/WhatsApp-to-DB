@@ -59,6 +59,12 @@ export default [
       },
 
       {
+        path: 'database/:database/schemacurator',
+        component: () => import('@/components/Schema/SchemaCurator.vue'),
+        props: true
+      },
+
+      {
         path: 'database/:database/:entity',
         component: DatabaseSectionPage,
         props: true
