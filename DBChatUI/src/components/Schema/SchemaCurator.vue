@@ -91,8 +91,7 @@
         <div 
           v-for="table in filteredTables" 
           :key="table"
-          class="border border-soft rounded-xl bg-base overflow-hidden transition"
-          :class="{ 'ring-1 ring-user/30': expandedTable === table }"
+          class="border border-soft rounded-xl bg-base overflow-hidden transition hover:shadow-sm"
         >
           <!-- Table Row Header -->
           <div class="flex items-center justify-between py-2 px-3.5 select-none bg-panel/30 hover:bg-hover/20 transition">
@@ -113,144 +112,11 @@
             
             <button 
               @click="onTableExpand(table)"
-              class="p-1 hover:bg-hover rounded-lg transition"
+              class="px-2.5 py-1 text-[11px] font-semibold rounded bg-hover hover:bg-hover/80 text-user transition flex items-center gap-1 cursor-pointer"
+              title="Configure columns and metadata"
             >
-              <svg 
-                class="w-4 h-4 transform transition-transform duration-200" 
-                :class="{ 'rotate-180': expandedTable === table }"
-                fill="none" stroke="currentColor" viewBox="0 0 24 24"
-              >
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"></path>
-              </svg>
+              <span>⚙️ Curate</span>
             </button>
-          </div>
-
-          <!-- Table Curation Details (Expanded) -->
-          <div v-if="expandedTable === table" class="p-4 border-t border-soft space-y-4 bg-panel/10">
-            <!-- Table Details / Description -->
-            <div>
-              <label class="block text-[11px] font-bold uppercase opacity-55 mb-1.5">
-                Table Details / Purpose (Exposed to AI)
-              </label>
-              <textarea
-                v-model="curatedTablesMap[table]!.description"
-                placeholder="e.g. Master list of store customers, contains contact details and credit limits."
-                rows="2"
-                class="w-full bg-base border border-soft rounded-xl p-3 text-xs focus:outline-none focus:border-user focus:ring-1 focus:ring-user transition"
-              ></textarea>
-            </div>
-
-            <!-- Column Selection List -->
-            <div>
-              <div class="flex justify-between items-center mb-2">
-                <span class="text-[11px] font-bold uppercase opacity-55">
-                  Column Metadata
-                </span>
-                <span class="text-[10px] opacity-60">
-                  Select which columns the AI can view and describe their purpose
-                </span>
-              </div>
-
-              <!-- Columns Loader -->
-              <div v-if="tableColumns[table]?.loading" class="py-6 flex justify-center">
-                <span class="w-6 h-6 border-2 border-user border-t-transparent rounded-full animate-spin"></span>
-              </div>
-              
-              <!-- Columns Error -->
-              <div v-else-if="tableColumns[table]?.error" class="p-3 bg-red-500/10 text-red-500 rounded-xl text-xs">
-                Error loading columns: {{ tableColumns[table].error }}
-              </div>
-
-              <!-- Columns list -->
-              <div v-else class="space-y-2.5">
-                <!-- Column Controls Toolbar -->
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-panel/30 border border-soft p-3 rounded-xl text-xs">
-                  <!-- Column Search Input -->
-                  <div class="relative flex-1 min-w-[200px]">
-                    <span class="absolute left-3 top-1/2 -translate-y-1/2 opacity-50">🔍</span>
-                    <input 
-                      v-model="columnSearch[table]"
-                      type="text"
-                      placeholder="Search columns by name or description..."
-                      class="w-full bg-base border border-soft rounded-lg pl-8 pr-3 py-1.5 text-xs focus:outline-none focus:border-user focus:ring-1 focus:ring-user transition"
-                    />
-                  </div>
-
-                  <!-- Select All / Deselect All / Filter Exposed -->
-                  <div class="flex flex-wrap items-center gap-4 select-none">
-                    <div class="flex items-center gap-2 border-r border-soft pr-3 mr-1">
-                      <button 
-                        @click="selectAllColumns(table)"
-                        class="px-2 py-1 rounded bg-hover hover:bg-hover/80 text-[11px] font-semibold text-user transition"
-                        title="Select all visible columns"
-                      >
-                        ☑️ Select All
-                      </button>
-                      <button 
-                        @click="deselectAllColumns(table)"
-                        class="px-2 py-1 rounded bg-hover hover:bg-hover/80 text-[11px] font-semibold opacity-80 hover:opacity-100 transition"
-                        title="Deselect all visible columns"
-                      >
-                        ⬜ Deselect All
-                      </button>
-                    </div>
-
-                    <label class="flex items-center gap-2 cursor-pointer font-medium hover:text-user transition">
-                      <input 
-                        type="checkbox"
-                        v-model="columnExposedOnly[table]"
-                        class="w-3.5 h-3.5 rounded border-soft text-user focus:ring-user cursor-pointer"
-                      />
-                      <span>Show Curated Only</span>
-                    </label>
-                  </div>
-                </div>
-
-                <!-- Column Table -->
-                <div class="border border-soft rounded-xl overflow-hidden bg-base text-xs max-h-[400px] overflow-y-auto">
-                  <table class="w-full border-collapse">
-                    <thead class="sticky top-0 bg-panel border-b border-soft z-10">
-                      <tr class="text-left">
-                        <th class="p-2.5 w-16 text-center">Expose</th>
-                        <th class="p-2.5 w-1/3">Column Name</th>
-                        <th class="p-2.5">AI Synonyms & Descriptions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr 
-                        v-for="col in getFilteredColumns(table)" 
-                        :key="col"
-                        class="border-b border-soft last:border-b-0 hover:bg-hover/10 transition-colors duration-150"
-                      >
-                        <td class="p-2 text-center">
-                          <input 
-                            type="checkbox"
-                            v-model="columnMetadata[table]![col]!.exposed"
-                            class="w-3.5 h-3.5 rounded border-soft text-user focus:ring-user"
-                          />
-                        </td>
-                        <td class="p-2 font-mono text-xs font-semibold">
-                          {{ col }}
-                        </td>
-                        <td class="p-1.5">
-                          <input 
-                            type="text"
-                            v-model="columnMetadata[table]![col]!.description"
-                            placeholder="e.g. Unique client identifier, customer number"
-                            class="w-full bg-base border border-soft rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-user focus:ring-1 focus:ring-user transition"
-                          />
-                        </td>
-                      </tr>
-                      <tr v-if="getFilteredColumns(table).length === 0">
-                        <td colspan="3" class="text-center py-6 opacity-50">
-                          No columns found matching the filters.
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
@@ -609,6 +475,168 @@
             class="px-4 py-2 rounded-xl bg-user text-white hover:opacity-90 text-xs font-semibold transition cursor-pointer"
           >
             Save Group
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TABLE COLUMNS CURATION MODAL -->
+    <div v-if="expandedTable" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-panel border border-soft rounded-2xl max-w-6xl w-full h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        
+        <!-- Modal Header -->
+        <div class="p-4 border-b border-soft flex items-center justify-between bg-panel/30 shrink-0">
+          <div class="flex items-center gap-3">
+            <span class="text-2xl">📋</span>
+            <div>
+              <span class="text-[10px] font-bold tracking-wider uppercase opacity-55">Table Columns Curator</span>
+              <h3 class="font-bold text-lg leading-tight">{{ expandedTable }}</h3>
+            </div>
+          </div>
+          <button 
+            @click="expandedTable = null" 
+            class="p-1 hover:bg-hover rounded-lg transition text-lg leading-none cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="p-6 overflow-y-auto flex-1 flex flex-col gap-6 min-h-0 bg-panel">
+          <!-- Table Details / Description -->
+          <div class="shrink-0">
+            <label class="block text-[11px] font-bold uppercase opacity-55 mb-1.5">
+              Table Details / Purpose (Exposed to AI)
+            </label>
+            <textarea
+              v-model="curatedTablesMap[expandedTable]!.description"
+              placeholder="e.g. Master list of store customers, contains contact details and credit limits."
+              rows="2"
+              class="w-full bg-base border border-soft rounded-xl p-3 text-xs focus:outline-none focus:border-user focus:ring-1 focus:ring-user transition"
+            ></textarea>
+          </div>
+
+          <!-- Column Selection List -->
+          <div class="flex-1 flex flex-col overflow-hidden min-h-0">
+            <div class="flex justify-between items-center mb-2 shrink-0">
+              <span class="text-[11px] font-bold uppercase opacity-55">
+                Column Metadata
+              </span>
+              <span class="text-[10px] opacity-60">
+                Select which columns the AI can view and describe their purpose
+              </span>
+            </div>
+
+            <!-- Columns Loader -->
+            <div v-if="tableColumns[expandedTable]?.loading" class="py-6 flex justify-center shrink-0">
+              <span class="w-6 h-6 border-2 border-user border-t-transparent rounded-full animate-spin"></span>
+            </div>
+            
+            <!-- Columns Error -->
+            <div v-else-if="tableColumns[expandedTable]?.error" class="p-3 bg-red-500/10 text-red-500 rounded-xl text-xs shrink-0">
+              Error loading columns: {{ tableColumns[expandedTable]?.error }}
+            </div>
+
+            <!-- Columns list -->
+            <div v-else class="flex-1 flex flex-col overflow-hidden min-h-0 space-y-2.5">
+              <!-- Column Controls Toolbar -->
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-panel/30 border border-soft p-3 rounded-xl text-xs shrink-0">
+                <!-- Column Search Input -->
+                <div class="relative flex-1 min-w-[200px]">
+                  <span class="absolute left-3 top-1/2 -translate-y-1/2 opacity-50">🔍</span>
+                  <input 
+                    v-model="columnSearch[expandedTable]"
+                    type="text"
+                    placeholder="Search columns by name or description..."
+                    class="w-full bg-base border border-soft rounded-lg pl-8 pr-3 py-1.5 text-xs focus:outline-none focus:border-user focus:ring-1 focus:ring-user transition"
+                  />
+                </div>
+
+                <!-- Select All / Deselect All / Filter Exposed -->
+                <div class="flex flex-wrap items-center gap-4 select-none">
+                  <div class="flex items-center gap-2 border-r border-soft pr-3 mr-1">
+                    <button 
+                      @click="selectAllColumns(expandedTable)"
+                      class="px-2 py-1 rounded bg-hover hover:bg-hover/80 text-[11px] font-semibold text-user transition"
+                      title="Select all visible columns"
+                    >
+                      ☑️ Select All
+                    </button>
+                    <button 
+                      @click="deselectAllColumns(expandedTable)"
+                      class="px-2 py-1 rounded bg-hover hover:bg-hover/80 text-[11px] font-semibold opacity-80 hover:opacity-100 transition"
+                      title="Deselect all visible columns"
+                    >
+                      ⬜ Deselect All
+                    </button>
+                  </div>
+
+                  <label class="flex items-center gap-2 cursor-pointer font-medium hover:text-user transition">
+                    <input 
+                      type="checkbox"
+                      v-model="columnExposedOnly[expandedTable]"
+                      class="w-3.5 h-3.5 rounded border-soft text-user focus:ring-user cursor-pointer"
+                    />
+                    <span>Show Curated Only</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Column Table -->
+              <div class="border border-soft rounded-xl overflow-hidden bg-base text-xs flex-1 overflow-y-auto">
+                <table class="w-full border-collapse">
+                  <thead class="sticky top-0 bg-panel border-b border-soft z-10">
+                    <tr class="text-left">
+                      <th class="p-2.5 w-16 text-center">Expose</th>
+                      <th class="p-2.5 w-1/3">Column Name</th>
+                      <th class="p-2.5">AI Synonyms & Descriptions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr 
+                      v-for="col in getFilteredColumns(expandedTable)" 
+                      :key="col"
+                      class="border-b border-soft last:border-b-0 hover:bg-hover/10 transition-colors duration-150"
+                    >
+                      <td class="p-2 text-center">
+                        <input 
+                          type="checkbox"
+                          v-model="columnMetadata[expandedTable]![col]!.exposed"
+                          class="w-3.5 h-3.5 rounded border-soft text-user focus:ring-user"
+                        />
+                      </td>
+                      <td class="p-2 font-mono text-xs font-semibold">
+                        {{ col }}
+                      </td>
+                      <td class="p-1.5">
+                        <input 
+                          type="text"
+                          v-model="columnMetadata[expandedTable]![col]!.description"
+                          placeholder="e.g. Unique client identifier, customer number"
+                          class="w-full bg-base border border-soft rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-user focus:ring-1 focus:ring-user transition"
+                        />
+                      </td>
+                    </tr>
+                    <tr v-if="getFilteredColumns(expandedTable).length === 0">
+                      <td colspan="3" class="text-center py-6 opacity-50">
+                        No columns found matching the filters.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="p-4 border-t border-soft bg-panel/30 flex justify-end shrink-0">
+          <button
+            @click="expandedTable = null"
+            class="px-5 py-2 rounded-xl bg-user text-white text-xs font-semibold hover:opacity-90 transition cursor-pointer"
+          >
+            Done
           </button>
         </div>
 

@@ -21,7 +21,7 @@ namespace WhatsAppToDB.Data
             else 
             {
                  _logger.LogInfo("ChatHistoryFolder not found in default folders config, falling back to DataFolder from configuration or 'Data'");                 
-                _dataFolder = configuration.GetValue<string>("DataFolder") ?? "Data";
+                _dataFolder = Path.Combine(AppContext.BaseDirectory, "ChatData");
             }
         }
 

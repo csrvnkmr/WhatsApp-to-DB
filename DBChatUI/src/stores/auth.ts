@@ -10,6 +10,9 @@ export const useAuthStore = defineStore('auth', () => {
     const userName =
         ref(localStorage.getItem('username') || '')
 
+    const role =
+        ref(localStorage.getItem('role') || '')
+
     const message =
         ref('')
 
@@ -37,6 +40,11 @@ export const useAuthStore = defineStore('auth', () => {
                 ? username
                 : ''
 
+        role.value =
+            isLoggedIn.value
+                ? (result.role || result.Role || '')
+                : ''
+
         localStorage.setItem(
             'token',
             token.value
@@ -46,21 +54,29 @@ export const useAuthStore = defineStore('auth', () => {
             'username',
             userName.value
         )
+
+        localStorage.setItem(
+            'role',
+            role.value
+        )
     }
 
     function logout() {
 
         token.value = ''
         userName.value = ''
+        role.value = ''
         isLoggedIn.value = false
 
         localStorage.removeItem('token')
         localStorage.removeItem('username')
+        localStorage.removeItem('role')
     }
 
     return {
         token,
         userName,
+        role,
         message,
         isLoggedIn,
         doLogin,

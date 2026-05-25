@@ -12,7 +12,7 @@ namespace WhatsAppToDB.LlmProviders
 
         public bool SupportsKernel => true;
 
-        public Task<string> GenerateAsync(ChatHistory history, string model)
+        public Task<string> GenerateAsync(ChatHistory history, string model, Kernel kernel)
         {
             throw new NotImplementedException();
         }

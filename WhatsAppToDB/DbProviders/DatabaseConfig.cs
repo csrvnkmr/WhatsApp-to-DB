@@ -6,6 +6,8 @@
         public string Description { get; set; }
         public string ConnectionString { get; set; }
         public string DbProvider { get; set; }
+
+        public string DefaultRole { get; set; }
         public string PromptFile { get; set; }
         public string SchemaFile { get; set; }
     }

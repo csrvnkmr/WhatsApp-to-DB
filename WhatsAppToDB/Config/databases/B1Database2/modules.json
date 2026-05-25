@@ -93,7 +93,24 @@
       "OGIN",
       "OGIE",
       "ODLN",
-      "OITL"
+      "OITL",
+      "OIGE",
+      "IGE1"
+    ]
+  },
+  {
+    "Name": "Production",
+    "Details": "Production",
+    "Tables": [
+      "OITT",
+      "ITT1",
+      "OIGE",
+      "IGE1",
+      "OIGN",
+      "IGN1",
+      "OWHS",
+      "OWOR",
+      "WOR1"
     ]
   }
 ]

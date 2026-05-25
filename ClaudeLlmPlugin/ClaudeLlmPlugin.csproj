@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Anthropic.SDK" Version="4.7.2" />
+    <PackageReference Include="Microsoft.Extensions.AI" Version="10.4.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\WhatsAppToDB.Abstractions\WhatsAppToDB.Abstractions.csproj" />
+  </ItemGroup>
+
+
+</Project>

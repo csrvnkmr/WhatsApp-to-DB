@@ -172,6 +172,7 @@ function newChat() {
     if (chat.loading)
         return;
 
+    chat.viewMode = 'chat';
     chat.messages = [];
     chat.selectedSessionId = null;
 
@@ -189,8 +190,7 @@ async function logout() {
         console.error("Logout request failed:", err);
     }
 
-    localStorage.removeItem("token");
-    localStorage.removeItem("username");
+    auth.logout();
 
     location.reload();
 }

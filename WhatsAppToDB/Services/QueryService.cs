@@ -1,5 +1,6 @@
 ﻿using DocumentFormat.OpenXml.EMMA;
 using DocumentFormat.OpenXml.Vml.Office;
+using DocumentFormat.OpenXml.Wordprocessing;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Options;
 using Microsoft.Graph.Models.CallRecords;
@@ -128,7 +129,16 @@ namespace WhatsAppToDB.Services
                     var provider = _llmContext.GetProvider();
                     string aiContent;
                     var model = _llmContext.GetModel();
-                    await repo.InsertMessageAsync(sessionid, "User", messageText, "", "", dbName, provider.Name,model, ctx.ModuleName);
+                    await repo.InsertMessageAsync(sessionid, "User", messageText, "", "", 
+                        dbName, provider.Name,model, ctx.ModuleName);
+                    
+                    
+
+                    if (kernel.FunctionInvocationFilters?.Count == 0)
+                    {
+                        kernel.FunctionInvocationFilters.Add(new FunctionCallLogger());
+                    }
+
                     if (provider.SupportsKernel)
                     {
                         var chatService = kernel.GetRequiredService<IChatCompletionService>();
@@ -141,7 +151,7 @@ namespace WhatsAppToDB.Services
                     {
                         aiContent = await provider.GenerateAsync(
                             history,
-                            model);
+                            model, kernel);
                     }
                     Console.WriteLine($"[QUERY] [{identity.UserName}] AI Response received for {messageText}");
                     var whatsAppReplyText = aiContent;

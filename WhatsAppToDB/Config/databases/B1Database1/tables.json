@@ -116,15 +116,23 @@
     "Columns": [
       "DocEntry",
       "DocNum (Document Number)",
+      "DocType (I - Items, S - Service)",
+      "CANCELED",
+      "DocStatus (O - Open, C - Closed)",
+      "ObjType (Object Type)",
       "DocDate",
+      "DocDueDate",
       "CardCode",
       "CardName",
-      "DocTotal (Document Total)",
+      "NumAtCard (Customer Reference number)",
       "VatSum (Tax Amount)",
-      "DocDueDate",
-      "CANCELED",
+      "DocCur (Invoice Currency)",
+      "DocTotal (Document Total)",
+      "DocTotalFC (Document Total in invoice Currency)",
       "PaidToDate (Paid Amount)",
-      "DocStatus (O - Open, C - Closed)"
+      "Comments",
+      "TransId (Journal Table entry)",
+      "SlpCode (Sales Person Code)"
     ]
   },
   {

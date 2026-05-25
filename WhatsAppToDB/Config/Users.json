@@ -1,7 +1,7 @@
 [
   {
     "Username": "csrvn",
-    "Password": "ENC:\u002Bkp4cxBnPkb3Qk8F6TqK5LAOLHPTS2Y6wnwl\u002BdFyA/s=",
+    "Password": "ENC:8PpxlFEu7IMbmFf2UzM55bBcqPDsWp7dejEeKoW84zo=",
     "Fullname": "C Saravana Kumar",
     "Role": "SalesPerson",
     "InternalUserId": "277",
@@ -11,7 +11,7 @@
   },
   {
     "Username": "admin",
-    "Password": "ENC:kKM0dCf7Odajyyr1Hfv0py9/siGhIYomGPCX5fBtljY=",
+    "Password": "ENC:2jJt6sYg0HtnuorrNh\u002BlixBOJvhjHAByyJb58BWLvB8=",
     "Fullname": "Administrator",
     "Role": "Admin",
     "InternalUserId": "1",
@@ -21,11 +21,18 @@
   },
   {
     "Username": "aiuser",
-    "Password": "ENC:S8p0pDmznOhCWthFKDz1\u002B1WTHAAQ7NJ2UoBSFQDyx7c=",
+    "Password": "ENC:rt7fs9B/9m7dcIduoDc384zO75MZ6B5HRNCX2Z7Zr0A=",
     "Fullname": "AI User",
     "Role": "Sales",
     "InternalUserId": "1",
     "SessionContextKey": " SlpCode",
     "DefaultDatabase": "B1Database1"
+  },
+  {
+    "Username": "aiuser2",
+    "Password": "ENC:dkOWSQFk8BtTygK2GP1mzFlYm/v3j3b5SLklwP/Rh4U=",
+    "Fullname": "AI User 2",
+    "Role": "salesperson",
+    "DefaultDatabase": "chinook-sqlite"
   }
 ]

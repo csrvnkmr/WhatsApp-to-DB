@@ -21,7 +21,7 @@ namespace OllamaLlmPlugin
 
             public Task<string> GenerateAsync(
                 Microsoft.SemanticKernel.ChatCompletion.ChatHistory history,
-                string model)
+                string model,Kernel kernel)
             {
                 throw new NotImplementedException();
             }

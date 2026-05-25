@@ -66,6 +66,7 @@ namespace WhatsAppToDB.Controllers
             latestProvider ??= _defaultSettings.DefaultLlmProvider;
             latestModel ??= _defaultSettings.DefaultLlmModel;
 
+
             if (latestModel.Split(',').Length > 1)
             {
                 latestProvider = latestModel.Split(',')[0].Trim();
@@ -76,9 +77,13 @@ namespace WhatsAppToDB.Controllers
             HttpContext.Session.SetString(Constants.SessionKeys.ActiveLlmProvider, latestProvider);
             HttpContext.Session.SetString(Constants.SessionKeys.ActiveLlmModel, latestModel);
 
+            var allRoles = _jsonConfigService.GetRoles(latestDb);
+            var userRole = allRoles.Find(x => x.Users.Contains(request.Username));
+            var roleName = userRole != null ? userRole.Name : "Unknown";
+
             await _auditService.LogAsync(request.Username, AuditActions.Login, "Successful");
 
-            return Ok(new { Token = result.session.Token, Message = "Login Successful" });
+            return Ok(new { Token = result.session.Token, Message = "Login Successful", Role = roleName });
         }
 
 

@@ -118,10 +118,10 @@ namespace WhatsAppToDB.Plugin
                 {
                     await provider.SetSessionContext(db, identity);
                 }
-                    
+                 _logger.LogDebug($"[DatabaseQueryPlugin] {DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} Connection opened. Executing query...");   
                 // Use Dapper to get dynamic results (perfect for unpredictable SAP tables)
                 var results = await db.QueryAsync(sql);                
-
+                _logger.LogDebug($"[DatabaseQueryPlugin] {DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} Executed query...");
                 //if (!results.Any()) return "[]";
                 var jsonresult = JsonSerializer.Serialize(results, new JsonSerializerOptions { WriteIndented = true });
                 var qrpath = _folderUtils.GetQueryResultFile();

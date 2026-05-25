@@ -1,210 +1,466 @@
 [
   {
-    "Name": "ODSC",
-    "Description": "Banks (Header)",
+    "Name": "DLN1",
+    "Description": "Delivery Note(Detail)",
     "Columns": [
-      "BankCode, BankName"
+      "DocEntry",
+      "ItemCode",
+      "Account",
+      "Quantity",
+      "Price",
+      "LineTotal",
+      "VatSum (Tax Amount)",
+      "LineStatus (O - Open, C - Closed)"
     ]
   },
   {
     "Name": "DSC1",
     "Description": "Banks (Lines)",
     "Columns": [
-      "BankCode, GLAccount (Account Code), Account (Bank Account number)"
+      "BankCode",
+      "GLAccount (Account Code)",
+      "Account (Bank Account number)"
     ]
   },
   {
-    "Name": "OCRD",
-    "Description": "Business Partners(Customers \u0026 Suppliers)",
+    "Name": "IGE1",
+    "Description": "Materials Issued/Consumed Details",
     "Columns": [
-      "CardCode,CardName,SlpCode (Sales Person Code),Balance (Balance to be paid/received),GroupCode,CardType =\u0027C\u0027 (Customers), CardType=\u0027S\u0027 (Suppliers)",
-      "CreditLine(Credit Limit)"
+      "DocEntry (Part of Primary Key)",
+      "LineNum (Part of Primary Key)",
+      "ItemCode",
+      "Quantity"
     ]
   },
   {
-    "Name": "OITM",
-    "Description": "Items",
+    "Name": "IGN1",
+    "Description": "Material Received in Inventory",
     "Columns": [
-      "ItemCode, ItemName, OnHand (In Stock), Committed (Committed stock through Sales Orders/Production orders),ItmsGrpCod (Item Group Code)",
-      "SellItem(is a Sales Item Y/N),PrchseItem (Purchase Item),InvntItem (Inventory Item)"
-    ]
-  },
-  {
-    "Name": "OCRG",
-    "Description": "Business Partner Groups",
-    "Columns": [
-      "GroupCode, GroupName"
-    ]
-  },
-  {
-    "Name": "OITB",
-    "Description": "Item Groups",
-    "Columns": [
-      "ItmsGrpCod (Item Group Code), ItmsGrpNam (Item Group Name)"
-    ]
-  },
-  {
-    "Name": "OSLP",
-    "Description": "Sales Persons",
-    "Columns": [
-      "SlpCode (Sales Person Code), SlpName (Sales Person Name)"
-    ]
-  },
-  {
-    "Name": "OACT",
-    "Description": "Chart of Accounts",
-    "Columns": [
-      "AcctCode (Account Code), AcctName (Account Name), CurrTotal (Account Balance),ActType (Account Type - E(Expenses), I(Income), N (Others)"
-    ]
-  },
-  {
-    "Name": "OWHS",
-    "Description": "Warehouse Master",
-    "Columns": [
-      "WhsCode (Warehouse Code), WhsName (Warehouse Name)"
-    ]
-  },
-  {
-    "Name": "OJDT",
-    "Description": "Journal Entry Header",
-    "Columns": [
-      "TransId, RefDate (Transaction date)"
-    ]
-  },
-  {
-    "Name": "JDT1",
-    "Description": "Journal Entry Lines",
-    "Columns": [
-      "TransId, Account (Account Code), Debit, Credit, ShortName (Customer/Supplier Code)"
-    ]
-  },
-  {
-    "Name": "OINV",
-    "Description": "Sales Invoice(Header)",
-    "Columns": [
-      "DocEntry,DocNum (Document Number),DocDate,CardCode,CardName,DocTotal (Document Total),VatSum (Tax Amount),DocDueDate,CANCELED,PaidToDate (Paid Amount),DocStatus (O - Open, C - Closed)",
-      "DocType(I-Item,S-Service)"
+      "DocEntry",
+      "LineNum",
+      "ItemCode",
+      "Quantity"
     ]
   },
   {
     "Name": "INV1",
     "Description": "Sales Invoice(Detail)",
     "Columns": [
-      "DocEntry, ItemCode, Account, Quantity, Price, LineTotal, VatSum (Tax Amount),LineStatus (O - Open, C - Closed)"
-    ]
-  },
-  {
-    "Name": "ORDR",
-    "Description": "Sales Order(Header)",
-    "Columns": [
-      "DocEntry,DocNum (Document Number),DocDate,CardCode,CardName,DocTotal (Document Total),VatSum (Tax Amount),DocDueDate,CANCELED,DocStatus (O - Open, C - Closed)"
-    ]
-  },
-  {
-    "Name": "RDR1",
-    "Description": "Sales Order(Detail)",
-    "Columns": [
-      "DocEntry, ItemCode, Account, Quantity, Price, LineTotal, VatSum (Tax Amount),LineStatus (O - Open, C - Closed)"
-    ]
-  },
-  {
-    "Name": "ODLN",
-    "Description": "Delivery Note(Header)",
-    "Columns": [
-      "DocEntry,DocNum (Document Number),DocDate,CardCode,CardName,DocTotal (Document Total),VatSum (Tax Amount),DocDueDate,CANCELED,,DocStatus (O - Open, C - Closed)"
-    ]
-  },
-  {
-    "Name": "DLN1",
-    "Description": "Delivery Note(Detail)",
-    "Columns": [
-      "DocEntry, ItemCode, Account, Quantity, Price, LineTotal, VatSum (Tax Amount),LineStatus (O - Open, C - Closed)"
-    ]
-  },
-  {
-    "Name": "ORIN",
-    "Description": "Sales Return(Header)",
-    "Columns": [
-      "DocEntry,DocNum (Document Number),DocDate,CardCode,CardName,DocTotal (Document Total),VatSum (Tax Amount),DocDueDate,CANCELED,PaidToDate (Paid Amount),DocStatus (O - Open, C - Closed)"
-    ]
-  },
-  {
-    "Name": "RIN1",
-    "Description": "Sales Return(Detail)",
-    "Columns": [
-      "DocEntry, ItemCode, Account, Quantity, Price, LineTotal, VatSum (Tax Amount),LineStatus (O - Open, C - Closed)"
-    ]
-  },
-  {
-    "Name": "OPCH",
-    "Description": "Purchase Invoice(Header)",
-    "Columns": [
-      "DocEntry,DocNum (Document Number),DocDate,CardCode,CardName,DocTotal (Document Total),VatSum (Tax Amount),DocDueDate,CANCELED,PaidToDate (Paid Amount),DocStatus (O - Open, C - Closed)"
-    ]
-  },
-  {
-    "Name": "PCH1",
-    "Description": "Purchase Invoice(Detail)",
-    "Columns": [
-      "DocEntry, ItemCode, Account, Quantity, Price, LineTotal, VatSum (Tax Amount),LineStatus (O - Open, C - Closed)"
-    ]
-  },
-  {
-    "Name": "OPOR",
-    "Description": "Purchase Order(Header)",
-    "Columns": [
-      "DocEntry,DocNum (Document Number),DocDate,CardCode,CardName,DocTotal (Document Total),VatSum (Tax Amount),DocDueDate,CANCELED,PaidToDate (Paid Amount),DocStatus (O - Open, C - Closed)"
-    ]
-  },
-  {
-    "Name": "POR1",
-    "Description": "Purchase Order(Detail)",
-    "Columns": [
-      "DocEntry, ItemCode, Account, Quantity, Price, LineTotal, VatSum (Tax Amount),LineStatus (O - Open, C - Closed)"
-    ]
-  },
-  {
-    "Name": "OPDN",
-    "Description": "Purchase Delivery Note(Header)",
-    "Columns": [
-      "DocEntry,DocNum (Document Number),DocDate,CardCode,CardName,DocTotal (Document Total),VatSum (Tax Amount),DocDueDate,CANCELED,PaidToDate (Paid Amount),DocStatus (O - Open, C - Closed)"
-    ]
-  },
-  {
-    "Name": "PDN1",
-    "Description": "Purchase Delivery Note(Detail)",
-    "Columns": [
-      "DocEntry, ItemCode, Account, Quantity, Price, LineTotal, VatSum (Tax Amount),LineStatus (O - Open, C - Closed)"
-    ]
-  },
-  {
-    "Name": "ORPC",
-    "Description": "Purchase Return(Header)",
-    "Columns": [
-      "DocEntry,DocNum (Document Number),DocDate,CardCode,CardName,DocTotal (Document Total),VatSum (Tax Amount),DocDueDate,CANCELED,PaidToDate (Paid Amount),DocStatus (O - Open, C - Closed)"
-    ]
-  },
-  {
-    "Name": "RPC1",
-    "Description": "Purchase Return(Detail)",
-    "Columns": [
-      "DocEntry, ItemCode, Account, Quantity, Price, LineTotal, VatSum (Tax Amount),LineStatus (O - Open, C - Closed)"
-    ]
-  },
-  {
-    "Description": "Internal Reconciliation - used to track payments/settlements",
-    "Name": "OITR",
-    "Columns": [
-      "ReconNum(Primary Key),ReconDate(Reconciliation Date),Canceled(Y/N)"
+      "DocEntry",
+      "LineStatus (O - Open, C - Closed)",
+      "ItemCode",
+      "Quantity",
+      "Price",
+      "LineTotal",
+      "VatSum (Tax Amount)"
     ]
   },
   {
     "Name": "ITR1",
     "Description": "Internal reconciliation Lines",
     "Columns": [
-      "ReconNum,TransId,SrcObjTyp(Source Object Type),SrcObjAbs(Source Object Key),ReconSum(Reconciliation Amount)",
-      "ShortName(Business Partner Code),TransRowId(JDT1 lineid)",
-      "IsCredit(C-Credit,D-Debit)"
+      "ReconNum",
+      "TransId",
+      "SrcObjTyp (Source Object Type)",
+      "SrcObjAbs (Source Object Key)",
+      "ReconSum (Reconciliation Amount)",
+      "ShortName (Business Partner Code)",
+      "TransRowId (JDT1 lineid)",
+      "IsCredit (C-Credit,D-Debit)"
+    ]
+  },
+  {
+    "Name": "ITT1",
+    "Description": "Bill of Materials BOM (Details)",
+    "Columns": [
+      "Father (Father BOM Item)",
+      "ChildNum (BOM Order number)",
+      "Code (Child Item Code)",
+      "Quantity (Child Quantity)",
+      "Warehouse",
+      "Uom"
+    ]
+  },
+  {
+    "Name": "JDT1",
+    "Description": "Journal Entry Lines",
+    "Columns": [
+      "TransId",
+      "Account (Account Code)",
+      "Debit",
+      "Credit",
+      "ShortName (Customer/Supplier Code)"
+    ]
+  },
+  {
+    "Name": "OACT",
+    "Description": "Chart of Accounts",
+    "Columns": [
+      "AcctCode (Account Code)",
+      "AcctName (Account Name)",
+      "CurrTotal (Account Balance)",
+      "ActType (Account Type - E(Expenses), I(Income), N (Others)"
+    ]
+  },
+  {
+    "Name": "OCRD",
+    "Description": "Business Partners(Customers \u0026 Suppliers)",
+    "Columns": [
+      "CardCode",
+      "CardName",
+      "SlpCode (Sales Person Code)",
+      "Balance (Balance to be paid/received)",
+      "GroupCode",
+      "CardType =\u0027C\u0027 (Customers)",
+      "CardType=\u0027S\u0027 (Suppliers)",
+      "CreditLine (Credit Limit)"
+    ]
+  },
+  {
+    "Name": "OCRG",
+    "Description": "Business Partner Groups",
+    "Columns": [
+      "GroupCode",
+      "GroupName"
+    ]
+  },
+  {
+    "Name": "ODLN",
+    "Description": "Delivery Note(Header)",
+    "Columns": [
+      "DocEntry",
+      "DocNum (Document Number)",
+      "DocDate",
+      "CardCode",
+      "CardName",
+      "DocTotal (Document Total)",
+      "VatSum (Tax Amount)",
+      "DocDueDate",
+      "CANCELED",
+      "DocStatus (O - Open, C - Closed)"
+    ]
+  },
+  {
+    "Name": "ODSC",
+    "Description": "Banks (Header)",
+    "Columns": [
+      "BankCode",
+      "BankName"
+    ]
+  },
+  {
+    "Name": "OIGE",
+    "Description": "Materials Issued/Consumed Header",
+    "Columns": [
+      "DocEntry (Primary Key)",
+      "DocNum (Document Number)",
+      "ObjType",
+      "DocDate (Document Date)"
+    ]
+  },
+  {
+    "Name": "OIGN",
+    "Description": "Material Received Header",
+    "Columns": [
+      "DocEntry",
+      "DocNum",
+      "DocDate"
+    ]
+  },
+  {
+    "Name": "OINV",
+    "Description": "Sales Invoice(Header)",
+    "Columns": [
+      "DocEntry",
+      "DocNum (Document Number)",
+      "DocDate",
+      "CardCode",
+      "CardName",
+      "DocTotal (Document Total)",
+      "VatSum (Tax Amount)",
+      "DocDueDate",
+      "CANCELED",
+      "PaidToDate (Paid Amount)",
+      "DocStatus (O - Open, C - Closed)",
+      "DocType (I-Item,S-Service)"
+    ]
+  },
+  {
+    "Name": "OITB",
+    "Description": "Item Groups",
+    "Columns": [
+      "ItmsGrpCod (Item Group Code)",
+      "ItmsGrpNam (Item Group Name)"
+    ]
+  },
+  {
+    "Name": "OITM",
+    "Description": "Items",
+    "Columns": [
+      "ItemCode",
+      "ItemName",
+      "ItmsGrpCod (Item Group Code)",
+      "PrchseItem (Purchase Item)",
+      "SellItem (is a Sales Item Y/N)",
+      "InvntItem (Inventory Item)",
+      "OnHand (In Stock)"
+    ]
+  },
+  {
+    "Name": "OITR",
+    "Description": "Internal Reconciliation - used to track payments/settlements",
+    "Columns": [
+      "ReconNum (Primary Key)",
+      "ReconDate (Reconciliation Date)",
+      "Canceled (Y/N)"
+    ]
+  },
+  {
+    "Name": "OITT",
+    "Description": "Bill of Materials BOM (Header)",
+    "Columns": [
+      "Code (Production ItemCode of BOM)",
+      "TreeType (BOM Type A - Assembly, P - Production, S - Sales, T - Template)",
+      "Qauntity (BOM output Qty)"
+    ]
+  },
+  {
+    "Name": "OJDT",
+    "Description": "Journal Entry Header",
+    "Columns": [
+      "TransId",
+      "RefDate (Transaction date)"
+    ]
+  },
+  {
+    "Name": "OPCH",
+    "Description": "Purchase Invoice(Header)",
+    "Columns": [
+      "DocEntry",
+      "DocNum (Document Number)",
+      "DocDate",
+      "CardCode",
+      "CardName",
+      "DocTotal (Document Total)",
+      "VatSum (Tax Amount)",
+      "DocDueDate",
+      "CANCELED",
+      "PaidToDate (Paid Amount)",
+      "DocStatus (O - Open, C - Closed)"
+    ]
+  },
+  {
+    "Name": "OPDN",
+    "Description": "Purchase Delivery Note(Header)",
+    "Columns": [
+      "DocEntry",
+      "DocNum (Document Number)",
+      "DocDate",
+      "CardCode",
+      "CardName",
+      "DocTotal (Document Total)",
+      "VatSum (Tax Amount)",
+      "DocDueDate",
+      "CANCELED",
+      "PaidToDate (Paid Amount)",
+      "DocStatus (O - Open, C - Closed)"
+    ]
+  },
+  {
+    "Name": "OPOR",
+    "Description": "Purchase Order(Header)",
+    "Columns": [
+      "DocEntry",
+      "DocNum (Document Number)",
+      "DocDate",
+      "CardCode",
+      "CardName",
+      "DocTotal (Document Total)",
+      "VatSum (Tax Amount)",
+      "DocDueDate",
+      "CANCELED",
+      "PaidToDate (Paid Amount)",
+      "DocStatus (O - Open, C - Closed)"
+    ]
+  },
+  {
+    "Name": "ORDR",
+    "Description": "Sales Order(Header)",
+    "Columns": [
+      "DocEntry",
+      "DocNum (Document Number)",
+      "DocDate",
+      "CardCode",
+      "CardName",
+      "DocTotal (Document Total)",
+      "VatSum (Tax Amount)",
+      "DocDueDate",
+      "CANCELED",
+      "DocStatus (O - Open, C - Closed)"
+    ]
+  },
+  {
+    "Name": "ORIN",
+    "Description": "Sales Return(Header)",
+    "Columns": [
+      "DocEntry",
+      "DocNum (Document Number)",
+      "DocDate",
+      "CardCode",
+      "CardName",
+      "DocTotal (Document Total)",
+      "VatSum (Tax Amount)",
+      "DocDueDate",
+      "CANCELED",
+      "PaidToDate (Paid Amount)",
+      "DocStatus (O - Open, C - Closed)"
+    ]
+  },
+  {
+    "Name": "ORPC",
+    "Description": "Purchase Return(Header)",
+    "Columns": [
+      "DocEntry",
+      "DocNum (Document Number)",
+      "DocDate",
+      "CardCode",
+      "CardName",
+      "DocTotal (Document Total)",
+      "VatSum (Tax Amount)",
+      "DocDueDate",
+      "CANCELED",
+      "PaidToDate (Paid Amount)",
+      "DocStatus (O - Open, C - Closed)"
+    ]
+  },
+  {
+    "Name": "OSLP",
+    "Description": "Sales Persons",
+    "Columns": [
+      "SlpCode (Sales Person Code)",
+      "SlpName (Sales Person Name)"
+    ]
+  },
+  {
+    "Name": "OWHS",
+    "Description": "Warehouse Master",
+    "Columns": [
+      "WhsCode (Warehouse Code)",
+      "WhsName (Warehouse Name)"
+    ]
+  },
+  {
+    "Name": "OWOR",
+    "Description": "Production Order Header",
+    "Columns": [
+      "DocEntry (Primary Key)",
+      "DocNum (Document number)",
+      "ItemCode (Production Item Code)",
+      "Status (P - Planned, R - Released, C - Canceled, L - Closed,)",
+      "PlannedQty (Planned Quantity)",
+      "CmpltQty (Completed Quantity)",
+      "RjctQty (Rejectd Quantity)",
+      "DueDate (Target Date)",
+      "Warehouse",
+      "Uom"
+    ]
+  },
+  {
+    "Name": "PCH1",
+    "Description": "Purchase Invoice(Detail)",
+    "Columns": [
+      "DocEntry",
+      "ItemCode",
+      "Account",
+      "Quantity",
+      "Price",
+      "LineTotal",
+      "VatSum (Tax Amount)",
+      "LineStatus (O - Open, C - Closed)"
+    ]
+  },
+  {
+    "Name": "PDN1",
+    "Description": "Purchase Delivery Note(Detail)",
+    "Columns": [
+      "DocEntry",
+      "ItemCode",
+      "Account",
+      "Quantity",
+      "Price",
+      "LineTotal",
+      "VatSum (Tax Amount)",
+      "LineStatus (O - Open, C - Closed)"
+    ]
+  },
+  {
+    "Name": "POR1",
+    "Description": "Purchase Order(Detail)",
+    "Columns": [
+      "DocEntry",
+      "ItemCode",
+      "Account",
+      "Quantity",
+      "Price",
+      "LineTotal",
+      "VatSum (Tax Amount)",
+      "LineStatus (O - Open, C - Closed)"
+    ]
+  },
+  {
+    "Name": "RDR1",
+    "Description": "Sales Order(Detail)",
+    "Columns": [
+      "DocEntry",
+      "ItemCode",
+      "Account",
+      "Quantity",
+      "Price",
+      "LineTotal",
+      "VatSum (Tax Amount)",
+      "LineStatus (O - Open, C - Closed)"
+    ]
+  },
+  {
+    "Name": "RIN1",
+    "Description": "Sales Return(Detail)",
+    "Columns": [
+      "DocEntry",
+      "ItemCode",
+      "Account",
+      "Quantity",
+      "Price",
+      "LineTotal",
+      "VatSum (Tax Amount)",
+      "LineStatus (O - Open, C - Closed)"
+    ]
+  },
+  {
+    "Name": "RPC1",
+    "Description": "Purchase Return(Detail)",
+    "Columns": [
+      "DocEntry",
+      "ItemCode",
+      "Account",
+      "Quantity",
+      "Price",
+      "LineTotal",
+      "VatSum (Tax Amount)",
+      "LineStatus (O - Open, C - Closed)"
+    ]
+  },
+  {
+    "Name": "WOR1",
+    "Description": "Production Order Detail",
+    "Columns": [
+      "DocEntry",
+      "LineNum",
+      "ItemCode (Issue Item)",
+      "BaseQty (Issue BOM Qty)",
+      "PlannedQty (Issue Planned Qty)",
+      "IssuedQty (Issued  Qty)",
+      "IssueType (M - Manual, B - Backflush)",
+      "wareHouse"
     ]
   }
 ]

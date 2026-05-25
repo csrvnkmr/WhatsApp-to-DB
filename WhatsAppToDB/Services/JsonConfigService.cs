@@ -27,85 +27,18 @@ namespace WhatsAppToDB.Services
         public JsonConfigService(
             IConfiguration config, ILogger logger)
         {
-            _configRoot =
-                config.GetValue<string>(
-                    "ConfigRootFolder")!;
+            _configRoot = config.GetValue<string>("ConfigRootFolder")!;
+            if (string.IsNullOrWhiteSpace(_configRoot))
+            {
+                _configRoot = Path.Combine(AppContext.BaseDirectory, "Config");
+            }
+            if (!Directory.Exists(_configRoot))
+                Directory.CreateDirectory(_configRoot);
+
             _logger = logger;
               _encryption = new FieldEncryptionService();
         }
-
-        // ============================================
-        // GLOBAL FILE
-        // ============================================
-
-        public T Load<T>(
-            string fileName, [CallerFilePath] string callerfile="", 
-            [CallerMemberName] string callermember="", [CallerLineNumber] int callerlinenum=-1)
-            where T : class
-        {
-            try
-            {
-                var path =
-                    Path.Combine(
-                        _configRoot,
-                        fileName);
-
-                if (!File.Exists(path))
-                {
-                    throw new Exception(
-                        $"Config file not found: {path}");
-                }
-
-                var json = File.ReadAllText(path);
-
-                return JsonSerializer.Deserialize<T>(json, _options)!;
-            }
-            catch(Exception ex)
-            {
-                _logger.LogInfo($"Exception in {nameof(Load)} in {nameof(JsonConfigService)} {ex}, {callerfile}.{callermember} at {callerlinenum}");
-                return null;
-            }
-        }
-
-        // ============================================
-        // DATABASE FILE
-        // ============================================
-
-        public T LoadDatabaseConfig<T>(
-            string database,
-            string fileName, [CallerFilePath] string callerfile = "", 
-            [CallerMemberName] string callermember = "", [CallerLineNumber] int callerlinenum = -1)
-            where T : class
-        {
-            try
-            {
-                var path =
-                    Path.Combine(
-                        _configRoot,
-                        "databases",
-                        database,
-                        fileName);
-
-                if (!File.Exists(path))
-                {                    
-                    throw new Exception(
-                        $"Config file not found: {path}");
-                }
-
-                var json =
-                    File.ReadAllText(path);
-
-                return JsonSerializer.Deserialize<T>(
-                    json,
-                    _options)!;
-
-            }
-            catch (Exception ex)
-            {
-                _logger.LogInfo($"Exception in {nameof(LoadDatabaseConfig)} in {nameof(JsonConfigService)} {ex}, {callerfile}.{callermember} at {callerlinenum}");
-                return null;
-            }
-        }
+        
 
         /// <summary>
         /// Reads a JSON file and decrypts any ENC:... values whose field
@@ -244,6 +177,45 @@ namespace WhatsAppToDB.Services
         {
             return LoadAndDecryptGlobal<List<LlmConfig>>(Constants.ConfigFiles.Llms);
         }
+
+
+        public (LlmConfig? Config, Dictionary<string, object?> ExtraProperties) GetLlmConfig(string providerName)
+        {
+            if (string.IsNullOrWhiteSpace(providerName))
+            {
+                return (null, new Dictionary<string, object?>());
+            }
+
+            // 1. Load the strongly typed collection using your existing method
+            List<LlmConfig> configs = GetLlmConfigs();
+            if (configs == null || !configs.Any())
+            {
+                return (null, new Dictionary<string, object?>());
+            }
+
+            // 2. Locate the specific item and its index in the list
+            var targetIndex = configs.FindIndex(c => 
+                c.Provider != null && 
+                c.Provider.Equals(providerName, StringComparison.OrdinalIgnoreCase));
+
+            if (targetIndex == -1)
+            {
+                // Provider matching the string was not found
+                return (null, new Dictionary<string, object?>());
+            }
+
+            var matchedConfig = configs[targetIndex];
+
+            // 3. Fetch the raw payload text directly from your storage provider mapping
+            string rawJson = ""; 
+            //_storageProvider.ReadGlobalConfigRaw(Path.GetFileNameWithoutExtension(Constants.ConfigFiles.Llms));
+
+            // 4. Extract unmapped parameters exclusively for this item's array position
+            var extraProperties = JsonExtensionUtils.GetUnmappedPropertiesForIndex(matchedConfig, rawJson, targetIndex);
+
+            return (matchedConfig, extraProperties);
+        }
+
         public List<LoginUser> GetUsers()
         {
             return LoadAndDecryptGlobal<List<LoginUser>>(Constants.ConfigFiles.Users);
@@ -359,7 +331,7 @@ namespace WhatsAppToDB.Services
 
         public DefaultSettings GetDefaultSettings()
         {
-            var settings = Load<List<DefaultSettings>>(Constants.ConfigFiles.DefaultSettings);
+            var settings = LoadAndDecryptGlobal<List<DefaultSettings>>(Constants.ConfigFiles.DefaultSettings);
             if (settings != null && settings.Count > 0)
             {
                 return settings[0];
@@ -369,7 +341,7 @@ namespace WhatsAppToDB.Services
 
         public DefaultFolders GetDefaultFolders()
         {
-            var folders = Load<List<DefaultFolders>>(Constants.ConfigFiles.DefaultFolders);
+            var folders = LoadAndDecryptGlobal<List<DefaultFolders>>(Constants.ConfigFiles.DefaultFolders);
             if (folders != null && folders.Count > 0)
             {
                 return folders[0];

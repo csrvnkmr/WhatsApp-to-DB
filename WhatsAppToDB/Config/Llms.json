@@ -6,7 +6,7 @@
       "gpt-5.4-mini",
       "gpt-4"
     ],
-    "ApiKey": "ENC:1XWmMHbiaZPW/KL5Wdcy8zeOdXmevmFv6MaX2564iUpxu1Xa7jiIKZhD41NfQ0iG2rlX0QPuJpBt5sWH9wV9uBcgvjsBiwS\u002B2YO12yqhfqWxxgJf49uN2IPbLtRLIWaw5KpoSmwpk5oSnJwqmrI8zPDTolXYbWNDKC6r1K1GrYI9Pb3LdQm9A8gGGx1bhEuhIG7AO7EPMLZkYUexT\u002B5rkYhR82f2U9d2PmpueRLOF2jBNRNNffpP7oGJrLFS5fw5"
+    "ApiKey": "ENC:R6JaTRW0vVesL\u002BkP52zqYQNbHm4tCU2q27KNOOy2MuNoqyzM5bWsi0acouccWoK/S9Sh8au4DNTLv3YOg2DU9rBWO191zhiFV/BmtSsRPb\u002Bi9798YbDgiMBAXV28cE8R1lD/rLc1bwfjiLyI9qQbrYaNtBU/8Q9JzoS5dy1HfGCt0SrTNwFS3mzc2tNSowioQSnK8hZDWds9OvcfEW5rniSUYDwLiL32L3cLxgmAcY3471/40W52kbUfdjtR6CRm"
   },
   {
     "Provider": "Ollama",
@@ -16,7 +16,18 @@
       "gemma4:31b-cloud",
       "devstral-2:123b-cloud"
     ],
-    "HttpEndPoint": "ENC:LBuVRRV8IMafWMozl0/5ySeRLtRyCpo9ryg0h7WUdp1WVKIu1uTCSjFZrMiMSBzP",
-    "ApiKey": "ENC:MboL1k5YDPA6dtrslq4zWLR\u002By6hX4huV89IRQ0X\u002B\u002BSA="
+    "HttpEndPoint": "ENC:ZCwJ5fc8e\u002BnFn7BodaKrYgvLJDL\u002BJJ2zSEEJX7gbi3NqPbTUPkgn6T/RLxnXUUa3",
+    "ApiKey": "ENC:iTnX1XPx4JMqlQASEZ/6j0uNt3lO4RF4QisEEiTReEI="
+  },
+  {
+    "Provider": "Claude",
+    "Enabled": true,
+    "ApiKey": "ENC:Ehz1G5d\u002BbIm0uDnSJhxev7T1SAl4vhApyg54LIRavWH8fpQ4uEPqCaMIiq3LYdRyBLkaL0pSRj8Sp7rd/olXTJrjwebsXkksiW6jdGjXOv3MUY9zhTa8a1BsEF5wgKzqsj1yYlokchcNHgfc12paf06q3T/JgnbMJlhJKdZ/Dbw=",
+    "Models": [
+      "claude-haiku-4-5-20251001",
+      "claude-sonnet-4-5-20250929",
+      "claude-sonnet-4-6",
+      "claude-opus-4-1-20250805"
+    ]
   }
 ]

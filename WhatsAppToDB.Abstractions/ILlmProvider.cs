@@ -21,6 +21,7 @@ namespace WhatsAppToDB.Abstractions
 
         Task<string> GenerateAsync(
             ChatHistory history,
-            string model);
+            string model,
+            Kernel kernel);
     }
 }

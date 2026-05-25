@@ -32,7 +32,7 @@ UPDATED:
         <div class="flex flex-wrap items-center gap-2 sm:gap-3 w-full lg:w-auto">
 
             <!-- Admin Link -->
-            <router-link
+            <router-link v-if="isAdmin"
                 to="/admin/databases"
                 class="px-3 py-1.5 rounded-xl border border-soft hover:bg-hover transition text-sm font-medium bg-panel">
                 ⚙️ Admin
@@ -815,6 +815,7 @@ CHART MODAL
 import { ref, nextTick, watch, onMounted, computed, onBeforeUnmount } from "vue";
 import { useChatStore } from "@/stores/chat";
 import { useThemeStore } from "@/stores/theme";
+import { useAuthStore } from "@/stores/auth";
 import { useMessageModals } from "@/composables/useMessageModals";
 import { useEmailResult } from "@/composables/useEmailResult";
 import AiChartView from "./AiChartView.vue";
@@ -833,6 +834,12 @@ import {
 
 const chat = useChatStore();
 const theme = useThemeStore();
+const auth = useAuthStore();
+
+const isAdmin = computed(() => {
+    const role = auth.role || localStorage.getItem('role') || '';
+    return role.toLowerCase() === 'admin';
+});
 
 // Composable for message visual actions (SQL / Data view modals)
 const {
@@ -1065,14 +1072,28 @@ watch(
     }
 );
 
+watch(
+    () => chat.viewMode,
+    async (newMode) => {
+        if (newMode === 'chat') {
+            await nextTick();
+            questionInput.value?.focus();
+        }
+    }
+);
+
 // ==========================================
 // New Chat
 // ==========================================
 function newChat() {
     if (loading.value) return;
 
+    chat.viewMode = 'chat';
     chat.messages = [];
     chat.selectedSessionId = null;
+    nextTick(() => {
+        questionInput.value?.focus();
+    });
 }
 
 // ==========================================

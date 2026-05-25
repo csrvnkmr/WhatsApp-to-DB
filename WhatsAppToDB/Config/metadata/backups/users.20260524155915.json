@@ -1,7 +1,9 @@
 {
   "entity": "users",
   "title": "Users",
+
   "targetFile": "users.json",
+
   "fields": [
     {
       "name": "Username",
@@ -9,7 +11,7 @@
       "type": "text",
       "showinheader": true,
       "required": true,
-      "unique": true
+      "unique":true
     },
     {
       "name": "Password",
@@ -22,6 +24,13 @@
     {
       "name": "Fullname",
       "label": "Full Name",
+      "showinheader": true,
+      "type": "text",
+      "required": true
+    },
+    {
+      "name": "Role",
+      "label": "Role",
       "showinheader": true,
       "type": "text",
       "required": true
@@ -46,7 +55,7 @@
       "showinheader": true,
       "type": "text",
       "required": false,
-      "unique": true
+      "unique":true
     },
     {
       "name": "DefaultDatabase",
@@ -55,11 +64,9 @@
       "type": "text",
       "required": false,
       "references": "databases.Name",
-      "requiredIf": {
-        "WhatsAppNumber": {
-          "op": "not empty"
+       "requiredIf": {
+          "WhatsAppNumber": {"op": "not empty"}
         }
-      }
     }
   ]
 }

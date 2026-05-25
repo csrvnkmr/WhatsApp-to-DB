@@ -2,7 +2,7 @@
   {
     "Name": "chinook-sqlite",
     "Description": "Chinook SQLite Sample DB",
-    "ConnectionString": "ENC:hRahxakTncW1taV8e\u002BM\u002BChoPFiGbB0Gq7mt1YIuZV2G7RjebfwfwULZryB9k/xKQupmqPWRyT914qYwB/rK8M4eNGi8CwK2AVM/FkON36xSvUZ6KZT7ghjjWQfPqjZV1",
+    "ConnectionString": "ENC:tdDGnw1\u002BUwbXKnlKd/lyKTyidZpVkA5VQfOs\u002BpR5mWjxPHTMRzii6W4Gx31cVVCXhs03FoC\u002Bmh87kVcErBCMQsMyOyJPHCJhKVxXRhvqvynB/ceu3jombTH6TOt1XPSh",
     "SchemaFile": "C:\\Development\\AiAgents\\SemanticKernel\\chinnook_schema.json",
     "DbProvider": "sqlite",
     "PromptFile": "C:\\Development\\AiAgents\\SemanticKernel\\AiPromptForChinook.txt",
@@ -11,16 +11,16 @@
   {
     "Name": "B1Database1",
     "Description": "B1 Database 1",
-    "ConnectionString": "ENC:c2Zc/8K0WNdVQPxTAftwquQ9qyCrFkJo1O5NJL1lhHThCBPVKJpEFBZI/od1vHRg8w6D\u002BVoz71saeETPPzVV5FTJXVBuubpacnOazjJyeHeo3satTwutoY4y3nfswi8R8sRXAkK23I3CY38fyWSYIqF5qUrtN1J57W0y1HdYxgo=",
+    "ConnectionString": "ENC:bh7wPlCs35ZSW/w6iYivY2QDOklbXyqMSQD2L4ZpeLdPZnuaMNKwYr9tAN/z913t0xp5LRgPhPYoJp/6Y0o1KDt/WzcMtjtuztQj4v7u3p2lgLwrYnd\u002BV/sogUfnp4M252GwOGDDf4PyrGKJVBzHhAtCC4DEpqCJyVjlC5XbzFc=",
     "SchemaFile": "C:\\Development\\AiAgents\\SemanticKernel\\b1_schema.json",
     "DbProvider": "mssql",
     "PromptFile": "C:\\Development\\AiAgents\\SemanticKernel\\AiPromptForB1Database.txt",
-    "DefaultRole": "Admin"
+    "DefaultRole": ""
   },
   {
     "Name": "B1Database2",
     "Description": "B1 Database two",
-    "ConnectionString": "ENC:76F8HCxnLzuSeYc\u002BAl/XEiEDRk8doQ1MKFuMld35/htyvK6ufOa9z/V5P4z2ROpkqej8brT81G/9Inb\u002BWVvz74Rw6bSDjzyIeepcbok4MhwEyF4/\u002BBUkow5fN3XmnZY\u002B4119Yz/mr6vMjY\u002BJUqdoR748wTliXYfw5K4oxdkPx0g=",
+    "ConnectionString": "ENC:kz8Uhntyxg56vOn0CNiG2\u002BKlthX9dcp1HC\u002BrQSc366Gn6dzxHkLQ2H7VT24w7Jb7Fkd2EJ3/rjPnnzb3MKhlJqc61P1T2/bnlePpUNrGJzrSmZnw11NXx9gur9MyXBhRjuxqd47Ip/JcodjOlfqBzH00gfcr5uDV31PuWFhOddA=",
     "SchemaFile": "C:\\Development\\AiAgents\\SemanticKernel\\b1_schema.json",
     "DbProvider": "mssql",
     "PromptFile": "C:\\Development\\AiAgents\\SemanticKernel\\AiPromptForB1Database.txt",
@@ -29,7 +29,7 @@
   {
     "Name": "chinook-postgres",
     "Description": "Chinook PostgreSQL DB",
-    "ConnectionString": "ENC:NCM\u002BOdY\u002B0SAVH6/eeiRpBgWV/VLuwaVHkcmLBjJ4nPr5tbljQ9MEgq3pYyA9y0LgjTESZfi2h6rqSveWVPqAORwo3BGprHmB1T6yBUAua49GgUJDI1bdi87IIZeOJza0",
+    "ConnectionString": "ENC:cvpVE7VxqmNpdBIMXomJmY//ARYH85ffLZzhSi1oopFAIQa2SwAfPVZWdyaNhagVr9dAJz3sfNddmkDiw882dwwXk0C\u002BO7ExovffFLqDg6LgKGPTEBLEAuttRKgIec/Z",
     "DbProvider": "postgres",
     "PromptFile": "C:\\Development\\AiAgents\\SemanticKernel\\AiPromptForChinookPostGres.txt",
     "SchemaFile": "C:\\Development\\AiAgents\\SemanticKernel\\chinnook_postgres_schema.json",
@@ -38,14 +38,14 @@
   {
     "Name": "adventureworks",
     "Description": "SQL Server AdventureWorks",
-    "ConnectionString": "ENC:Vt4OhaY526WJvKBiV4YLxtWPL4pMbZnSb3z\u002BHxeYx05xXq3PmGAHMtV0D7o6K89YLKXaUlO0w/BkAwpR4L8EG2ab\u002Bm2cUiSazCHL6vfwk4YfqI6POsKr7VUGy7pKqmkaXaZ2zfcFSc000omNo6CPXzwwxAI4JATG5x8jN75WoKzm2HL0QJx8mgm7n7weELZO",
+    "ConnectionString": "ENC:UMcuyUhpT/rqGPN4ru3dEEPj\u002BHDNnJ3QsH\u002BpC68kdMI1ldBf2vowUxiWMpWOsw4rvvAxo\u002BwqanMs/6pz3tiLihmCwFQK5ZZ/WhLMbRaQyP2i2BxnTCJmbTAtnM9TaRduvI2jhPVMMpJ8AiRCkQfGBudJa0QUrbrEOeFRq5JPHx759EztN6AgNm9q/uL3cIHE",
     "DbProvider": "mssql",
     "PromptFile": "C:\\Development\\AiAgents\\SemanticKernel\\AiPromptForAdventureWorks.txt",
     "SchemaFile": "C:\\Development\\AiAgents\\SemanticKernel\\aw_schema.json",
-    "DefaultRole": "admin"
+    "DefaultRole": ""
   },
   {
-    "ConnectionString": "ENC:9QZGBRD\u002BGjzvuAR7rhe39oWlI9cjv86vn1HjDkYn2STi24oQAccraH1l0jKDwgQxfDo2WOpBohJY3ozaC8uTRcPrQAjqMBWgANRz682\u002B7UkOPwVKXuHkDigkiCQi6U20uo8Gt4dJixJcmm0nSjrqmi1vC51MNzUM0uq/fpZStwpJOJc43keHOhs8S7UO1Xu6",
+    "ConnectionString": "ENC:sA2yWeurbbSeE9618LXyRrzW7KCyiJXhuvJaH3HYEoV32evosIF9VJWLvMgomI2io/vC90o2bqaGayc9xNeleVYQNXBOdp4FVm3r4JLmkp\u002Bcc7W/KZtcLNdi4GUXs/TrIlzqsZmKqyf/UETwwxaVdL6ETU89SkOA2BTgAHhIKGWucpyTKT56f3NnHSE1GTTo",
     "DbProvider": "mssql",
     "Name": "stackoverflowmini",
     "Description": "Stack Overflow Mini database",

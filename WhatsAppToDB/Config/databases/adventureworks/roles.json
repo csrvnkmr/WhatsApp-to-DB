@@ -3,7 +3,8 @@
     "Name": "SalesPerson",
     "Description": "Sales Person",
     "Users": [
-      "csrvn"
+      "csrvn",
+      "aiuser2"
     ],
     "Modules": [
       "Sales",
