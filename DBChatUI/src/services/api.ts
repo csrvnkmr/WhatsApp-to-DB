@@ -319,3 +319,17 @@ export async function exportExcelFile(messageId: number) {
   return await res.blob();
 }
 
+export async function compileMetadataString(targetEngine: string, parameters: Record<string, string>) {
+  const res = await fetch(`${BASE_URL}/admin/api/compile-metadata-string`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: authHeader(),
+    body: JSON.stringify({ targetEngine, parameters })
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || "Failed to compile connection string.");
+  }
+  return await res.json();
+}
+

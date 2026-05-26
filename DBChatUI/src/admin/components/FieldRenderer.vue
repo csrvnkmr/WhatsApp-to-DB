@@ -2,10 +2,20 @@
 
 <div>
 
-    <label class="block text-sm mb-1 opacity-70">
-        {{ field.label }}
-        <span v-if="field.required" class="text-red-500 ml-1">*</span>
-    </label>
+    <div class="flex items-center justify-between mb-1">
+        <label class="block text-sm opacity-70">
+            {{ field.label }}
+            <span v-if="field.required" class="text-red-500 ml-1">*</span>
+        </label>
+        <button
+            v-if="field.wizard && (field.type === 'text' || field.type === 'textarea')"
+            type="button"
+            :disabled="!isWizardActive"
+            @click="openWizard"
+            class="text-xs px-2.5 py-1 rounded-xl bg-soft hover:bg-hover border border-soft transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1 font-medium">
+            <span>🔧 Connection Wizard</span>
+        </button>
+    </div>
 
     <!-- TEXT -->
     <div v-if="field.type === 'text'" class="relative w-full">
@@ -314,13 +324,113 @@
         {{ field.description }}
     </div>
 
+    <!-- Teleport Wizard Modal to body -->
+    <Teleport to="body" v-if="showWizardModal">
+        <div class="fixed inset-0 bg-black/55 flex items-center justify-center z-[100] backdrop-blur-sm">
+            <div class="w-full max-w-lg bg-panel border border-soft rounded-2xl p-6 shadow-2xl max-h-[95vh] overflow-y-auto">
+                <div class="flex items-center justify-between mb-4 border-b border-soft pb-3">
+                    <h3 class="text-base font-bold flex items-center gap-2">
+                        <span>🔧 Connection Wizard</span>
+                        <span class="text-xs font-normal opacity-50">({{ currentProviderName }})</span>
+                    </h3>
+                    <button 
+                        @click="closeWizard" 
+                        class="text-lg opacity-60 hover:opacity-100 transition px-2">
+                        &times;
+                    </button>
+                </div>
+
+                <div class="space-y-4 my-4">
+                    <div v-for="wField in wizardFields" :key="wField.key || wField.name">
+                        <label class="block text-xs font-semibold mb-1 opacity-70">
+                            {{ wField.label || wField.key || wField.name }}
+                            <span v-if="wField.isRequired || wField.required" class="text-red-500 ml-1">*</span>
+                        </label>
+                        
+                        <!-- WIZARD INPUT: TEXT -->
+                        <input
+                            v-if="wField.type === 'text'"
+                            type="text"
+                            v-model="wizardModel[wField.key || wField.name]"
+                            class="w-full rounded-xl border border-soft bg-base px-3 py-2 text-xs" />
+
+                        <!-- WIZARD INPUT: PASSWORD -->
+                        <div v-else-if="wField.type === 'password'" class="relative w-full">
+                            <input
+                                :type="showWizardPassword[wField.key || wField.name] ? 'text' : 'password'"
+                                v-model="wizardModel[wField.key || wField.name]"
+                                class="w-full rounded-xl border border-soft bg-base px-3 py-2 pr-12 text-xs" />
+                            <button
+                                type="button"
+                                @click.prevent="showWizardPassword[wField.key || wField.name] = !showWizardPassword[wField.key || wField.name]"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] opacity-60 hover:opacity-100 transition">
+                                {{ showWizardPassword[wField.key || wField.name] ? 'Hide' : 'Show' }}
+                            </button>
+                        </div>
+
+                        <!-- WIZARD INPUT: NUMBER -->
+                        <input
+                            v-else-if="wField.type === 'number'"
+                            type="number"
+                            v-model.number="wizardModel[wField.key || wField.name]"
+                            class="w-full rounded-xl border border-soft bg-base px-3 py-2 text-xs" />
+
+                        <!-- WIZARD INPUT: BOOLEAN (SWITCH) -->
+                        <label
+                            v-else-if="wField.type === 'boolean' || wField.type === 'checkbox'"
+                            class="relative inline-flex items-center cursor-pointer mt-1">
+                            <input
+                                type="checkbox"
+                                class="sr-only peer"
+                                v-model="wizardModel[wField.key || wField.name]" />
+                            <div class="w-9 h-5 bg-red-400 border border-red-500 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-400 peer-checked:border-green-500"></div>
+                        </label>
+                        
+                        <!-- WIZARD INPUT: SELECT -->
+                        <select
+                            v-else-if="wField.type === 'select'"
+                            v-model="wizardModel[wField.key || wField.name]"
+                            class="w-full rounded-xl border border-soft bg-base px-3 py-2 text-xs">
+                            <option v-for="o in wField.options" :key="o" :value="o">
+                                {{ o }}
+                            </option>
+                        </select>
+
+                        <div v-if="wField.description" class="text-[10px] opacity-50 mt-0.5">
+                            {{ wField.description }}
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="wizardError" class="text-xs text-red-500 bg-red-100 dark:bg-red-950/40 p-2.5 rounded-xl border border-red-200 dark:border-red-900/50 mb-4">
+                    {{ wizardError }}
+                </div>
+
+                <div class="flex justify-end gap-2 text-xs pt-3 border-t border-soft">
+                    <button
+                        @click="closeWizard"
+                        class="px-3 py-1.5 rounded-xl border border-soft">
+                        Cancel
+                    </button>
+                    <button
+                        @click="generateConnectionString"
+                        :disabled="isGeneratingString"
+                        class="px-3 py-1.5 rounded-xl bg-user text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5">
+                        <span v-if="isGeneratingString" class="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                        Apply &amp; Generate
+                    </button>
+                </div>
+            </div>
+        </div>
+    </Teleport>
+
 </div>
 
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
-import { getData } from '@/services/api'
+import { getData, compileMetadataString } from '@/services/api'
 
 // Global counter for debugging component instances
 let instanceCounter = (window as any).__fieldRendererInstanceCounter || 0;
@@ -954,5 +1064,234 @@ function onDragOver(event: DragEvent, index: number) {
 
 function onDragEnd() {
     draggedIdx.value = null
+}
+
+// Wizard state and logic
+const showWizardModal = ref(false)
+const wizardModel = ref<Record<string, any>>({})
+const showWizardPassword = ref<Record<string, boolean>>({})
+const isGeneratingString = ref(false)
+const wizardError = ref('')
+
+const isWizardActive = computed(() => {
+    if (!props.field.wizard) return false
+    const dependsOnField = props.field.wizard.dependsOn
+    if (!dependsOnField) return true
+    const val = getDependencyValue(dependsOnField)
+    return !!val
+})
+
+const currentProviderName = computed(() => {
+    if (!props.field.wizard) return ''
+    const val = getDependencyValue(props.field.wizard.dependsOn)
+    if (!val) return ''
+    const config = getProviderConfig(val)
+    return config ? config.name : String(val)
+})
+
+const wizardFields = computed(() => {
+    if (!props.field.wizard || !props.field.wizard.providers) return []
+    const providerVal = getDependencyValue(props.field.wizard.dependsOn)
+    if (!providerVal) return []
+    const config = getProviderConfig(providerVal)
+    return config ? config.fields : []
+})
+
+function safeGetModelValue(name: string) {
+    const obj = props.model || {}
+    const parts = name.split(/[.,]/)
+    let current = obj
+    for (const part of parts) {
+        if (current === undefined || current === null) return undefined
+        current = current[part]
+    }
+    return current
+}
+
+function getDependencyValue(dependsOnField: string | undefined) {
+    if (!dependsOnField || !props.model) return undefined
+    
+    // 1. Direct nested lookup
+    const directVal = safeGetModelValue(dependsOnField)
+    if (directVal !== undefined) return directVal
+    
+    // 2. Case-insensitive Suffix Search in model keys (e.g. "DbProvider" matches "Provider")
+    const lowerTarget = dependsOnField.toLowerCase()
+    const keys = Object.keys(props.model)
+    
+    // Exact case-insensitive match
+    for (const key of keys) {
+        if (key.toLowerCase() === lowerTarget) {
+            return props.model[key]
+        }
+    }
+    
+    // Suffix match
+    for (const key of keys) {
+        if (key.toLowerCase().endsWith(lowerTarget)) {
+            return props.model[key]
+        }
+    }
+    
+    // Contains match
+    for (const key of keys) {
+        if (key.toLowerCase().includes(lowerTarget)) {
+            return props.model[key]
+        }
+    }
+    
+    return undefined
+}
+
+function getProviderConfig(providerValue: any) {
+    if (!props.field.wizard || !props.field.wizard.providers || !providerValue) return null
+    
+    const providers = props.field.wizard.providers
+    const lowerVal = String(providerValue).toLowerCase()
+    
+    // Direct case-insensitive match
+    for (const key of Object.keys(providers)) {
+        if (key.toLowerCase() === lowerVal) {
+            return { name: key, fields: providers[key] }
+        }
+    }
+    
+    // Alias/Synonym mapping
+    const mappings: Record<string, string> = {
+        'mssql': 'sqlserver',
+        'sqlserver': 'sqlserver',
+        'postgres': 'postgresql',
+        'postgresql': 'postgresql',
+        'sqlite': 'sqlite'
+    }
+    
+    const standardVal = mappings[lowerVal] || lowerVal
+    
+    for (const key of Object.keys(providers)) {
+        const standardKey = mappings[key.toLowerCase()] || key.toLowerCase()
+        if (standardKey === standardVal) {
+            return { name: key, fields: providers[key] }
+        }
+    }
+    
+    return null
+}
+
+function parseConnectionString(connStr: string): Record<string, string> {
+    const result: Record<string, string> = {}
+    if (!connStr) return result
+    
+    // Split by semicolon, but handle possible trailing empty entries
+    const pairs = connStr.split(';')
+    for (const pair of pairs) {
+        if (!pair.trim()) continue
+        const eqIdx = pair.indexOf('=')
+        if (eqIdx !== -1) {
+            const key = pair.substring(0, eqIdx).trim()
+            const val = pair.substring(eqIdx + 1).trim()
+            result[key] = val
+        }
+    }
+    return result
+}
+
+function openWizard() {
+    wizardError.value = ''
+    
+    const parsedConnStr = parseConnectionString(String(props.modelValue || ''))
+    const model: Record<string, any> = {}
+    const pwShow: Record<string, boolean> = {}
+    
+    for (const wf of wizardFields.value) {
+        const fieldKey = wf.key || wf.name
+        const defaultValue = wf.defaultValue !== undefined ? wf.defaultValue : wf.default
+        
+        // Find in parsed connection string case-insensitively
+        let parsedVal: string | undefined = undefined
+        const lowerFieldKey = fieldKey.toLowerCase()
+        
+        for (const [pk, pv] of Object.entries(parsedConnStr)) {
+            if (pk.toLowerCase() === lowerFieldKey) {
+                parsedVal = pv
+                break
+            }
+        }
+        
+        if (parsedVal !== undefined) {
+            // Convert to target datatype
+            if (wf.type === 'number') {
+                const num = Number(parsedVal)
+                model[fieldKey] = isNaN(num) ? (defaultValue !== undefined ? defaultValue : '') : num
+            } else if (wf.type === 'boolean' || wf.type === 'checkbox') {
+                const lowerVal = parsedVal.toLowerCase()
+                model[fieldKey] = lowerVal === 'true' || lowerVal === '1' || lowerVal === 'yes'
+            } else {
+                model[fieldKey] = parsedVal
+            }
+        } else {
+            // Fallback to default values or empty
+            if (defaultValue !== undefined) {
+                model[fieldKey] = defaultValue
+            } else if (wf.type === 'boolean' || wf.type === 'checkbox') {
+                model[fieldKey] = false
+            } else {
+                model[fieldKey] = ''
+            }
+        }
+        
+        if (wf.type === 'password') {
+            pwShow[fieldKey] = false
+        }
+    }
+    
+    wizardModel.value = model
+    showWizardPassword.value = pwShow
+    showWizardModal.value = true
+}
+
+function closeWizard() {
+    showWizardModal.value = false
+    wizardError.value = ''
+}
+
+async function generateConnectionString() {
+    // Validate required fields
+    for (const wf of wizardFields.value) {
+        const fieldKey = wf.key || wf.name
+        const isRequired = wf.isRequired !== undefined ? wf.isRequired : wf.required
+        if (isRequired && (wizardModel.value[fieldKey] === undefined || wizardModel.value[fieldKey] === null || wizardModel.value[fieldKey] === '')) {
+            alert(`${wf.label || fieldKey} is required.`)
+            return
+        }
+    }
+    
+    isGeneratingString.value = true
+    wizardError.value = ''
+    try {
+        const providerVal = getDependencyValue(props.field.wizard.dependsOn)
+        
+        // Convert all parameter values to strings as expected by the backend Dictionary<string, string>
+        const stringifiedParameters: Record<string, string> = {}
+        for (const [key, val] of Object.entries(wizardModel.value)) {
+            if (val === undefined || val === null) {
+                stringifiedParameters[key] = ""
+            } else {
+                stringifiedParameters[key] = String(val)
+            }
+        }
+
+        const response = await compileMetadataString(providerVal, stringifiedParameters)
+        if (response && response.resultString !== undefined) {
+            emit('update:modelValue', response.resultString)
+            closeWizard()
+        } else {
+            throw new Error("Invalid API response format. Expected 'resultString'.")
+        }
+    } catch (e: any) {
+        console.error("Failed to generate connection string", e)
+        wizardError.value = e.message || "Failed to generate connection string"
+    } finally {
+        isGeneratingString.value = false
+    }
 }
 </script>

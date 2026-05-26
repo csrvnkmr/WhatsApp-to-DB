@@ -133,6 +133,38 @@
           "type": "object",
           "fulllength": true,
           "required": false
+        },
+        {
+          "name": "wizard",
+          "label": "Connection Wizard Properties",
+          "type": "object",
+          "fulllength": true,
+          "required": false,
+          "description": "Configures a pop-up input generator wizard block for this metadata property.",
+          "showIf": { "type": { "op": "in", "value": ["text", "textarea"] } },
+          "properties": [
+            {
+              "name": "title",
+              "label": "Wizard Window Title",
+              "type": "text",
+              "required": true,
+              "description": "E.g., 'Database Connection Setup Wizard'"
+            },
+            {
+              "name": "dependsOn",
+              "label": "Depends On Field Name",
+              "type": "text",
+              "required": true,
+              "description": "The exact parameter field name driving the choice array (e.g., 'DbProvider')"
+            },
+            {
+              "name": "providers",
+              "label": "Provider Engine Field Matrix mappings",
+              "type": "object",
+              "required": true,
+              "description": "A dynamic payload configuration object mapping provider engine values (e.g., SqlServer, SQLite) to their required sub-fields array sets."
+            }
+          ]
         }
       ]
     }

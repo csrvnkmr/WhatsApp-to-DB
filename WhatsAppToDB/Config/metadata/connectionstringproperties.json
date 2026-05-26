@@ -1,0 +1,108 @@
+[ 
+	{
+		"name": "mssql",
+		"properties" : [
+            {
+              "key": "Server",
+              "label": "Server Address / Host",
+              "type": "text",
+              "isRequired": true
+            },
+            {
+              "key": "Database",
+              "label": "Initial Catalog (Database Name)",
+              "type": "text",
+              "isRequired": true
+            },
+            {
+              "key": "User ID",
+              "label": "User ID",
+              "type": "text"
+            },
+            {
+              "key": "Password",
+              "label": "Password",
+              "type": "password"
+            },
+            {
+              "key": "TrustServerCertificate",
+              "label": "Trust Server Certificate",
+              "type": "boolean",
+              "defaultValue": "false"
+            }
+        ]
+	},
+	{
+		"name":"postgres",
+		"properties": 
+		[
+            {
+              "key": "Host",
+              "label": "Host Address",
+              "type": "text",
+              "isRequired": true
+            },
+            {
+              "key": "Port",
+              "label": "Port",
+              "type": "number",
+              "defaultValue": "5432"
+            },
+            {
+              "key": "Database",
+              "label": "Database Name",
+              "type": "text",
+              "isRequired": true
+            },
+            {
+              "key": "Username",
+              "label": "Username",
+              "type": "text",
+              "isRequired": true
+            },
+            {
+              "key": "Password",
+              "label": "Password",
+              "type": "password",
+              "isRequired": true
+            }
+        ]
+	},
+	{
+		"name":"sqlite",
+		"properties":
+		[
+            {
+              "key": "DataSource",
+              "label": "SQLite Database File Path",
+              "type": "text",
+              "isRequired": true
+            }
+        ]
+	},
+  {
+    "name":"mssql", 
+    "properties": 
+    [
+      { "key": "Server", "label": "Hostname / IP Address", "type": "text", "isRequired": true, "defaultValue": "localhost" },
+      { "key": "Port", "label": "Port", "type": "number", "isRequired": true, "defaultValue": "3306" },
+      { "key": "Database", "label": "Database Name", "type": "text", "isRequired": true },
+      { "key": "User ID", "label": "User ID", "type": "text", "isRequired": true },
+      { "key": "Password", "label": "Password", "type": "password", "isRequired": true },
+      { "key": "AllowUserVariables", "label": "Allow User Variables (@)", "type": "boolean", "defaultValue": "true" },
+      { "key": "AllowPublicKeyRetrieval", "label": "Allow Public Key Retrieval", "type": "boolean", "defaultValue": "true" }
+    ]
+  } ,
+  {
+    "name":"oracle", 
+    "properties": 
+    [
+      { "key": "Data Source", "label": "Data Source (Host:Port/ServiceName or TNS Alias)", "type": "text", "isRequired": true, "description": "E.g., localhost:1521/ORCL or your TNS endpoint name" },
+      { "key": "User ID", "label": "User ID", "type": "text", "isRequired": true },
+      { "key": "Password", "label": "Password", "type": "password", "isRequired": true },
+      { "key": "Pooling", "label": "Enable Connection Pooling", "type": "boolean", "defaultValue": "true" }
+    ]
+  }
+  
+]
+	

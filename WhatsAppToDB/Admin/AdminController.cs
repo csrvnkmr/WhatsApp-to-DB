@@ -291,11 +291,76 @@ namespace WhatsAppToDB.Admin
                 $"{entity}.json");
         }
 
+        [HttpPost("compile-metadata-string")]
+        public IActionResult CompileMetadataString([FromBody] MetadataCompileRequest request)
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.TargetEngine))
+            {
+                return BadRequest("Invalid payload structure or missing TargetEngine.");
+            }
+
+            string compiledOutputString;
+
+            // 1. If it's a known database provider, handle formatting using standard DB rules
+            if (request.TargetEngine.Equals("mssql", StringComparison.OrdinalIgnoreCase) || 
+                request.TargetEngine.Equals("postgres", StringComparison.OrdinalIgnoreCase))
+            {
+                var dbBuilder = new System.Data.Common.DbConnectionStringBuilder();
+                
+                foreach (var kvp in request.Parameters)
+                {
+                    if (!string.IsNullOrWhiteSpace(kvp.Value))
+                    {
+                        dbBuilder[kvp.Key] = kvp.Value;
+                    }
+                }
+                compiledOutputString = dbBuilder.ConnectionString;
+            }
+            // Add this logic into your existing TargetEngine condition checking blocks
+            else if (request.TargetEngine.Equals("mysql", StringComparison.OrdinalIgnoreCase))
+            {
+                var mysqlBuilder = new System.Data.Common.DbConnectionStringBuilder();
+                foreach (var kvp in request.Parameters)
+                {
+                    if (!string.IsNullOrWhiteSpace(kvp.Value))
+                    {
+                        // Normalize potential lowercase inputs back to official driver casing expectations
+                        string normKey = kvp.Key.ToLower() switch {
+                            "userid"   => "User ID",
+                            "username" => "User ID",
+                            _          => kvp.Key
+                        };
+                        mysqlBuilder[normKey] = kvp.Value;
+                    }
+                }
+                compiledOutputString = mysqlBuilder.ConnectionString;
+            }
+            else
+            {
+                // 2. Generic fallback for everything else (LLM configs, API targets, prompts configurations)
+                // Outputs a clean, uniform: "ApiKey=sk_abc;Endpoint=https://api.com;"
+                compiledOutputString = string.Join(";", request.Parameters
+                    .Where(kvp => !string.IsNullOrWhiteSpace(kvp.Value))
+                    .Select(kvp => $"{kvp.Key}={kvp.Value}"));
+            }
+
+            return Ok(new { resultString = compiledOutputString });
+        }
+
         
         // ======================================================
         // SENSITIVE FIELD RESOLUTION
         // Now handled by JsonConfigService.GetSensitiveFields()
         // ======================================================
 
+    }
+
+    public record MetadataCompileRequest
+    {
+        // E.g., "SqlServer", "PostgreSQL", "OpenAI", "SMTP"
+        public string TargetEngine { get; init; } = string.Empty;
+
+        // A flat list of keys and values collected from your dynamic form UI
+        public Dictionary<string, string> Parameters { get; init; } = new(StringComparer.OrdinalIgnoreCase);
     }
 }
