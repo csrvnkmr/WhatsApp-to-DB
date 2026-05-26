@@ -1,7 +1,0 @@
-[
-  {
-    "Name": "Search Helper for Chinook Sqlite",
-    "AssemblyPath": "C:\\Development\\AiAgents\\SemanticKernel\\Plugins\\DBSearchHelperPlugin.dll",
-    "PluginClassName": "searchhelper.helper"
-  }
-]

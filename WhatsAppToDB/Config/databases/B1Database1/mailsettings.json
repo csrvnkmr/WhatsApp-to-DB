@@ -1,9 +1,0 @@
-[
-  {
-    "smtpServer": "smtp.gmail.com",
-    "Port": "587",
-    "username": "srvnkmr@gmail.com",
-    "password": "jkogginypczvyydt",
-    "EnableSSL": true
-  }
-]

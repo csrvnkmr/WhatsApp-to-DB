@@ -1,7 +1,0 @@
-[
-  {
-    "PromptInjectorDLL": "C:\\Development\\AiAgents\\SemanticKernel\\Plugins\\SecurityPlugin.dll",
-    "SqlInterceptorDLL": "C:\\Development\\AiAgents\\SemanticKernel\\Plugins\\SecurityPlugin.dll",
-    "SqlTemplateExtensionDLL": "C:\\Development\\AiAgents\\SemanticKernel\\Plugins\\SecurityPlugin.dll"
-  }
-]
