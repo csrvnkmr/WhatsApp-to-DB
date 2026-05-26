@@ -7,21 +7,20 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using WhatsAppToDB.Abstractions;
-using VectorDBSync.EmbeddingService;
 using Dapper;
 
 namespace VectorDBSync.VectorDBService
 {
     internal class SQLiteVectorDBService : IVectorDBService
     {
-        private IEmbeddingService _embeddingService;
         private readonly string _basePath;
-
+        private readonly int _batchSize = 100;
 
         public SQLiteVectorDBService(VectorDBSettings settings)
         {
-            _embeddingService = EmbeddingServiceFactory.Create(settings.EmbeddingServiceSettings);
+            ArgumentNullException.ThrowIfNull(settings);
             _basePath = settings.VectorDBProviderSettings.VectorDBFolder;
+            _batchSize = settings.EmbeddingServiceSettings.BatchSize > 0 ? settings.EmbeddingServiceSettings.BatchSize : 100;
             if (!Directory.Exists(_basePath))
             {
                 Directory.CreateDirectory(_basePath);
@@ -74,20 +73,20 @@ namespace VectorDBSync.VectorDBService
             await connection.ExecuteAsync(sql);
         }
 
-        public async Task Add(string collectionName, List<string> ids, List<string>? documents,
-            List<Dictionary<string, object>>? metadatas)
+        public async Task Add(string collectionName, List<string> ids, List<ReadOnlyMemory<float>> vectors,
+            List<string>? documents = null,
+            List<Dictionary<string, object>>? metadatas = null)
         {
-            var batchsize = 100;
+            var batchsize = _batchSize;
             for (int outer=0; outer < ids.Count; outer += batchsize)
             {
                 var currentIds = ids.Skip(outer).Take(batchsize).ToList();
+                var currentVectors = vectors.Skip(outer).Take(batchsize).ToList();
                 var currentDocs = documents?.Skip(outer).Take(batchsize).ToList();
                 var currentMetas = metadatas?.Skip(outer).Take(batchsize).ToList();
-            
-                Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} [SQLiteVectorDBService] [{collectionName}] {outer+1} to {outer+currentIds.Count} of {ids.Count} - Processing batch..."    );
-                Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} [SQLiteVectorDBService] [{collectionName}] Generating embeddings for {currentIds?.Count ?? 0} records...");
-                var vectors = await GetVectors(currentDocs ?? new List<string>());
-                Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} [SQLiteVectorDBService] [{collectionName}] starting to insert {currentIds?.Count ?? 0} records.");
+
+                Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} [SQLiteVectorDBService] [{collectionName}] {outer+1} to {outer+currentIds.Count} of {ids.Count} - Processing batch...");
+                Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} [SQLiteVectorDBService] [{collectionName}] inserting {currentIds?.Count ?? 0} records.");
                 string dbPath = GetCollectionPath(collectionName);
                 using var connection = new SqliteConnection($"Data Source={dbPath}");
                 connection.Open();
@@ -115,8 +114,8 @@ namespace VectorDBSync.VectorDBService
                         cmd.Parameters.AddWithValue("$meta", currentMetas != null ? JsonSerializer.Serialize(currentMetas[i]) : DBNull.Value);
 
                         // Convert ReadOnlyMemory<float> to byte array for BLOB storage
-                        byte[] vectorBytes = new byte[vectors[i].Length * sizeof(float)];
-                        Buffer.BlockCopy(vectors[i].ToArray(), 0, vectorBytes, 0, vectorBytes.Length);
+                        byte[] vectorBytes = new byte[currentVectors[i].Length * sizeof(float)];
+                        Buffer.BlockCopy(currentVectors[i].ToArray(), 0, vectorBytes, 0, vectorBytes.Length);
                         cmd.Parameters.AddWithValue("$vec", vectorBytes);
 
                         await cmd.ExecuteNonQueryAsync();
@@ -156,13 +155,6 @@ namespace VectorDBSync.VectorDBService
                 PRAGMA synchronous = NORMAL;";
             cmd.ExecuteNonQuery();
         }
-
-        public async Task<List<ReadOnlyMemory<float>>> GetVectors(List<string> texts)
-        {
-            var vectors = await _embeddingService.GetVectors(texts);
-            return vectors;            
-        }
-
 
         private async Task<List<VectorSearchResult>> GetFtsResults(string collectionName, string queryText, int limit,
             IDictionary<string, object>? filter = null)
@@ -249,15 +241,16 @@ namespace VectorDBSync.VectorDBService
             return query.Trim();
         }
 
-        public async Task<List<VectorSearchResult>> SearchCollection(string collectionName, string queryText, int limit = 5,            
+        public async Task<List<VectorSearchResult>> SearchCollection(string collectionName, ReadOnlyMemory<float> queryVector, string? queryText = null, int limit = 5,            
                 IDictionary<string, object>? filter = null)
         {
-
             // 1. Get Vector Matches (Semantic)
-            var vectorMatches = await GetVectorResults(collectionName, queryText, 20, filter);
+            var vectorMatches = await GetVectorResults(collectionName, queryVector, 20, filter);
 
             // 2. Get FTS5 Matches (Typo/Literal)
-            var ftsMatches = await GetFtsResults(collectionName, queryText, 20);
+            var ftsMatches = string.IsNullOrWhiteSpace(queryText)
+                ? new List<VectorSearchResult>()
+                : await GetFtsResults(collectionName, queryText, 20);
 
             // 3. Simple Re-ranking Logic
             // If a result is in BOTH lists, boost it significantly.
@@ -281,15 +274,13 @@ namespace VectorDBSync.VectorDBService
 
         public async Task<List<VectorSearchResult>> GetVectorResults(
             string collectionName,
-            string queryText,
+            ReadOnlyMemory<float> queryVector,
             int limit = 5,
             IDictionary<string, object>? filter = null)
         {
             string dbPath = Path.Combine(_basePath, $"{collectionName}.db");
             if (!File.Exists(dbPath)) return new List<VectorSearchResult>();
 
-            // 1. Get the vector for the query text
-            var queryVector = await _embeddingService.GetVector(queryText);
             var querySpan = queryVector.Span;
 
             var allResults = new List<VectorSearchResult>();

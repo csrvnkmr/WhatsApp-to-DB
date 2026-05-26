@@ -6,5 +6,7 @@ namespace WhatsAppToDB.Abstractions
         public string ApiKey { get; set; } = string.Empty;
         public string Model { get; set; } = string.Empty;
         public string Url { get; set; } = string.Empty;
+
+        public int BatchSize { get; set; } = 100;
     }
 }

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using WhatsAppToDB.Abstractions;
-using VectorDBSync.EmbeddingService;
 
 namespace VectorDBSync.VectorDBService
 {
@@ -54,13 +53,11 @@ namespace VectorDBSync.VectorDBService
                 providerType = "sqlite";
             }
 
-            var embeddingService = EmbeddingServiceFactory.Create(settings.EmbeddingServiceSettings);
-
             lock (_sync)
             {
                 if (_providers.TryGetValue(providerType, out var provider))
                 {
-                    return provider.CreateVectorDBService(settings, embeddingService);
+                    return provider.CreateVectorDBService(settings);
                 }
             }
 

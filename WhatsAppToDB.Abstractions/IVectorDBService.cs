@@ -2,22 +2,22 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace WhatsAppToDB.Abstractions
 {
     public interface IVectorDBService
     {
-        Task<List<ReadOnlyMemory<float>>> GetVectors(List<string> texts);
-
         Task Delete(string collectionName);
         Task Delete(string collectionName, string id);
 
-        Task Add(string collectionName, 
-            List<string> ids, List<string>? documents, List<Dictionary<string, object>>? metadatas);
+        Task Add(string collectionName,
+            List<string> ids, List<ReadOnlyMemory<float>> vectors, List<string>? documents = null, List<Dictionary<string, object>>? metadatas = null);
         Task<List<VectorSearchResult>> SearchCollection(
                 string collectionName,
-                string queryText,
+                ReadOnlyMemory<float> queryVector,
+                string? queryText = null,
                 int limit = 5,
                 IDictionary<string, object>? filter = null);
         Task AfterCollectionSyncCompletedAsync(
@@ -32,6 +32,6 @@ namespace WhatsAppToDB.Abstractions
     {
         string Type { get; }
 
-        IVectorDBService CreateVectorDBService(VectorDBSettings settings, IEmbeddingService embeddingService);
+        IVectorDBService CreateVectorDBService(VectorDBSettings settings);
     }
 }

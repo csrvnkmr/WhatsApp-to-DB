@@ -5,6 +5,7 @@ using System.Data;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using VectorDBSync.EmbeddingService;
 using VectorDBSync.VectorDBService;
 using WhatsAppToDB.Abstractions;
 
@@ -33,11 +34,13 @@ namespace VectorDBSync
         private readonly string connectionString;
         string sqliteDbPath;
         private IVectorDBService _vectorDBService;
+        private readonly IEmbeddingService _embeddingService;
         private readonly SQLiteCacheService _sqliteCacheService = new();        
 
         public VectorSyncService(VectorDBSettings settings, string sourceConnectionString)
         {
             _vectorDBService = VectorDBServiceFactory.CreateVectorDBService(settings);
+            _embeddingService = EmbeddingServiceFactory.Create(settings.EmbeddingServiceSettings);
             this.connectionString = sourceConnectionString?.Trim() ?? string.Empty;
             var cacheFolder = settings.CacheFolder;
             if (string.IsNullOrWhiteSpace(cacheFolder))
@@ -103,11 +106,11 @@ namespace VectorDBSync
                 Console.WriteLine($"\n[{config.CollectionName}] Sync starting at " +
                                   $"{DateTime.Now:yyyy-MM-dd HH:mm:ss}");
  
-                // DeleteAndCreate: wipe ChromaDB + SQLite cache, then full re-embed
+                // DeleteAndCreate: wipe vector DB collection + SQLite cache, then full re-embed
                 if (config.DeleteAndCreate)
                 {
                     Console.WriteLine($"[{config.CollectionName}] DeleteAndCreate=true — " +
-                                      $"clearing ChromaDB collection and SQLite cache.");
+                                      $"clearing vector DB collection and SQLite cache.");
                     await _vectorDBService.Delete(config.CollectionName);
                     _sqliteCacheService.DropSqliteCache(sqliteConn, config.CollectionName);
                 }
@@ -159,10 +162,10 @@ namespace VectorDBSync
                             Metadata = new Dictionary<string, object>()
                         };
 
-                        record.ChromaId = _sqliteCacheService.GetOrCreateChromaId(sqliteConn, config.CollectionName, id);
-                        if (!SQLiteCacheService.IsValidUuidV4(record.ChromaId))
+                        record.VectorId = _sqliteCacheService.GetOrCreateVectorId(sqliteConn, config.CollectionName, id);
+                        if (!SQLiteCacheService.IsValidVectorId(record.VectorId))
                         {
-                            record.ChromaId = Guid.NewGuid().ToString();
+                            record.VectorId = Guid.NewGuid().ToString();
                         }
                         record.Metadata["_source_id"] = id;
 
@@ -185,16 +188,16 @@ namespace VectorDBSync
                                   $"Unchanged: {sourceResults.Count - toUpsert.Count - toDelete.Count}, " +
                                   $"To delete: {toDelete.Count}");
  
-                // -- Step 5: Delete removed records from ChromaDB + SQLite cache -
+                // -- Step 5: Delete removed records from vector DB + SQLite cache -
                 if (toDelete.Any())
                 {
                     Console.WriteLine($"[{config.CollectionName}] Deleting {toDelete.Count} removed records...");
-                    var cachedChromaIds = _sqliteCacheService.LoadCachedChromaIds(sqliteConn, config.CollectionName);
+                    var cachedVectorIds = _sqliteCacheService.LoadCachedVectorIds(sqliteConn, config.CollectionName);
                     foreach (var deletedId in toDelete)
                     {
-                        if (cachedChromaIds.TryGetValue(deletedId, out var chromaId) && !string.IsNullOrWhiteSpace(chromaId))
+                        if (cachedVectorIds.TryGetValue(deletedId, out var vectorId) && !string.IsNullOrWhiteSpace(vectorId))
                         {
-                            await _vectorDBService.Delete(config.CollectionName, chromaId);
+                            await _vectorDBService.Delete(config.CollectionName, vectorId);
                         }
                     }
                     _sqliteCacheService.DeleteFromSqliteCache(sqliteConn, config.CollectionName, toDelete);
@@ -237,19 +240,22 @@ namespace VectorDBSync
                 // Get the current window of records
                 var currentBatch = records.Skip(i).Take(batchSize).ToList();
 
-                var ids = currentBatch.Select(r =>{if (!SQLiteCacheService.IsValidUuidV4(r.ChromaId))
+                var ids = currentBatch.Select(r =>
                     {
-                        r.ChromaId = Guid.NewGuid().ToString();
-                    }
-                    return r.ChromaId!;
+                        if (!SQLiteCacheService.IsValidVectorId(r.VectorId))
+                        {
+                            r.VectorId = Guid.NewGuid().ToString();
+                        }
+                        return r.VectorId!;
                     }
                 ).ToList();
                 var documents = currentBatch.Select(r => r.Content).ToList();
 
-                Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} [Sync] Generating embeddings for " +
+                Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} [Sync] Generating embeddings for " +
                     $"{i+1} to {i + currentBatch.Count} of ({records.Count} records)...");
 
                 // 2. Bulk fetch embeddings for the entire batch
+                var vectors = await _embeddingService.GetVectors(documents);
 
                 // Filter metadata
                 var metadatas = currentBatch.Select(r =>
@@ -260,6 +266,7 @@ namespace VectorDBSync
                 await _vectorDBService.Add(
                     collectionName,
                     ids,
+                    vectors,
                     documents,
                     metadatas
                 );
@@ -275,7 +282,8 @@ namespace VectorDBSync
                 int limit = 5,
                 IDictionary<string, object>? filter = null)
         {
-            var results = await _vectorDBService.SearchCollection(collectionName, queryText, limit, filter);
+            var queryVector = await _embeddingService.GetVector(queryText);
+            var results = await _vectorDBService.SearchCollection(collectionName, queryVector, queryText: null, limit, filter);
 
             return results;
         }

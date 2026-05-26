@@ -6,11 +6,10 @@ namespace ChromaVectorDBProvider
     {
         public string Type => "chroma";
 
-        public IVectorDBService CreateVectorDBService(VectorDBSettings settings, IEmbeddingService embeddingService)
+        public IVectorDBService CreateVectorDBService(VectorDBSettings settings)
         {
             ArgumentNullException.ThrowIfNull(settings);
-            ArgumentNullException.ThrowIfNull(embeddingService);
-            return new ChromaDBService(settings, embeddingService);
+            return new ChromaDBService(settings);
         }
     }
 }

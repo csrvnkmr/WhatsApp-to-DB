@@ -2,43 +2,31 @@
 <!-- src/components/Sidebar.vue -->
 <!-- ============================================= -->
 <template>
-<div class="w-full md:w-72 h-full overflow-auto bg-panel flex flex-col">
+<div class="w-full md:w-72 h-full bg-panel flex flex-col overflow-hidden">
 
-    <!--<div class="p-4 border-b font-bold text-xl">-->
-<div class="p-4">
-
-    <div class="flex items-center justify-between">
-
-        <!-- Left: Welcome + Username inline -->
-        <div class="flex items-center gap-2 min-w-0">
-
-            <span class="text-sm text-gray-500">
-                Welcome
-            </span>
-
-            <span class="font-semibold text-base truncate max-w-[140px]">
-                {{ userName }}
-            </span>
-
+    <!-- WELCOME HEADER (Fixed) -->
+    <div class="p-4 shrink-0 border-b border-soft/50">
+        <div class="flex items-center justify-between">
+            <!-- Left: Welcome + Username inline -->
+            <div class="flex items-center gap-2 min-w-0">
+                <span class="text-sm text-gray-500">Welcome</span>
+                <span class="font-semibold text-base truncate max-w-[140px]">{{ userName }}</span>
+            </div>
+            <!-- Right: Logout -->
+            <button
+                @click="logout"
+                class="text-xs px-2 py-1 rounded-md text-gray-500 hover:text-black hover:bg-hover transition">
+                Logout
+            </button>
         </div>
-
-        <!-- Right: Logout (smaller + subtle) -->
-        <button
-            @click="logout"
-            class="text-xs px-2 py-1 rounded-md text-gray-500 hover:text-black hover:bg-hover transition">
-            Logout
-        </button>
-
     </div>
 
-</div>
-
-    <div class="p-3">
-
+    <!-- CONTROLS SECTION (Fixed) -->
+    <div class="p-3 pb-2 shrink-0 space-y-2.5">
         <button
              @click="newChat"
             :disabled="chat.loading"
-            class="w-full bg-user rounded-xl p-3 mb-3 disabled:opacity-50">
+            class="w-full bg-user rounded-xl p-3 disabled:opacity-50 text-white font-semibold transition hover:opacity-90">
             + New Chat
         </button>
 
@@ -46,14 +34,17 @@
         <input
             v-model="searchText"
             placeholder="Search chats..."
-            class="w-full mb-1 rounded-xl px-3 py-2 outline-none bg-panel" />
+            class="w-full rounded-xl px-3 py-2 outline-none bg-panel border border-soft" />
+
         <div
             @click="loadBookmarks"
-            class="cursor-pointer px-3 py-2 rounded-lg bg-panel hover:bg-hover transition">
-
+            class="cursor-pointer px-3 py-2 rounded-lg bg-panel hover:bg-hover transition border border-soft flex items-center">
             📌 Bookmarks
-
         </div>
+    </div>
+
+    <!-- SCROLLABLE CHAT SESSIONS -->
+    <div class="flex-1 overflow-y-auto px-3 pb-3 min-h-0 space-y-1">
         <div
             v-if="chat.loading"
             class="text-sm text-gray-500 p-2">
@@ -61,12 +52,12 @@
         </div>
 
         <!-- REGULAR CHATS (When not searching) -->
-        <div v-if="!searchText">
+        <div v-if="!searchText" class="space-y-1">
             <div
                 v-for="item in filteredSessions"
                 :key="item.id"
                 @click="openSession(item.id)"
-                class="p-2 mb-1 rounded-xl cursor-pointer border transition"
+                class="p-2.5 rounded-xl cursor-pointer border transition"
                 :class="Number(chat.selectedSessionId) === Number(item.id)
                     ? 'bg-selected border-blue-400 shadow-sm'
                     : 'bg-panel hover:bg-hover border-gray-200'">
@@ -88,24 +79,26 @@
         </div>
 
         <!-- SEARCH RESULTS (When searching) -->
-        <div v-else>
+        <div v-else class="space-y-3">
             <div
                 v-for="s in groupedResults"
                 :key="s.sessionId"
                 class="mb-3">
 
                 <!-- SESSION HEADER -->
-                <div class="font-semibold text-sm px-2 py-1 text-gray-700">
+                <div class="font-semibold text-xs px-2 py-1 text-gray-500 uppercase tracking-wider">
                     {{ s.title }}
                 </div>
 
                 <!-- QUESTIONS -->
-                <div
-                    v-for="m in s.messages"
-                    :key="m.MessageId"
-                    @click="openSearchResult(s.sessionId, m.MessageId)"
-                    class="text-sm px-3 py-1 cursor-pointer rounded bg-panel hover:bg-hover transition">
-                    {{ m.MessageText }}
+                <div class="space-y-0.5 mt-1">
+                    <div
+                        v-for="m in s.messages"
+                        :key="m.MessageId"
+                        @click="openSearchResult(s.sessionId, m.MessageId)"
+                        class="text-sm px-3 py-2 cursor-pointer rounded-lg bg-panel hover:bg-hover border border-soft/30 transition truncate">
+                        {{ m.MessageText }}
+                    </div>
                 </div>
 
             </div>

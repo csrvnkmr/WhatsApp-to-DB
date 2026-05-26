@@ -60,3 +60,13 @@ nunit-*.xml
 
 app[sS]ettings.json
 app[Ss]ettings.sql.json
+
+# 1. Ignore all JSON files directly inside the config folder
+[Cc]onfig/*.json
+
+# 2. Ignore all JSON files inside any subfolders under config
+[Cc]onfig/**/*.json
+
+# 3. Create an explicit exception rule for the metadata folder
+![Cc]onfig/metadata/
+![Cc]onfig/metadata/**/*.json

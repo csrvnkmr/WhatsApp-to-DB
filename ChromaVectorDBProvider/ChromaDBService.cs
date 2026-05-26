@@ -1,8 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using WhatsAppToDB.Abstractions;
 
 namespace ChromaVectorDBProvider
@@ -13,14 +17,12 @@ namespace ChromaVectorDBProvider
 
         private readonly HttpClient _httpClient;
         private readonly VectorDBSettings _vectorDBSettings;
-        private readonly IEmbeddingService _embeddingService;
         private readonly string _baseUrl;
         private bool _useConfiguredNamespace = true;
 
-        public ChromaDBService(VectorDBSettings settings, IEmbeddingService embeddingService)
+        public ChromaDBService(VectorDBSettings settings)
         {
             ArgumentNullException.ThrowIfNull(settings);
-            ArgumentNullException.ThrowIfNull(embeddingService);
 
             var chromaUrl = settings.VectorDBProviderSettings.Url
                 ?? throw new InvalidOperationException("Chroma URL is not configured.");
@@ -31,14 +33,13 @@ namespace ChromaVectorDBProvider
 
             _httpClient = new HttpClient();
             _vectorDBSettings = settings;
-            _embeddingService = embeddingService;
             _baseUrl = NormalizeBaseUrl(chromaUrl);
 
             Console.WriteLine($"[{ProviderVersion}] ctor complete");
         }
 
-        public async Task Add(string collectionName, List<string> ids, List<string>? documents,
-            List<Dictionary<string, object>>? metadatas)
+        public async Task Add(string collectionName, List<string> ids, List<ReadOnlyMemory<float>> vectors,
+            List<string>? documents, List<Dictionary<string, object>>? metadatas)
         {
             Console.WriteLine($"[{ProviderVersion}] Add collection={collectionName} ids={ids?.Count ?? 0}");
             await EnsureNamespaceAsync();
@@ -46,13 +47,12 @@ namespace ChromaVectorDBProvider
             // This now returns the required string UUID (e.g., "797e91e3-8c34-4ce7-b294-0c9eb3eebdb4")
             var collectionId = await EnsureCollectionExistsAsync(NormalizeCollectionName(collectionName));
 
-            var embeddings = await GetVectors(documents ?? new List<string>());
             var body = new
             { 
                 ids,
                 documents,
                 metadatas,
-                embeddings = embeddings.Select(e => e.ToArray()).ToArray()
+                embeddings = vectors.Select(e => e.ToArray()).ToArray()
             };
 
             // The endpoint path now successfully receives a valid UUIDv4 string
@@ -63,21 +63,20 @@ namespace ChromaVectorDBProvider
                 expectedStatusCodes: new[] { HttpStatusCode.Created, HttpStatusCode.OK });
         }
 
-        public async Task Addold(string collectionName, List<string> ids, List<string>? documents,
-            List<Dictionary<string, object>>? metadatas)
+        public async Task Addold(string collectionName, List<string> ids, List<ReadOnlyMemory<float>> vectors,
+            List<string>? documents, List<Dictionary<string, object>>? metadatas)
         {
             Console.WriteLine($"[{ProviderVersion}] Add collection={collectionName} ids={ids?.Count ?? 0}");
             await EnsureNamespaceAsync();
 
             var chromaCollectionName = await EnsureCollectionExistsAsync(NormalizeCollectionName(collectionName));
 
-            var embeddings = await GetVectors(documents ?? new List<string>());
             var body = new
-            { 
+            {
                 ids,
                 documents,
                 metadatas,
-                embeddings = embeddings.Select(e => e.ToArray()).ToArray()
+                embeddings = vectors.Select(e => e.ToArray()).ToArray()
             };
 
             await SendAsync(
@@ -126,25 +125,19 @@ namespace ChromaVectorDBProvider
                 expectedStatusCodes: new[] { HttpStatusCode.OK });
         }
 
-        public async Task<List<ReadOnlyMemory<float>>> GetVectors(List<string> texts)
-        {
-            var result = await _embeddingService.GetVectors(texts);
-            return result;
-        }
-
        public async Task<List<VectorSearchResult>> SearchCollection(
             string collectionName,
-            string queryText,
+            ReadOnlyMemory<float> queryVector,
+            string? queryText = null,
             int limit = 5,
             IDictionary<string, object>? filter = null)
         {
-            Console.WriteLine($"[{ProviderVersion}] Search collection={collectionName} queryLen={queryText?.Length ?? 0}");
+            Console.WriteLine($"[{ProviderVersion}] Search collection={collectionName} queryVectorLength={queryVector.Length}");
             await EnsureNamespaceAsync();
 
             // Change: EnsureCollectionExistsAsync now returns the GUID string!
             var collectionId = await EnsureCollectionExistsAsync(NormalizeCollectionName(collectionName));
 
-            var queryVector = await _embeddingService.GetVector(queryText);
             var queryEmbeddings = new[] { queryVector.ToArray() };
 
             object? whereFilter = null;

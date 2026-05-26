@@ -37,38 +37,38 @@ namespace VectorDBSync
             using var cmd = conn.CreateCommand();
             cmd.CommandText = $@"
                 CREATE TABLE IF NOT EXISTS cache_{collectionName} (
-                    record_key   TEXT PRIMARY KEY,
-                    content_hash TEXT NOT NULL,
-                    chroma_id    TEXT,
-                    updated_at   DATETIME DEFAULT CURRENT_TIMESTAMP
+                    record_key    TEXT PRIMARY KEY,
+                    content_hash  TEXT NOT NULL,
+                    vector_id     TEXT,
+                    updated_at    DATETIME DEFAULT CURRENT_TIMESTAMP
                 );";
             cmd.ExecuteNonQuery();
 
-            EnsureChromaIdColumn(conn, collectionName);
+            EnsureVectorIdColumn(conn, collectionName);
         }
 
-        private static void EnsureChromaIdColumn(SqliteConnection conn, string collectionName)
+        private static void EnsureVectorIdColumn(SqliteConnection conn, string collectionName)
         {
             using var checkCmd = conn.CreateCommand();
             checkCmd.CommandText = $"PRAGMA table_info(cache_{collectionName});";
             using var reader = checkCmd.ExecuteReader();
             var hasTable = false;
-            var hasChromaId = false;
+            var hasVectorId = false;
             while (reader.Read())
             {
                 hasTable = true;
                 var columnName = reader.GetString(1);
-                if (string.Equals(columnName, "chroma_id", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(columnName, "vector_id", StringComparison.OrdinalIgnoreCase))
                 {
-                    hasChromaId = true;
+                    hasVectorId = true;
                     break;
                 }
             }
 
-            if (hasTable && !hasChromaId)
+            if (hasTable && !hasVectorId)
             {
                 using var alterCmd = conn.CreateCommand();
-                alterCmd.CommandText = $"ALTER TABLE cache_{collectionName} ADD COLUMN chroma_id TEXT;";
+                alterCmd.CommandText = $"ALTER TABLE cache_{collectionName} ADD COLUMN vector_id TEXT;";
                 alterCmd.ExecuteNonQuery();
             }
         }
@@ -94,11 +94,11 @@ namespace VectorDBSync
             return result;
         }
 
-        public Dictionary<string, string> LoadCachedChromaIds(SqliteConnection conn, string collectionName)
+        public Dictionary<string, string> LoadCachedVectorIds(SqliteConnection conn, string collectionName)
         {
             var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             using var cmd = conn.CreateCommand();
-            cmd.CommandText = $"SELECT record_key, chroma_id FROM cache_{collectionName};";
+            cmd.CommandText = $"SELECT record_key, vector_id FROM cache_{collectionName};";
             using var reader = cmd.ExecuteReader();
             while (reader.Read())
             {
@@ -107,53 +107,47 @@ namespace VectorDBSync
                     continue;
                 }
 
-                var chromaId = reader.GetString(1);
-                if (!string.IsNullOrWhiteSpace(chromaId))
+                var vectorId = reader.GetString(1);
+                if (!string.IsNullOrWhiteSpace(vectorId))
                 {
-                    result[reader.GetString(0)] = chromaId;
+                    result[reader.GetString(0)] = vectorId;
                 }
             }
 
             return result;
         }
 
-        public string GetOrCreateChromaId(SqliteConnection conn, string collectionName, string recordKey)
+        public string GetOrCreateVectorId(SqliteConnection conn, string collectionName, string recordKey)
         {
             using var getCmd = conn.CreateCommand();
-            getCmd.CommandText = $"SELECT chroma_id FROM cache_{collectionName} WHERE record_key=@key;";
+            getCmd.CommandText = $"SELECT vector_id FROM cache_{collectionName} WHERE record_key=@key;";
             getCmd.Parameters.AddWithValue("@key", recordKey);
 
             var existing = getCmd.ExecuteScalar()?.ToString();
-            if (IsValidUuidV4(existing))
+            if (!string.IsNullOrWhiteSpace(existing))
             {
                 return existing;
             }
 
-            var chromaId = Guid.NewGuid().ToString();
+            var vectorId = !string.IsNullOrWhiteSpace(recordKey)
+                ? recordKey
+                : Guid.NewGuid().ToString();
             using var upsertCmd = conn.CreateCommand();
             upsertCmd.CommandText = $@"
-                INSERT INTO cache_{collectionName}(record_key, content_hash, chroma_id, updated_at)
-                VALUES(@key, '', @chromaId, CURRENT_TIMESTAMP)
+                INSERT INTO cache_{collectionName}(record_key, content_hash, vector_id, updated_at)
+                VALUES(@key, '', @vectorId, CURRENT_TIMESTAMP)
                 ON CONFLICT(record_key) DO UPDATE
-                SET chroma_id = excluded.chroma_id,
+                SET vector_id = excluded.vector_id,
                     updated_at = CURRENT_TIMESTAMP;";
             upsertCmd.Parameters.AddWithValue("@key", recordKey);
-            upsertCmd.Parameters.AddWithValue("@chromaId", chromaId);
+            upsertCmd.Parameters.AddWithValue("@vectorId", vectorId);
             upsertCmd.ExecuteNonQuery();
-            return chromaId;
+            return vectorId;
         }
 
-        public static bool IsValidUuidV4(string? value)
+        public static bool IsValidVectorId(string? value)
         {
-            if (!Guid.TryParse(value, out var guid))
-            {
-                return false;
-            }
-
-            var guidText = guid.ToString("D");
-            return guidText.Length >= 19
-                   && guidText[14] == '4'
-                   && "89abAB".Contains(guidText[19]);
+            return !string.IsNullOrWhiteSpace(value);
         }
 
         public void UpsertSqliteCache(SqliteConnection conn, string collectionName, List<VectorRecord> records)
@@ -164,15 +158,15 @@ namespace VectorDBSync
                 using var cmd = conn.CreateCommand();
                 cmd.Transaction = tx;
                 cmd.CommandText = $@"
-                    INSERT INTO cache_{collectionName}(record_key, content_hash, chroma_id, updated_at)
-                    VALUES(@key, @hash, @chromaId, CURRENT_TIMESTAMP)
+                    INSERT INTO cache_{collectionName}(record_key, content_hash, vector_id, updated_at)
+                    VALUES(@key, @hash, @vectorId, CURRENT_TIMESTAMP)
                     ON CONFLICT(record_key) DO UPDATE
                     SET content_hash = excluded.content_hash,
-                        chroma_id = excluded.chroma_id,
+                        vector_id = excluded.vector_id,
                         updated_at   = CURRENT_TIMESTAMP;";
                 cmd.Parameters.AddWithValue("@key", record.Id);
                 cmd.Parameters.AddWithValue("@hash", ComputeHash(record.Content));
-                cmd.Parameters.AddWithValue("@chromaId", IsValidUuidV4(record.ChromaId) ? record.ChromaId : Guid.NewGuid().ToString());
+                cmd.Parameters.AddWithValue("@vectorId", string.IsNullOrWhiteSpace(record.VectorId) ? Guid.NewGuid().ToString() : record.VectorId);
                 cmd.ExecuteNonQuery();
             }
 

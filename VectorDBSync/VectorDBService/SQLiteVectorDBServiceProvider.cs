@@ -6,7 +6,7 @@ namespace VectorDBSync.VectorDBService
     {
         public string Type => "sqlite";
 
-        public IVectorDBService CreateVectorDBService(VectorDBSettings settings, IEmbeddingService embeddingService)
+        public IVectorDBService CreateVectorDBService(VectorDBSettings settings)
         {
             ArgumentNullException.ThrowIfNull(settings);
             return new SQLiteVectorDBService(settings);

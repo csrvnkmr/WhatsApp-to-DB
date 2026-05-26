@@ -206,6 +206,7 @@
                 <table class="w-full text-xs text-left">
                     <thead>
                         <tr class="border-b border-soft bg-hover/10">
+                            <th class="p-2 w-8 text-center"></th>
                             <th v-for="subField in nestedFields" :key="subField.name" class="p-2 font-semibold whitespace-nowrap">
                                 {{ subField.label || subField.name }}
                             </th>
@@ -215,8 +216,28 @@
                     <tbody>
                         <tr
                             v-for="(item, idx) in modelValue"
-                            :key="idx"
-                            class="border-b border-soft hover:bg-hover/20 last:border-b-0">
+                            :key="getRowKey(item, idx)"
+                            draggable="true"
+                            @dragstart="onDragStart($event, idx)"
+                            @dragover="onDragOver($event, idx)"
+                            @dragend="onDragEnd"
+                            :class="[
+                                'border-b border-soft hover:bg-hover/20 last:border-b-0 transition-colors',
+                                draggedIdx === idx ? 'bg-hover/40 opacity-50' : ''
+                            ]">
+                            <td 
+                                @mousedown="dragHandleActive = true"
+                                @touchstart="dragHandleActive = true"
+                                class="p-2 text-center align-middle drag-handle cursor-grab active:cursor-grabbing text-muted select-none w-8">
+                                <svg class="w-4 h-4 inline-block opacity-40 hover:opacity-100 transition" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="9" cy="12" r="1" />
+                                    <circle cx="9" cy="5" r="1" />
+                                    <circle cx="9" cy="19" r="1" />
+                                    <circle cx="15" cy="12" r="1" />
+                                    <circle cx="15" cy="5" r="1" />
+                                    <circle cx="15" cy="19" r="1" />
+                                </svg>
+                            </td>
                             <td v-for="subField in nestedFields" :key="subField.name" class="p-2 font-mono text-[11px] max-w-[200px] truncate">
                                 {{ formatSubFieldValue(item[subField.name], subField.type) }}
                             </td>
@@ -871,5 +892,67 @@ function removeObjectItem(index: number) {
             cancelEditItem()
         }
     }
+}
+
+// Drag and drop support for object arrays
+const draggedIdx = ref<number | null>(null)
+const dragHandleActive = ref(false)
+const rowKeys = new WeakMap<any, number>()
+let nextKey = 1
+
+function getRowKey(item: any, index: number) {
+    if (item && typeof item === 'object') {
+        if (!rowKeys.has(item)) {
+            rowKeys.set(item, nextKey++)
+        }
+        return rowKeys.get(item)
+    }
+    return index
+}
+
+function resetDragHandle() {
+    dragHandleActive.value = false
+}
+
+onMounted(() => {
+    window.addEventListener('mouseup', resetDragHandle)
+    window.addEventListener('touchend', resetDragHandle)
+})
+
+onUnmounted(() => {
+    window.removeEventListener('mouseup', resetDragHandle)
+    window.removeEventListener('touchend', resetDragHandle)
+})
+
+function onDragStart(event: DragEvent, index: number) {
+    if (!dragHandleActive.value) {
+        event.preventDefault()
+        return
+    }
+    dragHandleActive.value = false
+    draggedIdx.value = index
+    if (event.dataTransfer) {
+        event.dataTransfer.effectAllowed = 'move'
+        event.dataTransfer.dropEffect = 'move'
+    }
+}
+
+function onDragOver(event: DragEvent, index: number) {
+    event.preventDefault()
+    if (draggedIdx.value === null || draggedIdx.value === index) return
+
+    const currentArray = Array.isArray(props.modelValue) ? [...props.modelValue] : []
+    const draggedItem = currentArray[draggedIdx.value]
+    
+    // Remove from old position and insert at new position
+    currentArray.splice(draggedIdx.value, 1)
+    currentArray.splice(index, 0, draggedItem)
+    
+    draggedIdx.value = index
+    emit('update:modelValue', currentArray)
+}
+
+function onDragEnd() {
+    draggedIdx.value = null
 }
 </script>
