@@ -12,7 +12,8 @@
     "CollectionName": "VectorOITM",
     "TableName": "OITM",
     "KeyField": "ItemCode",
-    "ContentField": "ItemName"
+    "ContentField": "ItemName",
+    "DeleteAndCreate": true
   },
   {
     "CollectionName": "VectorOITB",

@@ -19,6 +19,14 @@
       "fulllength": false
     },
     {
+      "name": "ConnectionString",
+      "label": "Connection String",
+      "showinheader": false,
+      "sensitive": true,
+      "fulllength": true,
+      "type": "textarea"
+    },
+    {
       "name": "DbProvider",
       "label": "Provider",
       "type": "select",
@@ -28,14 +36,6 @@
         "mssql",
         "postgres"
       ]
-    },
-    {
-      "name": "ConnectionString",
-      "label": "Connection String",
-      "showinheader": false,
-      "sensitive": true,
-      "fulllength": true,
-      "type": "textarea"
     },
     {
       "name": "DefaultRole",

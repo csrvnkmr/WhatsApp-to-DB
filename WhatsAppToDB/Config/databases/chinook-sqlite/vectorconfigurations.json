@@ -3,7 +3,8 @@
     "CollectionName": "VectorArtist",
     "KeyField": "ArtistId",
     "TableName": "Artist",
-    "ContentField": "Name"
+    "ContentField": "Name",
+    "DeleteAndCreate": true
   },
   {
     "CollectionName": "VectorCustomer",
@@ -12,19 +13,22 @@
     "ContentField": "FirstName || \u0027 \u0027 || LastName",
     "MetadataFields": [
       "Company"
-    ]
+    ],
+    "DeleteAndCreate": true
   },
   {
     "CollectionName": "VectorGenre",
     "TableName": "Genre",
     "KeyField": "GenreId",
-    "ContentField": "Name"
+    "ContentField": "Name",
+    "DeleteAndCreate": true
   },
   {
     "CollectionName": "VectorPlaylist",
     "TableName": "Playlist",
     "KeyField": "PlaylistId",
-    "ContentField": "Name"
+    "ContentField": "Name",
+    "DeleteAndCreate": true
   },
   {
     "CollectionName": "VectorAlbum",
@@ -33,18 +37,21 @@
     "ContentField": "Title",
     "MetadataFields": [
       "ArtistId"
-    ]
+    ],
+    "DeleteAndCreate": true
   },
   {
     "CollectionName": "VectorTrack",
     "TableName": "Track",
     "KeyField": "TrackId",
-    "ContentField": "Name"
+    "ContentField": "Name",
+    "DeleteAndCreate": true
   },
   {
     "CollectionName": "VectorEmployee",
     "TableName": "Employee",
     "KeyField": "EmployeeId",
-    "ContentField": "FirstName || \u0027 \u0027 || LastName"
+    "ContentField": "FirstName || \u0027 \u0027 || LastName",
+    "DeleteAndCreate": true
   }
 ]
