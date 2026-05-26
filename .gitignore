@@ -61,13 +61,9 @@ nunit-*.xml
 app[sS]ettings.json
 app[Ss]ettings.sql.json
 
-# 1. Allow Git to look inside the sub-application folder layout
-!WhatsAppToDB/
-!WhatsAppToDB/Config/
+# 1. Ignore all JSON files anywhere inside any folder named Config/
+**/Config/**/*.json
 
-# 2. Ignore all JSON configuration files inside the Config module
-WhatsAppToDB/Config/**/*.json
-
-# 3. Punch an absolute tracking exception hole for the metadata directory
-!WhatsAppToDB/Config/metadata/
-!WhatsAppToDB/Config/metadata/**/*.json
+# 2. Punch an absolute tracking exception hole for the metadata directory files
+!**/Config/metadata/
+!**/Config/metadata/**/*.json
