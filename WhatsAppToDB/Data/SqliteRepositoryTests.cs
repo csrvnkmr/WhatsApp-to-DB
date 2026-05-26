@@ -35,7 +35,8 @@ namespace WhatsAppToDB.Tests
                 .AddInMemoryCollection(new[] { new KeyValuePair<string, string>("DataFolder", "Data") })
                 .Build();
 
-            var repo = new ChatDbRepository(new FolderUtils(config, null), null, dbname);
+            var logger = new AppLogger();
+            var repo = new ChatDbRepository(new FolderUtils(config, null, logger), logger, dbname);
 
             // ---------------------------------------------
             // Create DB + Tables

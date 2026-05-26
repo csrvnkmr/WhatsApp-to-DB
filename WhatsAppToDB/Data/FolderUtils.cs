@@ -10,9 +10,10 @@ namespace WhatsAppToDB.Data
         private readonly JsonConfigService _jsonConfig;
         private readonly ILogger _logger;
         
-        public FolderUtils(IConfiguration configuration, JsonConfigService jsonConfig)
+        public FolderUtils(IConfiguration configuration, JsonConfigService jsonConfig, ILogger logger)
         {
             _jsonConfig = jsonConfig;
+            _logger = logger;
             var defaultFolders = _jsonConfig.GetDefaultFolders();
             if (defaultFolders != null && !string.IsNullOrWhiteSpace(defaultFolders.ChatHistoryFolder))
             {
