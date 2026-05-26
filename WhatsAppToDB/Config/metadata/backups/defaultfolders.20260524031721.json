@@ -1,0 +1,44 @@
+{
+  "entity": "defaultfolders",
+  "title": "Default Folders",
+  "targetFile": "defaultfolders.json",
+  "maxrecords": 1,
+  "fields": [
+    {
+      "name": "LlmProviderFolder",
+      "label": "Llm Provider Plugins Folder",
+      "type": "text",
+      "showinheader": true,
+      "fulllength": true,
+      "required": false,
+      "description": "Default folder path for LLM provider plugins. This is where the application will look for plugin assemblies (DLL files) that implement LLM providers. Ensure this folder exists and contains the necessary plugin files for the LLM providers you intend to use."
+    },
+    {
+      "name": "DatabaseProviderFolder",
+      "label": "Database Provider Folder",
+      "showinheader": true,
+      "type": "text",
+      "fulllength": true,
+      "required": false,
+      "description": "Default folder path for database provider plugins. This is where the application will look for plugin assemblies (DLL files) that implement database providers. Ensure this folder exists and contains the necessary plugin files for the database providers you intend to use."
+    },
+    {
+      "name": "ChatHistoryFolder",
+      "label": "Chat History Folder",
+      "showinheader": true,
+      "type": "text",
+      "fulllength": true,
+      "required": true,
+      "description": "Folder path for storing chat history. This is where the application will save the conversation logs and history data. Ensure this folder exists and is writable by the application to allow proper storage of chat history."
+    },
+    {
+      "name": "EmbeddingProviderFolder",
+      "label": "Embedding Provider Folder",
+      "showinheader": true,
+      "required": false,
+      "fulllength": true,
+      "description": "Enter the folder that has embedding providers, the DLL name should end with embeddingprovider. e.g. lmstudioembeddingprovider.dll",
+      "type": "text"
+    }
+  ]
+}

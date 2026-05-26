@@ -1,0 +1,72 @@
+{
+  "entity": "whatsappprofiles",
+  "title": "WhatsApp Profiles",
+  "targetFile": "whatsappprofiles.json",
+  "fields": [
+    {
+      "name": "ProfileId",
+      "label": "Profile ID",
+      "type": "text",
+      "showinheader": true,
+      "fulllength": true,
+      "required": true,
+      "unique": true
+    },
+    {
+      "name": "Name",
+      "label": "Name",
+      "type": "text",
+      "showinheader": true,
+      "fulllength": true,
+      "required": true,
+      "unique": true
+    },
+    {
+      "name": "PhoneId",
+      "label": "Phone ID",
+      "type": "text",
+      "showinheader": false,
+      "fulllength": true,
+      "sensitive": true,
+      "required": true,
+      "unique": true
+    },
+    {
+      "name": "Token",
+      "label": "Token",
+      "type": "textarea",
+      "showinheader": false,
+      "fulllength": true,
+      "sensitive": true,
+      "required": true
+    },
+    {
+      "name": "BusinessId",
+      "label": "Business ID",
+      "type": "text",
+      "showinheader": false,
+      "sensitive": true,
+      "fulllength": true,
+      "required": true
+    },
+    {
+      "name": "VerifyToken",
+      "label": "Verify Token",
+      "type": "text",
+      "showinheader": false,
+      "sensitive": true,
+      "fulllength": true,
+      "required": true
+    },
+    {
+      "name": "Database",
+      "label": "Database",
+      "references": "databases.Name",
+      "type": "text",
+      "showinheader": true,
+      "fulllength": true,
+      "required": true,
+      "unique": true
+    }
+  ]
+}

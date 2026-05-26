@@ -1,0 +1,35 @@
+{
+  "entity": "plugins",
+  "title": "Plugins",
+
+  "targetFile": "plugins.json",
+
+  "fields": [
+    {
+      "name": "Name",
+      "label": "Plugin Name",
+      "type": "text",
+      "showinheader": true,
+      "fulllength": true,
+      "required": true
+    },
+    {
+      "name": "AssemblyPath",
+      "label": "Assembly Path",
+      "type": "file",
+      "fulllength": true,
+      "showinheader": true,
+      "required": true,
+      "description": "Path to the plugin assembly (DLL file). This should be a valid Full file path on the system where the application is running."
+    },
+    {
+      "name": "PluginClassName",
+      "label": "Class Name",
+      "showinheader": true,
+      "fulllength": true,
+      "type": "text",
+      "required": true,
+      "description": "The fully qualified name of the plugin class."
+    }
+  ]
+}

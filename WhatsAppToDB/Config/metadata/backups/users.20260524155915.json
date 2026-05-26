@@ -1,0 +1,72 @@
+{
+  "entity": "users",
+  "title": "Users",
+
+  "targetFile": "users.json",
+
+  "fields": [
+    {
+      "name": "Username",
+      "label": "User name",
+      "type": "text",
+      "showinheader": true,
+      "required": true,
+      "unique":true
+    },
+    {
+      "name": "Password",
+      "label": "Password",
+      "showinheader": false,
+      "type": "password",
+      "required": true,
+      "sensitive": true
+    },
+    {
+      "name": "Fullname",
+      "label": "Full Name",
+      "showinheader": true,
+      "type": "text",
+      "required": true
+    },
+    {
+      "name": "Role",
+      "label": "Role",
+      "showinheader": true,
+      "type": "text",
+      "required": true
+    },
+    {
+      "name": "InternalUserId",
+      "label": "Internal User Id",
+      "showinheader": true,
+      "type": "text",
+      "required": false
+    },
+    {
+      "name": "SessionContextKey",
+      "label": "Session Context Key",
+      "showinheader": true,
+      "type": "text",
+      "required": false
+    },
+    {
+      "name": "WhatsAppNumber",
+      "label": "WhatsApp Number",
+      "showinheader": true,
+      "type": "text",
+      "required": false,
+      "unique":true
+    },
+    {
+      "name": "DefaultDatabase",
+      "label": "Default Database",
+      "showinheader": true,
+      "type": "text",
+      "required": false,
+      "references": "databases.Name",
+       "requiredIf": {
+          "WhatsAppNumber": {"op": "not empty"}
+        }
+    }
+  ]
+}

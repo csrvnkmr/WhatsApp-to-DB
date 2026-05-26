@@ -1,0 +1,107 @@
+{
+  "entity": "vectordbsettings",
+  "title": "Vector DB Settings",
+  "targetFile": "vectordbsettings.json",
+  "maxrecords": 1,
+  "fields": [
+    {
+      "name": "CacheFolder",
+      "fulllength": true,
+      "required": true,
+      "label": "Cache Folder",
+      "type": "text",
+      "showinheader": true,
+      "description": "Folder path for SQLite Data cache. Ensure this folder exists and is writable."
+    },
+    {
+      "name": "EmbeddingServiceSettings.Type",
+      "fulllength": true,
+      "label": "Embedding Service Type",
+      "type": "select",
+      "showinheader": true,
+      "options": [
+        "ollama",
+        "jina",
+        "openai"
+      ],
+      "description": "Select the embedding service type. \u0027local\u0027 uses a local model, \u0027jina\u0027 uses Jina AI API, and \u0027openai\u0027 uses OpenAI API."
+    },
+    {
+      "name": "EmbeddingServiceSettings.ApiKey",
+      "fulllength": true,
+      "label": "Embedding Service API Key",
+      "type": "password",
+      "showinheader": false,
+      "description": "Enter the API key for the selected embedding service."
+    },
+    {
+      "name": "EmbeddingServiceSettings.Model",
+      "fulllength": true,
+      "label": "Embedding Service Model",
+      "type": "text",
+      "showinheader": true,
+      "description": "Enter the model for the selected embedding service."
+    },
+    {
+      "name": "EmbeddingServiceSettings.Url",
+      "fulllength": true,
+      "label": "Embedding Service URL",
+      "type": "text",
+      "showinheader": false,
+      "description": "Enter the URL for the selected embedding service."
+    },
+    {
+      "name": "VectorProviderSettings.Type",
+      "label": "Vector DB Type",
+      "fulllength": true,
+      "type": "select",
+      "options": [
+        "sqlite",
+        "chroma"
+      ],
+      "showinheader": true
+    },
+    {
+      "name": "VectorProviderSettings.VectorDBFolder",
+      "label": "SQLite Folder for Vector DB",
+      "fulllength": true,
+      "type": "text",
+      "showIf": {
+        "VectorProviderSettings.Type": {
+          "op": "==",
+          "value": "sqlite"
+        }
+      },
+      "description": "Folder path for SQLite vector DB files. Ensure this folder exists and is writable."
+    },
+    {
+      "name": "VectorProviderSettings.Url",
+      "label": "URL",
+      "fulllength": true,
+      "type": "text",
+      "showIf": {
+        "VectorProviderSettings.Type": {
+          "op": "!=",
+          "value": "chroma"
+        }
+      },
+      "description": "needed in case of Chroma, Qdrant, Azure or any other providers where a http client needs to be used"
+    },
+    {
+      "name": "VectorProviderSettings.ApiKey",
+      "label": "Api Key",
+      "type": "text",
+      "sensitive": true,
+      "fulllength": true,
+      "description": "ignore where it is not necessary, like Sqlite"
+    },
+    {
+      "name": "VectorProviderSettings.ConnectionString",
+      "label": "Connection String",
+      "type": "text",
+      "sensitive": true,
+      "fulllength": true,
+      "description": "needed for SQL Server or PostGres vector DB"
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "entity": "fewshotqueries",
+  "title": "Few Shot Queries",
+
+  "targetFile": "fewshotqueries.json",
+
+  "fields": [
+    {
+      "name": "Name",
+      "label": "Name",
+      "type": "text",
+      "showinheader": true,
+      "required": true
+    },
+    {
+      "name": "Module",
+      "label": "Module",
+      "showinheader": true,
+      "required": true,
+      "type": "text",
+      "references": "modules.Name"
+    },
+    {
+      "name": "Query",
+      "label": "Query Text",
+      "showinheader": true,
+      "required": true,
+      "type": "textarea",
+      "fulllength": true
+    }
+  ]
+}

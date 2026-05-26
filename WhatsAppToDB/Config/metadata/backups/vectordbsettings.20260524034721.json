@@ -1,0 +1,57 @@
+{
+  "entity": "vectordbsettings",
+  "title": "Vector DB Settings",
+  "targetFile": "vectordbsettings.json",
+  "maxrecords": 1,
+  "fields": [
+    { 
+      "name": "CacheFolder",
+      "fulllength": true, 
+      "required": true, 
+      "label": "Cache Folder", "type": "text",
+      "showinheader": true,
+      "description": "Folder path for SQLite Data cache. Ensure this folder exists and is writable." 
+    },
+
+    { 
+      "name": "EmbeddingServiceSettings.Type",
+      "fulllength": true, 
+      "label": "Embedding Service Type", "type": "select", 
+      "showinheader": true,
+      "options": ["ollama","jina","openai"],
+      "description": "Select the embedding service type. 'local' uses a local model, 'jina' uses Jina AI API, and 'openai' uses OpenAI API." 
+    },
+
+    { 
+      "name": "EmbeddingServiceSettings.ApiKey",
+      "fulllength": true, 
+      "label": "Embedding Service API Key", "type": "password", 
+      "showinheader": true,
+      "description": "Enter the API key for the selected embedding service." 
+    },
+    { 
+      "name": "EmbeddingServiceSettings.Model",
+      "fulllength": true, 
+      "label": "Embedding Service Model", "type": "text", 
+      "showinheader": true,
+      "description": "Enter the model for the selected embedding service." 
+    },
+    { 
+      "name": "EmbeddingServiceSettings.Url",
+      "fulllength": true, 
+      "label": "Embedding Service URL", "type": "text", 
+      "showinheader": true,
+      "description": "Enter the URL for the selected embedding service." 
+    },
+
+    { "name": "VectorProviderSettings.Type", "label": "Vector DB Type", 
+      "fulllength": true, "type": "select", "options": ["sqlite","chroma"] ,
+      "showinheader": true},
+    { "name": "SqliteSettings.VectorDBFolder", "label": "SQLite Folder for Vector DB", "fulllength": true, "type": "text",
+      "showIf": {"VectorProviderSettings.Type": { "op": "==", "value": "sqlite" }},
+
+      "description": "Folder path for SQLite vector DB files. Ensure this folder exists and is writable." },
+    { "name": "ChromaSettings.ChromaUrl", "label": "Chroma URL", "fulllength": true, "type": "text",
+      "showIf": {"VectorProviderSettings.Type": { "op": "==", "value": "chroma" }}  }
+  ]
+}
