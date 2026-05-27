@@ -46,6 +46,7 @@ WhatsApp-to-DB is an open-source Natural Language to SQL application built on [M
 - **Metadata-driven Admin UI** — every configuration form is generated at runtime from a JSON metadata descriptor; adding a field means editing a JSON file, not writing frontend code
 - **Metadata editor in the UI** — the metadata descriptors themselves are editable through the Admin UI
 
+Refer the doc folder in the repository for detailed documents and screenshots.
 ---
 
 ## Tech Stack
