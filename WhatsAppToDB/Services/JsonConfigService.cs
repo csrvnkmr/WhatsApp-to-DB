@@ -336,7 +336,8 @@ namespace WhatsAppToDB.Services
             {
                 return settings[0];
             }            
-            return null;
+            settings = new List<DefaultSettings>() { new DefaultSettings() };
+            return settings[0];
         }
 
         public DefaultFolders GetDefaultFolders()
@@ -346,7 +347,8 @@ namespace WhatsAppToDB.Services
             {
                 return folders[0];
             }            
-            return null;
+            folders = new List<DefaultFolders>() { new DefaultFolders() };
+            return folders[0];
         }
 
         public MailSettings GetMailSettings(string database)
