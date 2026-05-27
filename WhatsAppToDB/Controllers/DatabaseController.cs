@@ -33,9 +33,17 @@ namespace WhatsAppToDB.Controllers
         [HttpGet("databases")]
         public IActionResult GetDatabases()
         {
-            var username = HttpContext.Items[Constants.ContextItems.UserName]?.ToString() ?? "";
-            _waLogger.LogInfo($"[DatabaseController] Fetching databases for user: {username}");
-            return GetDatabasesForUser(username);
+            try
+            {
+                var username = HttpContext.Items[Constants.ContextItems.UserName]?.ToString() ?? "";
+                _waLogger.LogInfo($"[DatabaseController] Fetching databases for user: {username}");
+                return GetDatabasesForUser(username);
+            }            
+            catch (Exception ex)
+            {
+                _waLogger.LogError($"[DatabaseController] Error fetching databases: {ex}");
+                return StatusCode(500, "An error occurred while fetching databases.");
+            }
             var databases = _registry.GetAll().Select(d => new
             {
                 d.Name,
