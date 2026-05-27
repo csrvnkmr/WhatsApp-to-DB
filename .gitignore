@@ -58,9 +58,6 @@ nunit-*.xml
 
 .vs/
 
-app[sS]ettings.json
-app[Ss]ettings.sql.json
-
 # 1. Ignore all JSON files anywhere inside any folder named Config/
 **/Config/**/*.json
 
