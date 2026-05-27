@@ -11,7 +11,7 @@ namespace WhatsAppToDB.DbProviders
         public async Task<List<string>> GetTablesAsync(IDbConnection connection, string filter)
         {
             var query = @"SELECT name FROM sqlite_master 
-                          WHERE type='table' AND name NOT LIKE 'sqlite_%'
+                          WHERE type IN ('table', 'view') AND name NOT LIKE 'sqlite_%'
                           AND (@Filter IS NULL OR name LIKE '%' || @Filter || '%')
                           ORDER BY name";
             return (await connection.QueryAsync<string>(query, new { Filter = filter })).ToList();
@@ -21,7 +21,8 @@ namespace WhatsAppToDB.DbProviders
         {
             // SQLite pragma commands don't support standard WHERE clauses easily via parameters, 
             // so we filter the returned collection in-memory.
-            var query = $"PRAGMA table_info({tableName})"; 
+            var quotedName = QuoteIdentifier(tableName);
+            var query = $"PRAGMA table_info({quotedName})"; 
             var rows = await connection.QueryAsync(query);
             
             var columns = rows.Select(r => (string)r.name).ToList();
@@ -32,9 +33,17 @@ namespace WhatsAppToDB.DbProviders
             return columns;
         }
 
+        private static string QuoteIdentifier(string identifier)
+        {
+            // Escape any embedded double quotes and wrap in quotes.
+            var escaped = identifier.Replace("\"", "\"\"");
+            return $"\"{escaped}\"";
+        }
+
         public async Task<Dictionary<string, Dictionary<string, string>>> GetForeignKeysAsync(IDbConnection connection, string tableName)
         {
-            var query = $"PRAGMA foreign_key_list({tableName})";
+            var quotedName = QuoteIdentifier(tableName);
+            var query = $"PRAGMA foreign_key_list({quotedName})";
             var rows = await connection.QueryAsync(query);
 
             var result = new Dictionary<string, Dictionary<string, string>>();

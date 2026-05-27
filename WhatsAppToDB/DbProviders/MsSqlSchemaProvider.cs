@@ -21,7 +21,7 @@ namespace WhatsAppToDB.DbProviders
                                 ELSE TABLE_SCHEMA + '.' + TABLE_NAME 
                             END AS FullTableName
                           FROM INFORMATION_SCHEMA.TABLES 
-                          WHERE TABLE_TYPE = 'BASE TABLE'
+                          WHERE TABLE_TYPE IN ('BASE TABLE', 'VIEW')
                           AND (@Filter IS NULL OR 
                               (CASE WHEN TABLE_SCHEMA = 'dbo' THEN TABLE_NAME ELSE TABLE_SCHEMA + '.' + TABLE_NAME END) LIKE '%' + @Filter + '%')
                           ORDER BY TABLE_SCHEMA, TABLE_NAME";
