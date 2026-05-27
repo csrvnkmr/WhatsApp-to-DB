@@ -15,6 +15,10 @@ const router = createRouter({
     {
       path: '/',
       component: HomeView
+    },
+    {
+      path: '/index.html',
+      redirect: '/'
     }
   ],
 })

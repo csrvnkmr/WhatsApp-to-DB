@@ -5,6 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Platforms>AnyCPU;x64</Platforms>
+    <ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
   </PropertyGroup>
 
   <ItemGroup>
@@ -12,9 +13,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\DBSearchHelperPlugin\DBSearchHelperPlugin.csproj" />
-    <ProjectReference Include="..\VectorDBSync\VectorDBSync.csproj" />
-    <ProjectReference Include="..\WhatsAppToDB.Abstractions\WhatsAppToDB.Abstractions.csproj" />
+    <ProjectReference Include="..\DBSearchHelperPlugin\DBSearchHelperPlugin.csproj" >
+    <ExcludeAssets>runtime</ExcludeAssets>
+    </ProjectReference>
+    
+    <ProjectReference Include="..\VectorDBSync\VectorDBSync.csproj" >
+    <ExcludeAssets>runtime</ExcludeAssets>
+    </ProjectReference>
+    <ProjectReference Include="..\WhatsAppToDB.Abstractions\WhatsAppToDB.Abstractions.csproj" >
+    <ExcludeAssets>runtime</ExcludeAssets>
+    </ProjectReference>
   </ItemGroup>
 
 </Project>

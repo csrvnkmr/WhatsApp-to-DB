@@ -55,7 +55,12 @@ namespace WhatsAppToDB.Services
                 path.StartsWith("/css") ||
                 path.StartsWith("/debug") ||
                 path.StartsWith("/api/schema") ||
-                path.StartsWith("/js")
+                path.StartsWith("/js") ||
+                path == "/" ||
+                path == "/index.html" ||
+                path.StartsWith("/assets") ||
+                path.StartsWith("/images") ||
+                path.StartsWith("/fonts")
             )
             {
                 await _next(context);

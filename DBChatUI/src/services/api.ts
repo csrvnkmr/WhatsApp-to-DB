@@ -1,4 +1,26 @@
-export const BASE_URL = 'http://localhost:3000'
+function getBaseUrl(): string {
+  // 1. Check if defined in Vite environment variables
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+
+  // 2. Check if running in a native mobile app (Capacitor)
+  const isCapacitor = (window as any).Capacitor !== undefined || window.location.origin.startsWith('capacitor://') || (window.location.origin === 'http://localhost' && !import.meta.env.DEV);
+  if (isCapacitor) {
+    // Default mobile app fallback to dev machine API port
+    return 'http://localhost:3000';
+  }
+
+  // 3. Check if running in local development (Vite dev server)
+  if (import.meta.env.DEV) {
+    return 'http://localhost:3000';
+  }
+
+  // 4. Served from the main backend application (production/built hosting)
+  return window.location.origin;
+}
+
+export const BASE_URL = getBaseUrl();
 
 export interface EmailPayload {
   messageId: number;
