@@ -201,13 +201,12 @@
 </template>
 
 <script setup lang="ts">
-import { getDatabases } from '@/services/api'
+import { getDatabases, logout } from '@/services/api'
 import { onMounted, ref, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 
 const emit = defineEmits(["closeMobile"])
 const auth = useAuthStore()
-const BASE_URL = "http://localhost:3000"
 
 const userName = computed(() =>
     localStorage.getItem("username")
@@ -232,28 +231,7 @@ onMounted(async () => {
     loadDatabases()
 })
 
-function authHeader() {
-    const token = localStorage.getItem("token") || ""
-    return {
-        "Authorization": `Bearer ${token}`
-    }
-}
 
-async function logout() {
-    await fetch(
-        `${BASE_URL}/logout`,
-        {
-            credentials: 'include',
-            method: "POST",
-            headers: authHeader()
-        }
-    )
-
-    localStorage.removeItem("token")
-    localStorage.removeItem("username")
-
-    location.reload()
-}
 
 defineExpose({
     loadDatabases

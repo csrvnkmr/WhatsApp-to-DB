@@ -1,4 +1,4 @@
-const BASE_URL = 'http://localhost:3000'
+export const BASE_URL = 'http://localhost:3000'
 
 export interface EmailPayload {
   messageId: number;
@@ -170,6 +170,17 @@ export async function logoutSession() {
     credentials: "include",
     headers: authHeader()
   });
+}
+
+export async function logout() {
+  await fetch(`${BASE_URL}/logout`, {
+    method: "POST",
+    credentials: "include",
+    headers: authHeader()
+  });
+  localStorage.removeItem("token");
+  localStorage.removeItem("username");
+  location.reload();
 }
 
 export async function searchChats(searchText: string) {

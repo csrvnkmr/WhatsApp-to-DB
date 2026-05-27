@@ -1,4 +1,5 @@
-const BASE_URL = 'http://localhost:3000'
+
+import { BASE_URL } from "@/services/api"
 
 function authHeader(extraHeaders: Record<string, string> = {}) {
   const token = localStorage.getItem("token") || "";
