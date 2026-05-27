@@ -336,8 +336,13 @@ namespace WhatsAppToDB.Services
             {
                 return settings[0];
             }            
-            settings = new List<DefaultSettings>() { new DefaultSettings() };
-            return settings[0];
+            var defaultSettings = new DefaultSettings()
+            {
+                DefaultDatabase= "DefaultDB",
+                DefaultLlmModel = "gpt-4-mini",
+                DefaultLlmProvider = "openai"
+            };
+            return defaultSettings;
         }
 
         public DefaultFolders GetDefaultFolders()
