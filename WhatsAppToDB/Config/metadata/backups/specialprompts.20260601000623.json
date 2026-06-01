@@ -1,0 +1,33 @@
+{
+  "entity": "specialprompts",
+  "title": "Special Prompts",
+  "targetFile": "specialprompts.json",
+  "maxrecords": 1,
+  "fields": [
+    {
+      "name": "evalprompt",
+      "label": "Evaluation Prompt",
+      "type": "textarea",
+      "fulllength": true,
+      "showinheader": true,
+      "required": false,
+      "description": "The evaluation prompt is used to get only the data from the LLM"
+    },
+    {
+      "name": "chartprompt",
+      "label": "Chart Prompt",
+      "type": "textarea",
+      "fulllength": true,
+      "showinheader": true,
+      "required": false,
+      "description": "The chart prompt is used to get chart data from LLM"
+    },
+    {
+      "name": "compareprompt",
+      "label": "Comparison Prompt",
+      "type": "textarea",
+      "fulllength": true,
+      "description": "This is used for comparing the result from LLM and the database (ground truth)"
+    }
+  ]
+}

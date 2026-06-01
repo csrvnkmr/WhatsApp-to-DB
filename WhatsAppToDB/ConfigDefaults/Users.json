@@ -1,0 +1,12 @@
+[
+  {
+    "Username": "admin",
+    "Password": "adminpwd",
+    "Fullname": "Administrator",
+    "Role": "Admin",
+    "InternalUserId": "1",
+    "SessionContextKey": "EmployeeID",
+    "DefaultDatabase": "chinook-sqlite",
+    "WhatsAppNumber": "123456"
+  }
+]

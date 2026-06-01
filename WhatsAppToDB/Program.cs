@@ -1,8 +1,16 @@
-﻿using WhatsAppToDB.Data;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using WhatsAppToDB.Data;
 using WhatsAppToDB.Database;
 using WhatsAppToDB.Services;
 using WhatsAppToDB.Settings;
 using VectorDBSync;
+using WhatsAppToDB;
+
+var currentFolder = Directory.GetCurrentDirectory();
+var appSettingsPath = Path.Combine(currentFolder, "appsettings.json");
+var logger = new AppLogger { WriteToConsole = true };
+EnsureAppSettingsFile(appSettingsPath, currentFolder, logger);
 
 var builder = Microsoft.AspNetCore.Builder.WebApplication.CreateBuilder(args);
 var metadata = new PluginMetadata();
@@ -36,12 +44,14 @@ app.UseSession();
 
 app.UseSwagger();
 app.UseSwaggerUI();
-app.UseStaticFiles(); // This will serve index.html if it's in a folder named wwwroot
+app.UseDefaultFiles();
+app.UseStaticFiles();
 
 app.UseMiddleware<TokenAuthMiddleware>();
 app.UseMiddleware<SessionBootstrapMiddleware>();
 
 app.MapControllers();
+app.MapFallbackToFile("index.html");
 
 // Uncomment the line below to run Vector Sync test
 //await TestVectorSync(app, "B1Database2");
@@ -59,6 +69,126 @@ async Task TestSqliteExecution()
 {
     var repo = new WhatsAppToDB.Tests.SqliteRepositoryTests();
     await repo.Full_Sqlite_Test_Create_Insert_Select_Delete();
+}
+
+static void EnsureAppSettingsFile(string appSettingsPath, string currentFolder, AppLogger logger)
+{
+    var configRootPath = Path.Combine(currentFolder, "Config");
+
+    if (!File.Exists(appSettingsPath))
+    {
+        logger.LogInfo($"Creating appsettings.json at {appSettingsPath}");
+        var root = new JsonObject
+        {
+            ["ConfigRootFolder"] = configRootPath
+        };
+
+        File.WriteAllText(appSettingsPath, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+        logger.LogInfo($"Writing ConfigRootFolder='{configRootPath}' to {appSettingsPath}");
+        CopyConfigDefaults(configRootPath, currentFolder, logger);
+        return;
+    }
+
+    try
+    {
+        var json = File.ReadAllText(appSettingsPath);
+        var node = JsonNode.Parse(json) as JsonObject ?? new JsonObject();
+
+        if (node["ConfigRootFolder"] == null || string.IsNullOrWhiteSpace(node["ConfigRootFolder"]?.GetValue<string>()))
+        {
+            node["ConfigRootFolder"] = configRootPath;
+            File.WriteAllText(appSettingsPath, node.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+            logger.LogInfo($"Added missing ConfigRootFolder='{configRootPath}' to {appSettingsPath}");
+        }
+
+        var configRoot = node["ConfigRootFolder"]?.GetValue<string>() ?? configRootPath;
+        configRoot = GetAbsolutePath(configRoot, currentFolder);
+        CopyConfigDefaults(configRoot, currentFolder, logger);
+    }
+    catch (Exception ex)
+    {
+        logger.LogWarning($"Failed to parse existing appsettings.json, recreating default layout. Reason: {ex.Message}");
+        var root = new JsonObject
+        {
+            ["ConfigRootFolder"] = configRootPath
+        };
+
+        File.WriteAllText(appSettingsPath, root.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+        logger.LogInfo($"Created fallback appsettings.json with ConfigRootFolder='{configRootPath}'");
+        CopyConfigDefaults(configRootPath, currentFolder, logger);
+    }
+}
+
+static void CopyConfigDefaults(string configRoot, string currentFolder, AppLogger logger)
+{
+    if (string.IsNullOrWhiteSpace(configRoot))
+        configRoot = Path.Combine(currentFolder, "Config");
+
+    if (!Path.IsPathRooted(configRoot))
+        configRoot = Path.GetFullPath(Path.Combine(currentFolder, configRoot));
+
+    var configDefaultsRoot = Path.Combine(currentFolder, "ConfigDefaults");
+    if (!Directory.Exists(configDefaultsRoot))
+        return;
+
+    Directory.CreateDirectory(configRoot);
+
+    var defaultFiles = Directory.GetFiles(configDefaultsRoot, "*.json", SearchOption.AllDirectories);
+    var databasesCopied = false;
+
+    foreach (var sourceFile in defaultFiles)
+    {
+        var relativePath = Path.GetRelativePath(configDefaultsRoot, sourceFile);
+        var destinationFile = Path.Combine(configRoot, relativePath);
+
+        var destinationDir = Path.GetDirectoryName(destinationFile);
+        if (!Directory.Exists(destinationDir))
+            Directory.CreateDirectory(destinationDir!);
+
+        if (!File.Exists(destinationFile))
+        {
+            logger.LogInfo($"Copying {sourceFile} to {destinationFile}");
+            File.Copy(sourceFile, destinationFile);
+            if (string.Equals(relativePath, "Databases.json", StringComparison.OrdinalIgnoreCase))
+            {
+                databasesCopied = true;
+            }
+        }
+    }
+
+    if (databasesCopied)
+    {
+        var sqliteSource = Path.Combine(configDefaultsRoot, "Data", "Chinook_Sqlite.sqlite");
+        var sqliteTargetDir = Path.Combine(currentFolder, "data", "sqlite");
+        var sqliteTarget = Path.Combine(sqliteTargetDir, "Chinook_Sqlite.sqlite");
+
+        if (!File.Exists(sqliteSource))
+        {
+            logger.LogWarning($"SQLite source file not found: {sqliteSource}");
+        }
+        else
+        {
+            if (!Directory.Exists(sqliteTargetDir))
+            {
+                logger.LogInfo($"Creating SQLite data folder {sqliteTargetDir}");
+                Directory.CreateDirectory(sqliteTargetDir);
+            }
+
+            if (!File.Exists(sqliteTarget))
+            {
+                logger.LogInfo($"Copying {sqliteSource} to {sqliteTarget}");
+                File.Copy(sqliteSource, sqliteTarget);
+            }
+        }
+    }
+}
+
+static string GetAbsolutePath(string path, string baseFolder)
+{
+    if (Path.IsPathRooted(path))
+        return path;
+
+    return Path.GetFullPath(Path.Combine(baseFolder, path));
 }
 
 /// <summary>

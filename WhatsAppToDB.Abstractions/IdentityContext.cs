@@ -20,6 +20,7 @@ namespace WhatsAppToDB.Abstractions
         public string LlmModel { get; set; } = "";
 
         public bool IsWhatsAppRequest { get; set; }
+        public bool IsEvalRequest { get; set; }
 
         public string WhatsAppNumber { get; set; } = "";
         public string WhatsAppProfileId { get; set; } = "";

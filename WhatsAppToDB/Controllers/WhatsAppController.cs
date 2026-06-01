@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
+using System.Threading;
 using WhatsAppToDB.Abstractions;
 using WhatsAppToDB.Data;
 using WhatsAppToDB.Models;
@@ -19,29 +20,29 @@ namespace WhatsAppToDB.Controllers
     {
         private readonly IServiceScopeFactory _scopeFactory;
         private readonly ILogger _waLogger;
-        private readonly IOptions<WhatsAppSettings> _waOptions;
         private readonly ChatDbRepository _repo;
         private readonly PromptExecutionSettings _promptSettings;
         private readonly IQueryService _queryService;
         private readonly IIdentityContextEnricher _identityContextEnricher;
         private readonly JsonConfigService _jsonConfigService;
+        private readonly LlmCancellationService _cancellationService;
         
         public WhatsAppController(
             IServiceScopeFactory scopeFactory,
             ILogger waLogger,
-            IOptions<WhatsAppSettings> waOptions,
             ChatDbRepository repo,
             IQueryService queryService,
             IIdentityContextEnricher identityContextEnricher,
-            JsonConfigService jsonConfigService)
+            JsonConfigService jsonConfigService,
+            LlmCancellationService cancellationService)
         {
             _scopeFactory = scopeFactory;
             _waLogger = waLogger;
-            _waOptions = waOptions;
             _repo = repo;
             _queryService = queryService;
             _identityContextEnricher = identityContextEnricher;
             _jsonConfigService = jsonConfigService;
+            _cancellationService = cancellationService;
             _promptSettings =
                 new OpenAIPromptExecutionSettings
                 {
@@ -50,14 +51,26 @@ namespace WhatsAppToDB.Controllers
                 };
         }
 
+        private bool isTokenValid(string verify_token)
+        {
+            var lst = _jsonConfigService.GetWhatsAppProfiles();
+            if (lst == null || lst.Count==0)
+            {
+                return false;
+            }
+            if (lst.Any(x=>x.VerifyToken==verify_token))
+            {
+                return true;
+            }
+            return false;
+        }
+
         // ==================================================
         // GET /webhook
         // ==================================================
         [HttpGet("/webhook")]
         public IActionResult VerifyWebhook()
         {
-            var verifyToken =
-                _waOptions.Value.VerifyToken;
 
             string mode =
                 Request.Query["hub.mode"];
@@ -69,7 +82,7 @@ namespace WhatsAppToDB.Controllers
                 Request.Query["hub.challenge"];
 
             if (mode == "subscribe"
-                && token == verifyToken)
+                && isTokenValid(token))
             {
                 return Ok(challenge);
             }
@@ -111,6 +124,9 @@ namespace WhatsAppToDB.Controllers
                 identity,
                 HttpContext);
 
+            var cts = new CancellationTokenSource();
+            _cancellationService.Register(identity.UserName, cts);
+
             _ = Task.Run(async () =>
             {
                 using var bgScope =
@@ -134,23 +150,30 @@ namespace WhatsAppToDB.Controllers
                 var sessionId =
                     await repo.GetWhatsAppSessionIdAsync(identity.UserName);
 
+                try
+                {
+                    var response =
+                        await queryService.ExecuteQuery(
+                            _scopeFactory,
+                            identity,
+                            messageText,
+                            _promptSettings,
+                            _waLogger,
+                            _repo,
+                            sessionId,
+                            cts.Token);
 
-                var response =
-                    await queryService.ExecuteQuery(
-                        _scopeFactory,
-                        identity,
-                        messageText,
-                        _promptSettings,
-                        _waLogger,
-                        _repo,
-                        sessionId);
-
-                await waService.SendWhatsAppResponse(
-                    senderPhone,
-                    response.MessageText,
-                    waProfile,
-                    _waLogger);
-            });
+                    await waService.SendWhatsAppResponse(
+                        senderPhone,
+                        response.MessageText,
+                        waProfile,
+                        _waLogger);
+                }
+                finally
+                {
+                    _cancellationService.Remove(identity.UserName);
+                }
+            }, cts.Token);
 
             return Ok();
         }

@@ -1,0 +1,143 @@
+{
+  "entity": "databases",
+  "title": "Databases",
+  "targetFile": "databases.json",
+  "fields": [
+    {
+      "name": "Name",
+      "label": "Name",
+      "type": "text",
+      "showinheader": true,
+      "required": true,
+      "fulllength": false
+    },
+    {
+      "name": "Description",
+      "label": "Description",
+      "showinheader": true,
+      "type": "text",
+      "fulllength": false
+    },
+    {
+      "name": "DbProvider",
+      "label": "Provider",
+      "type": "select",
+      "showinheader": true,
+      "options": [
+        "sqlite",
+        "mssql",
+        "postgres"
+      ]
+    },
+    {
+      "name": "ConnectionString",
+      "label": "Connection String",
+      "showinheader": false,
+      "sensitive": true,
+      "fulllength": true,
+      "type": "textarea",
+      "wizard": {
+        "title": "Database Connection Wizard",
+        "dependsOn": "DbProvider",
+        "providers": {
+          "mssql": [
+            {
+              "key": "Server",
+              "label": "Server Address / Host",
+              "type": "text",
+              "isRequired": true
+            },
+            {
+              "key": "Database",
+              "label": "Initial Catalog (Database Name)",
+              "type": "text",
+              "isRequired": true
+            },
+            {
+              "key": "User ID",
+              "label": "User ID",
+              "type": "text"
+            },
+            {
+              "key": "Password",
+              "label": "Password",
+              "type": "password"
+            },
+            {
+              "key": "TrustServerCertificate",
+              "label": "Trust Server Certificate",
+              "type": "boolean",
+              "defaultValue": "false"
+            }
+          ],
+          "postgres": [
+            {
+              "key": "Host",
+              "label": "Host Address",
+              "type": "text",
+              "isRequired": true
+            },
+            {
+              "key": "Port",
+              "label": "Port",
+              "type": "number",
+              "defaultValue": "5432"
+            },
+            {
+              "key": "Database",
+              "label": "Database Name",
+              "type": "text",
+              "isRequired": true
+            },
+            {
+              "key": "Username",
+              "label": "Username",
+              "type": "text",
+              "isRequired": true
+            },
+            {
+              "key": "Password",
+              "label": "Password",
+              "type": "password",
+              "isRequired": true
+            }
+          ],
+          "sqlite": [
+            {
+              "key": "DataSource",
+              "label": "SQLite Database File Path",
+              "type": "text",
+              "isRequired": true
+            }
+          ]
+        },
+        "mysql": [
+          { "key": "Server", "label": "Hostname / IP Address", "type": "text", "isRequired": true, "defaultValue": "localhost" },
+          { "key": "Port", "label": "Port", "type": "number", "isRequired": true, "defaultValue": "3306" },
+          { "key": "Database", "label": "Database Name", "type": "text", "isRequired": true },
+          { "key": "User ID", "label": "User ID", "type": "text", "isRequired": true },
+          { "key": "Password", "label": "Password", "type": "password", "isRequired": true },
+          { "key": "AllowUserVariables", "label": "Allow User Variables (@)", "type": "boolean", "defaultValue": "true" },
+          { "key": "AllowPublicKeyRetrieval", "label": "Allow Public Key Retrieval", "type": "boolean", "defaultValue": "true" }
+        ],
+        "oracle": [
+          { "key": "Data Source", "label": "Data Source (Host:Port/ServiceName or TNS Alias)", "type": "text", "isRequired": true, "description": "E.g., localhost:1521/ORCL or your TNS endpoint name" },
+          { "key": "User ID", "label": "User ID", "type": "text", "isRequired": true },
+          { "key": "Password", "label": "Password", "type": "password", "isRequired": true },
+          { "key": "Pooling", "label": "Enable Connection Pooling", "type": "boolean", "defaultValue": "true" }
+        ]
+      },
+      "required": true
+    },
+    {
+      "name": "DefaultRole",
+      "label": "Default Role",
+      "showinheader": true,
+      "type": "text",
+      "description": "Role assigned to users who connect to this database if they don\u0027t have a specific role for it.",
+      "required": false,
+      "references": "",
+      "sourceScope": ""
+    }
+  ]
+}

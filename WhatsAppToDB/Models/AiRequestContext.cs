@@ -11,6 +11,11 @@ namespace WhatsAppToDB.Models
         public string UserQuestion { get; set; } = "";
         public string UserName { get; set; } = "";
 
+        public string Database { get; set; } = "";
+        public string LlmProvider { get; set; } = "";
+        public string LlmModel { get; set; } = "";
+        public bool IsWhatsAppRequest { get; set; }
+
         // SQL Execution Metadata
         public string LastExecutedSql { get; set; } = "";
         public string ModuleName { get; set; } = "";

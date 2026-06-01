@@ -1,0 +1,32 @@
+{
+  "entity": "testsuitequeries",
+  "title": "Test Suite Queries",
+  "description": "Set of questions to test the functionality. The output from the LLM to be companred with the output from the query defined",
+  "targetFile": "testsuitequeries.json",
+
+  "fields": [
+    {
+      "name": "Question",
+      "label": "Question",
+      "type": "text",
+      "showinheader": true,
+      "required": true
+    },
+    {
+      "name": "Module",
+      "label": "Module",
+      "showinheader": true,
+      "required": true,
+      "type": "text",
+      "references": "modules.Name"
+    },
+    {
+      "name": "Query",
+      "label": "Query Text",
+      "showinheader": true,
+      "required": true,
+      "type": "textarea",
+      "fulllength": true
+    }
+  ]
+}

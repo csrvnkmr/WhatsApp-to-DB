@@ -75,6 +75,13 @@
             <span>📁</span> Default Folders
         </RouterLink>
 
+        <RouterLink
+            to="/admin/specialprompts"
+            @click="emit('closeMobile')"
+            class="menu-item flex items-center gap-2">
+            <span>🪄</span> Special Prompts
+        </RouterLink>
+
     </div>
 
     <!-- DATABASE SUB MENUS -->
@@ -188,6 +195,20 @@
                     @click="emit('closeMobile')"
                     class="submenu-item flex items-center gap-2 text-xs py-1">
                     <span>⚙️</span> Vector DB Settings
+                </RouterLink>
+
+                <RouterLink
+                    :to="`/admin/database/${db.Name}/testsuitequeries`"
+                    @click="emit('closeMobile')"
+                    class="submenu-item flex items-center gap-2 text-xs py-1">
+                    <span>📋</span> Test Suite Queries
+                </RouterLink>
+
+                <RouterLink
+                    :to="`/admin/database/${db.Name}/testrunner`"
+                    @click="emit('closeMobile')"
+                    class="submenu-item flex items-center gap-2 text-xs py-1">
+                    <span>🧪</span> Test Runner
                 </RouterLink>
 
             </div>

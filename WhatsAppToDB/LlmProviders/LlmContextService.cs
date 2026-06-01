@@ -1,4 +1,5 @@
 ﻿using WhatsAppToDB.Abstractions;
+using WhatsAppToDB.Models;
 using WhatsAppToDB.Services;
 using WhatsAppToDB.Settings;
 
@@ -12,26 +13,26 @@ namespace WhatsAppToDB.LlmProviders
         private readonly LlmProviderFactory _factory;
         private readonly DefaultSettings _defaultSettings;
         private readonly IUserAuditService _userAuditService;
-        private readonly ExecutionContextService _executionContext;
+        private readonly AiRequestContext _requestContext;
 
         public LlmContextService(
             IHttpContextAccessor http,
             LlmProviderFactory factory,
             JsonConfigService jsonConfigService,
             IUserAuditService userAuditService,
-            ExecutionContextService executionContext)
+            AiRequestContext requestContext)
         {
             _http = http;
             _factory = factory;
             _defaultSettings = jsonConfigService.GetDefaultSettings();
             _userAuditService = userAuditService;
-            _executionContext = executionContext;
+            _requestContext = requestContext;
         }
 
         public string GetProviderName()
         {                
-            if (!string.IsNullOrWhiteSpace(_executionContext.LlmProvider))
-                return _executionContext.LlmProvider;
+            if (!string.IsNullOrWhiteSpace(_requestContext?.LlmProvider))
+                return _requestContext.LlmProvider;
             return _http.HttpContext?.Session?.GetString(Constants.SessionKeys.ActiveLlmProvider)
                    ?? _defaultSettings.DefaultLlmProvider;
         }
@@ -39,8 +40,8 @@ namespace WhatsAppToDB.LlmProviders
         public string GetModel()
         {
             
-            if (!string.IsNullOrWhiteSpace(_executionContext.LlmModel))
-                return _executionContext.LlmModel;
+            if (!string.IsNullOrWhiteSpace(_requestContext?.LlmModel))
+                return _requestContext.LlmModel;
 
             return _http.HttpContext?.Session?.GetString(Constants.SessionKeys.ActiveLlmModel)
                    ?? _defaultSettings.DefaultLlmModel;

@@ -10,6 +10,8 @@ using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.Win32;
 using System.Net;
 using System.Net.Mail;
+using System.Text.Json;
+using System.Threading;
 using WhatsAppToDB.Abstractions;
 using WhatsAppToDB.Audit;
 using WhatsAppToDB.Data;
@@ -32,13 +34,15 @@ namespace WhatsAppToDB.Controllers
         private readonly IIdentityContextEnricher _identityContextEnricher;
         private readonly JsonConfigService _jsonConfigService;
         private readonly DatabaseContextService _databaseContextService;
+        private readonly LlmCancellationService _cancellationService;
 
 
         public ChatController(
             IServiceScopeFactory scopeFactory,
             ILogger waLogger, ChatDbRepository repo, JsonConfigService jsonConfigService,
             IQueryService queryService, IIdentityContextEnricher identityContextEnricher, 
-            DatabaseContextService databaseContextService)
+            DatabaseContextService databaseContextService,
+            LlmCancellationService cancellationService)
         {
             _scopeFactory = scopeFactory;
             _waLogger = waLogger;
@@ -53,11 +57,105 @@ namespace WhatsAppToDB.Controllers
                 };
             _queryService = queryService;
             _databaseContextService = databaseContextService;
+            _cancellationService = cancellationService;
         }
        
-        // ==================================================
-        // POST /ask
-        // ==================================================
+
+        [HttpGet("stream/{requestId}")]
+        public async Task StreamProgress(string requestId, CancellationToken ct)
+        {
+            Response.Headers["Content-Type"]  = "text/event-stream";
+            Response.Headers["Cache-Control"] = "no-cache";
+            Response.Headers["X-Accel-Buffering"] = "no"; // important for nginx
+
+            if (!ProgressStore.TryGet(requestId, out var channel))
+            {
+                await Response.WriteAsync("event: error\ndata: {\"message\":\"Not found\"}\n\n");
+                return;
+            }
+
+            await foreach (var evt in channel.Reader.ReadAllAsync(ct))
+            {
+                var json = JsonSerializer.Serialize(evt);
+                await Response.WriteAsync($"event: progress\ndata: {json}\n\n");
+                await Response.Body.FlushAsync(ct);
+
+                if (evt.Phase == "done" || evt.Phase == "error") break;
+            }
+        }
+
+        [HttpPost("dontuse1")]
+        public async Task<IActionResult> Asknew([FromBody] AskRequest request)
+        {
+            var userName = HttpContext.Items[Constants.ContextItems.UserName]?.ToString() ?? "";
+            var result = UserService.ValidateUserName(userName);
+
+            if (!result.isSuccess)
+                return Unauthorized();
+
+            long sessionId = 0;
+            if (request.SessionId.HasValue && request.SessionId.Value > 0)
+                sessionId = request.SessionId.Value;
+            else
+                sessionId = await _repo.CreateSessionAsync(userName, request.Question);
+
+            var identity = result.identity;
+            _identityContextEnricher.EnrichFromHttpContext(identity, HttpContext);
+
+            // Generate a requestId and register a channel for SSE streaming
+            var requestId = Guid.NewGuid().ToString();
+            var progressChannel = new ProgressChannel();
+            ProgressStore.Register(requestId, progressChannel);
+
+            var cts = new CancellationTokenSource();
+            _cancellationService.Register(userName, cts);
+
+            // Fire the query in background — SSE stream runs concurrently
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await _queryService.ExecuteQuery(
+                        _scopeFactory,
+                        identity,
+                        request.Question,
+                        _promptSettings,
+                        _waLogger,
+                        _repo,
+                        sessionId,
+                        cts.Token);
+                        //,                        progressChannel);   // ← pass the channel
+                }
+                catch (Exception ex)
+                {
+                    await progressChannel.Writer.WriteAsync(new ProgressEvent
+                    {
+                        Phase = "error",
+                        Message = "❌ Unexpected error: " + ex.Message
+                    });
+                }
+                finally
+                {
+                    progressChannel.Complete();
+                    _cancellationService.Remove(userName);
+                    // Clean up after a delay to allow SSE client to finish reading
+                    _ = Task.Delay(TimeSpan.FromSeconds(30))
+                            .ContinueWith(_ => ProgressStore.Remove(requestId));
+                }
+            }, cts.Token);
+
+            // Return requestId immediately — Vue opens SSE with this ID
+            return Ok(new { requestId, sessionId });
+        }
+
+
+        [HttpPost("/eval")]
+        public async Task<IActionResult> AskEval(AskRequest request)
+        {
+            AskRequest askRequest = new AskRequest(request.Question, request.SessionId, true);
+            return await Ask(askRequest);
+        }
+
         [HttpPost("/ask")]
         public async Task<IActionResult> Ask(
             [FromBody] AskRequest request)
@@ -91,18 +189,32 @@ namespace WhatsAppToDB.Controllers
             _identityContextEnricher.EnrichFromHttpContext(
                 identity,
                 HttpContext);
+            if (request.isEval)
+            {
+                identity.IsEvalRequest = true;
+            }
 
-            var response =
-                await _queryService.ExecuteQuery(
-                    _scopeFactory,
-                    identity,
-                    request.Question,
-                    _promptSettings,
-                    _waLogger,
-                    _repo,
-                    sessionId);
+            using var cts = new CancellationTokenSource();
+            _cancellationService.Register(userName, cts);
+            try
+            {
+                var response =
+                    await _queryService.ExecuteQuery(
+                        _scopeFactory,
+                        identity,
+                        request.Question,
+                        _promptSettings,
+                        _waLogger,
+                        _repo,
+                        sessionId,
+                        cts.Token);
 
-            return Ok(response);
+                return Ok(response);
+            }
+            finally
+            {
+                _cancellationService.Remove(userName);
+            }
         }
 
         // ==================================================

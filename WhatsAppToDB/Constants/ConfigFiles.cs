@@ -57,7 +57,9 @@
 
         public const string SystemPrompt =
             "systemprompt.json";
-
+        public const string SpecialPrompts =
+            "specialprompts.json";
+            
         public const string FewShotQueries =
             "fewshotqueries.json";
     }

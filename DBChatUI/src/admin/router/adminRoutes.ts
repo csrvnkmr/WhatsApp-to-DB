@@ -59,8 +59,22 @@ export default [
       },
 
       {
+        path: 'specialprompts',
+        component: EntityPage,
+        props: {
+          entity: 'specialprompts'
+        }
+      },
+
+      {
         path: 'database/:database/schemacurator',
         component: () => import('@/components/Schema/SchemaCurator.vue'),
+        props: true
+      },
+
+      {
+        path: 'database/:database/testrunner',
+        component: () => import('../TestSuite/TestSuitePage.vue'),
         props: true
       },
 

@@ -1,0 +1,9 @@
+[
+  {
+    "Name": "chinook-sqlite",
+    "Description": "Chinook SQLite Sample DB",
+    "ConnectionString": "DataSource=data\\sqlite\\Chinook_Sqlite.sqlite",
+    "DbProvider": "sqlite",
+    "DefaultRole": "admin"
+  }
+]

@@ -254,6 +254,19 @@ export async function askQuestion(question: string, sessionId: number | null) {
   return await res.text();
 }
 
+export async function evalQuestion(question: string, sessionId: number | null) {
+  const res = await fetch(`${BASE_URL}/eval`, {
+    method: "POST",
+    credentials: "include",
+    headers: authHeader(),
+    body: JSON.stringify({
+      SessionId: sessionId,
+      Question: question
+    })
+  });
+  return await res.text();
+}
+
 export async function getMessageSql(messageId: number) {
   const res = await fetch(`${BASE_URL}/messagesql/${messageId}`, {
     credentials: "include",
@@ -362,6 +375,51 @@ export async function compileMetadataString(targetEngine: string, parameters: Re
   if (!res.ok) {
     const errorData = await res.json().catch(() => ({}));
     throw new Error(errorData.message || "Failed to compile connection string.");
+  }
+  return await res.json();
+}
+
+export async function executeDatabaseQuery(database: string, questionText: string) {
+  const res = await fetch(`${BASE_URL}/admin/api/execute/${database}`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: authHeader(),
+    body: JSON.stringify({ questiontext: questionText })
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to execute database query: ${res.statusText}`);
+  }
+  return await res.text();
+}
+
+export async function compareResults(database: string, payload: {
+  questiontext: string;
+  llmresult: string;
+  databaseresult: string;
+  modelname: string;
+  starttime: Date;
+  endtime: Date;
+}) {
+  const res = await fetch(`${BASE_URL}/admin/api/eval/compare/${database}`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: authHeader(),
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to compare results: ${res.statusText}`);
+  }
+  return await res.json();
+}
+
+export async function stopEvaluation() {
+  const res = await fetch(`${BASE_URL}/admin/api/eval/stop`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: authHeader()
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to stop evaluation: ${res.statusText}`);
   }
   return await res.json();
 }

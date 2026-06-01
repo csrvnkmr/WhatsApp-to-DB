@@ -29,7 +29,8 @@ namespace WhatsAppToDB.Admin
                     "fewshotqueries",
                     "vectorconfigurations",
                     "vectordbsettings",
-                    "extensions"
+                    "extensions",
+                    "testsuitequeries"
                 };
         private readonly IWebHostEnvironment _env;
         private readonly string ConfigRoot;

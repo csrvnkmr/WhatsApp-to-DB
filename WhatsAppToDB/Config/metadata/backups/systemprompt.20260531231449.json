@@ -1,0 +1,20 @@
+{
+
+  "entity": "prompt",
+  "title": "System Prompt",
+
+  "targetFile": "prompt.json",
+  "maxrecords": 15,
+
+  "fields": [
+    {
+      "name": "systemprompt",
+      "label": "System Prompt",
+      "type": "textarea",
+      "fulllength": true,
+      "showinheader": true,
+      "required": true,
+      "description": "The system prompt is a crucial component in guiding the behavior of the AI agent. It provides context, instructions, and constraints that shape how the agent responds to user inputs. A well-crafted system prompt can help ensure that the agent's responses are relevant, accurate, and aligned with the user's expectations. When creating a system prompt, consider including clear instructions on the desired tone, style, and content of the responses, as well as any specific information or guidelines that the agent should follow. Multiple prompts can be created to understand better"
+    }
+  ]
+}

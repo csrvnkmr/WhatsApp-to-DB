@@ -1,0 +1,48 @@
+{
+  "entity": "llms",
+  "title": "LLM Providers",
+
+  "targetFile": "llms.json",
+
+  "fields": [
+    {
+      "name": "Provider",
+      "label": "Provider",
+      "type": "text",
+      "showinheader": true,
+      "required": true
+    },
+    {
+      "name": "Enabled",
+      "label": "Enabled",
+      "showinheader": true,
+      "type": "boolean"
+    },
+    {
+      "name": "ApiKey",
+      "label": "API Key",
+      "showinheader": false,
+      "fulllength": true,
+      "type": "password",
+      "sensitive": true,
+      "description": "The API key or authentication token required to access the LLM provider's services. Can be a dummy string for local LLMs"
+    },
+    {
+      "name": "HttpEndPoint",
+      "label": "HTTP Endpoint",
+      "showinheader": false,
+      "fulllength": true,
+      "type": "text",
+      "sensitive": true,
+      "description": "The base URL or endpoint for the LLM provider's API. Must be specified for Local AI"
+    },
+    {
+      "name": "Models",
+      "label": "Models",
+      "showinheader": true,
+      "fulllength": true,
+      "type": "array<text>",
+      "description": "List of models for the LLM provider that can be used. Each model should be specified by its name or identifier as recognized by the provider."
+    }
+  ]
+}

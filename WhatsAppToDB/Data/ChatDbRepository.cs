@@ -25,6 +25,7 @@ namespace WhatsAppToDB.Data
     {
         public long Id { get; set; }
         public long SessionId { get; set; }
+        public string RequestId { get; set; } = "";
         public string Role { get; set; } = "";
         public string MessageText { get; set; } = "";
         public string CreatedOn { get; set; } = "";

@@ -70,6 +70,6 @@ namespace WhatsAppToDB.Services
     }
 
     public record LoginRequest(string Username, string Password);
-    public record AskRequest(string Question, long? SessionId);
+    public record AskRequest(string Question, long? SessionId, bool isEval = false);
     public record UserSession(string Token, string Username, string Role, string InternalUserId, string SessionContextKey, string DefaultDatabase);
 }

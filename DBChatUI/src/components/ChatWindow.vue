@@ -408,6 +408,34 @@ UPDATED:
             </div>
         </div>
 
+        <!-- Real-Time Reasoning Progress Feed -->
+        <div v-if="loading && progressEvents.length > 0" class="flex justify-start">
+            <div class="bg-panel border border-soft px-4 py-3 rounded-2xl max-w-[90%] md:max-w-[75%] lg:max-w-[75%] w-full shadow-sm">
+                <!-- Inner title/header -->
+                <div class="flex items-center gap-2 text-xs font-semibold opacity-65 mb-3 select-none">
+                    <span class="w-1.5 h-1.5 bg-user rounded-full animate-ping"></span>
+                    <span>AI Reasoning Progress...</span>
+                </div>
+                
+                <div class="progress-feed space-y-2.5">
+                    <TransitionGroup name="fade">
+                        <div
+                            v-for="(evt, i) in progressEvents"
+                            :key="i"
+                            :class="['progress-event', `phase-${(evt.Phase || evt.phase || '').toLowerCase()}`]"
+                        >
+                            <div class="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-2">
+                                <span class="message text-sm font-medium">{{ evt.Message || evt.message }}</span>
+                                <span v-if="evt.Detail || evt.detail" class="detail text-[10px] opacity-60 font-mono break-all sm:max-w-[350px] truncate" :title="evt.Detail || evt.detail">
+                                    {{ evt.Detail || evt.detail }}
+                                </span>
+                            </div>
+                        </div>
+                    </TransitionGroup>
+                </div>
+            </div>
+        </div>
+
         <!-- anchor -->
         <div ref="bottomRef"></div>
 
@@ -416,18 +444,63 @@ UPDATED:
 
     <div class="flex gap-2">
 
-        <!-- INPUT -->
-        <input v-if="chat.viewMode === 'chat'"
-            ref="questionInput"
-            v-model="question"
-            @keyup.enter="sendQuestion"
-            @keydown.up.prevent="navigateHistory('up')"
-            @keydown.down.prevent="navigateHistory('down')"
-            :disabled="loading"
-            :placeholder="loading
-                ? 'Please wait. Fetching the answer...'
-                : 'Ask anything'"
-            class="flex-1 border-soft rounded-2xl px-4 py-3 outline-none bg-panel focus:ring-1 focus:ring-[var(--border)] disabled:bg-panel transition" />
+        <!-- INPUT WRAPPER -->
+        <div v-if="chat.viewMode === 'chat'" class="relative flex-1 flex items-center">
+            <input
+                ref="questionInput"
+                v-model="question"
+                @keyup.enter="sendQuestion"
+                @keydown.up.prevent="navigateHistory('up')"
+                @keydown.down.prevent="navigateHistory('down')"
+                :disabled="loading"
+                :placeholder="loading
+                    ? 'Please wait. Fetching the answer...'
+                    : 'Ask anything'"
+                class="w-full border-soft rounded-2xl pl-4 pr-20 py-3 outline-none bg-panel focus:ring-1 focus:ring-[var(--border)] disabled:bg-panel transition" />
+
+            <!-- Voice typing controls -->
+            <div v-if="showVoiceInput" class="absolute right-3 flex items-center gap-1.5">
+                <!-- Language Selector Trigger -->
+                <div ref="langMenuRef" class="relative">
+                    <button
+                        @click="showLangMenu = !showLangMenu"
+                        type="button"
+                        class="text-[10px] font-bold text-gray-400 hover:text-black dark:hover:text-white transition px-1.5 py-0.5 rounded hover:bg-hover uppercase"
+                        title="Change voice language">
+                        {{ speechLanguage.split('-')[0] }}
+                    </button>
+
+                    <!-- Language Selector Dropdown -->
+                    <div v-if="showLangMenu"
+                        class="absolute bottom-full right-0 mb-2 w-36 bg-panel border border-soft rounded-2xl shadow-xl z-50 py-1.5 max-h-48 overflow-y-auto">
+                        <button
+                            v-for="lang in availableLanguages"
+                            :key="lang.code"
+                            @click="selectSpeechLanguage(lang.code)"
+                            :class="[
+                                'w-full text-left px-3 py-1.5 text-xs hover:bg-hover transition',
+                                speechLanguage === lang.code ? 'font-semibold text-user' : 'text-gray-600 dark:text-gray-300'
+                            ]">
+                            {{ lang.name }}
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Mic button -->
+                <button
+                    @click="toggleVoiceInput"
+                    type="button"
+                    :class="[
+                        'p-1.5 rounded-xl hover:bg-hover transition flex items-center justify-center',
+                        isListening ? 'text-red-500 bg-red-500/10 animate-pulse' : 'text-gray-400'
+                    ]"
+                    :title="isListening ? 'Stop listening' : 'Voice input'">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.48 6-3.3 6-6.72h-1.7z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
 
         <!-- BUTTON -->
         <button v-if="chat.viewMode === 'chat'"
@@ -829,7 +902,8 @@ import {
     addBookmark,
     removeBookmark as apiRemoveBookmark,
     exportExcelFile,
-    askQuestion
+    askQuestion,
+    BASE_URL
 } from "@/services/api";
 
 const chat = useChatStore();
@@ -973,10 +1047,102 @@ const {
 
 const question = ref("");
 const loading = ref(false);
+const progressEvents = ref<any[]>([]);
 
 const chatBody = ref<HTMLElement | null>(null);
 const bottomRef = ref<HTMLElement | null>(null);
 const questionInput = ref<HTMLInputElement | null>(null);
+
+// ==========================================
+// Voice Input (Speech to Text)
+// ==========================================
+const isListening = ref(false);
+let recognition: any = null;
+
+const speechLanguage = ref(navigator.language || "en-US");
+const showLangMenu = ref(false);
+
+const availableLanguages = [
+    { code: "en-US", name: "English (US)" },
+    { code: "en-GB", name: "English (UK)" },
+    { code: "es-ES", name: "Spanish" },
+    { code: "fr-FR", name: "French" },
+    { code: "de-DE", name: "German" },
+    { code: "it-IT", name: "Italian" },
+    { code: "pt-BR", name: "Portuguese" },
+    { code: "hi-IN", name: "Hindi" },
+    { code: "ta-IN", name: "Tamil" },
+    { code: "zh-CN", name: "Chinese" },
+    { code: "ja-JP", name: "Japanese" },
+    { code: "ar-SA", name: "Arabic" },
+    { code: "ru-RU", name: "Russian" }
+];
+
+const showVoiceInput = computed(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) return false;
+
+    const isCapacitor = (window as any).Capacitor !== undefined || 
+                        window.location.origin?.startsWith('capacitor://') || 
+                        (window.location.origin === 'http://localhost' && !import.meta.env.DEV);
+    if (isCapacitor) return false;
+
+    const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (isMobileDevice) return false;
+
+    return true;
+});
+
+function selectSpeechLanguage(code: string) {
+    speechLanguage.value = code;
+    showLangMenu.value = false;
+    if (isListening.value) {
+        recognition?.stop();
+    }
+}
+
+function toggleVoiceInput() {
+    if (isListening.value) {
+        recognition?.stop();
+        return;
+    }
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+
+    if (!recognition) {
+        recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+
+        recognition.onstart = () => {
+            isListening.value = true;
+        };
+
+        recognition.onend = () => {
+            isListening.value = false;
+        };
+
+        recognition.onerror = (event: any) => {
+            console.error('Speech recognition error', event.error);
+            isListening.value = false;
+        };
+
+        recognition.onresult = (event: any) => {
+            const transcript = event.results[0]?.[0]?.transcript;
+            if (transcript) {
+                question.value = (question.value + ' ' + transcript).trim().replace(/\s+/g, ' ');
+            }
+        };
+    }
+
+    try {
+        recognition.lang = speechLanguage.value;
+        recognition.start();
+    } catch (err) {
+        console.error('Failed to start speech recognition', err);
+    }
+}
 
 const bookmarkText = ref("");
 const bookmarkMessageId = ref<number | null>(null);
@@ -1121,52 +1287,127 @@ async function sendQuestion() {
 
     question.value = "";
     loading.value = true;
+    progressEvents.value = []; // Clear progress events
 
     await scrollToBottom();
 
+    let sse: EventSource | null = null;
+
     try {
         const raw = await askQuestion(userQuestion, chat.selectedSessionId);
-
-        let text = raw;
-        let msgid = Date.now() + 1;
+        
+        let requestId = "";
+        let sessionId: number | null = null;
+        
         try {
             const json = JSON.parse(raw);
-            console.log("Received data from Agent", json);
-            try {
-                text =
-                    json.response ||
-                    json.answer ||
-                    json.message ||
-                    json.messageText ||
-                    raw;
-            } catch {
-                text = raw;
-            }
-            if (json.sessionId) {
-                chat.selectedSessionId = json.sessionId;
-            }
-            if (json.id) {
-                msgid = json.id;
-            }
-            if (wasNewSession || json?.sessionId) {
-                await chat.loadSessions();
-            }
-            chat.messages.push({
-                id: msgid,
-                sessionId: chat.selectedSessionId,
-                role: "assistant",
-                messageText: text,
-                createdOn: json.createdOn || new Date().toLocaleString(),
-
-                canShowSql: json.canShowSql || false,
-                canShowData: json.canShowData || false,
-                canShowChart: json.canShowChart || false
-            });
-        } catch {
-            text = raw;
+            requestId = json.requestId || json.RequestId || "";
+            sessionId = json.sessionId || json.SessionId || null;
+        } catch (err) {
+            console.error("Failed to parse initial ask response:", err);
+            throw new Error("Invalid response from server.");
         }
 
-        await scrollToBottom();
+        if (sessionId) {
+            chat.selectedSessionId = sessionId;
+            if (wasNewSession) {
+                await chat.loadSessions();
+            }
+        }
+
+        if (!requestId) {
+            throw new Error("No request ID returned from server.");
+        }
+
+        // Open SSE connection
+        const sseUrl = `${BASE_URL}/stream/${requestId}`;
+        sse = new EventSource(sseUrl);
+
+        sse.addEventListener("progress", async (event: MessageEvent) => {
+            try {
+                const evt = JSON.parse(event.data);
+                const phase = (evt.Phase || evt.phase || "").toLowerCase();
+
+                if (phase === "done") {
+                    const detail = evt.Detail || evt.detail || "";
+                    let finalMsgText = detail;
+                    let msgid = Date.now() + 1;
+                    let canShowSql = false;
+                    let canShowData = false;
+                    let canShowChart = false;
+
+                    try {
+                        const msgDto = JSON.parse(detail);
+                        finalMsgText = msgDto.messageText || msgDto.MessageText || detail;
+                        msgid = msgDto.id || msgDto.Id || msgid;
+                        canShowSql = msgDto.canShowSql || msgDto.CanShowSql || false;
+                        canShowData = msgDto.canShowData || msgDto.CanShowData || false;
+                        canShowChart = msgDto.canShowChart || msgDto.CanShowChart || false;
+                    } catch {
+                        // Fallback if not JSON DTO
+                    }
+
+                    chat.messages.push({
+                        id: msgid,
+                        sessionId: chat.selectedSessionId,
+                        role: "assistant",
+                        messageText: finalMsgText,
+                        createdOn: new Date().toLocaleString(),
+                        canShowSql,
+                        canShowData,
+                        canShowChart
+                    });
+
+                    loading.value = false;
+                    progressEvents.value = [];
+                    sse?.close();
+                    await scrollToBottom();
+                    return;
+                }
+
+                if (phase === "error") {
+                    const errMsg = evt.Message || evt.message || "Error processing your request";
+                    chat.messages.push({
+                        id: Date.now() + 2,
+                        sessionId: chat.selectedSessionId,
+                        role: "assistant",
+                        messageText: errMsg,
+                        createdOn: new Date().toLocaleString()
+                    });
+
+                    loading.value = false;
+                    progressEvents.value = [];
+                    sse?.close();
+                    await scrollToBottom();
+                    return;
+                }
+
+                // Accumulate progress steps (skip 'done_step' if you want a cleaner UI)
+                if (phase !== "done_step") {
+                    progressEvents.value.push(evt);
+                    await scrollToBottom();
+                }
+            } catch (err) {
+                console.error("Error parsing progress event:", err);
+            }
+        });
+
+        sse.onerror = async () => {
+            console.error("SSE connection error occurred.");
+            chat.messages.push({
+                id: Date.now() + 2,
+                sessionId: chat.selectedSessionId,
+                role: "assistant",
+                messageText: "Connection to progress stream lost.",
+                createdOn: new Date().toLocaleString()
+            });
+
+            loading.value = false;
+            progressEvents.value = [];
+            sse?.close();
+            await scrollToBottom();
+        };
+
     } catch (ex) {
         console.log("Exception in SendQuestion", ex);
         chat.messages.push({
@@ -1177,10 +1418,10 @@ async function sendQuestion() {
             createdOn: new Date().toLocaleString()
         });
 
-        await scrollToBottom();
-    } finally {
         loading.value = false;
-        questionInput.value?.focus();
+        progressEvents.value = [];
+        sse?.close();
+        await scrollToBottom();
     }
 }
 
@@ -1376,6 +1617,7 @@ watch(activeDbName, (db) => {
 const dbFilterRef = ref<HTMLElement | null>(null);
 const llmMenuRef = ref<HTMLElement | null>(null);
 const dbMenuRef = ref<HTMLElement | null>(null);
+const langMenuRef = ref<HTMLElement | null>(null);
 
 onMounted(() => {
     document.addEventListener('click', handleOutsideClick);
@@ -1395,5 +1637,69 @@ function handleOutsideClick(e: any) {
     if (!dbMenuRef.value?.contains(e.target)) {
         showDbMenu.value = false;
     }
+    if (!langMenuRef.value?.contains(e.target)) {
+        showLangMenu.value = false;
+    }
 }
 </script>
+
+<style scoped>
+.progress-feed {
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.progress-event {
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+}
+
+.phase-thinking {
+  background: rgba(59, 130, 246, 0.08);
+  color: #2563eb;
+  border-color: rgba(59, 130, 246, 0.15);
+}
+
+.phase-planning {
+  background: rgba(245, 158, 11, 0.08);
+  color: #d97706;
+  border-color: rgba(245, 158, 11, 0.15);
+}
+
+.phase-executing {
+  background: rgba(16, 185, 129, 0.08);
+  color: #059669;
+  border-color: rgba(16, 185, 129, 0.15);
+}
+
+.phase-done {
+  background: rgba(107, 114, 128, 0.08);
+  color: #4b5563;
+  border-color: rgba(107, 114, 128, 0.15);
+}
+
+.phase-error {
+  background: rgba(239, 68, 68, 0.08);
+  color: #dc2626;
+  border-color: rgba(239, 68, 68, 0.15);
+}
+
+.detail {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.75rem;
+}
+
+.fade-enter-active {
+  transition: all 0.3s ease-out;
+}
+.fade-enter-from {
+  opacity: 0;
+  transform: translateY(6px);
+}
+</style>

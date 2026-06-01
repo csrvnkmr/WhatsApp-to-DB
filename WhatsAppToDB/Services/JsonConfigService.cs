@@ -313,6 +313,14 @@ namespace WhatsAppToDB.Services
             return finalPrompt;
         }
 
+        public SpecialPrompts GetSpecialPrompts()
+        {
+            var specialPrompts = LoadAndDecryptGlobal<List<SpecialPrompts>>(Constants.ConfigFiles.SpecialPrompts);
+            return specialPrompts?.FirstOrDefault() ?? new SpecialPrompts();
+        }
+
+
+
         public List<ModuleQuery> GetModuleQueries(string database, string moduleName)
         {
             var lstQueries = LoadDatabaseConfigAndDecrypt<List<ModuleQuery>>(database, Constants.ConfigFiles.FewShotQueries);

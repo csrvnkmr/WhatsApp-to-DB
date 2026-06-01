@@ -16,18 +16,6 @@
         public string PluginClassName { get; set; } = string.Empty;
     }
 
-
-    public class RoleSettings
-    {
-        public string DefaultRole { get; set; }
-        public string MappingSource { get; set; }
-        public string RoleMappingJsonFile { get; set; }
-        public string RoleMappingSqlQuery { get; set; }
-        
-    }
-
-
-
     public class PluginMetadata
     {
         // Now stores all loaded plugin types

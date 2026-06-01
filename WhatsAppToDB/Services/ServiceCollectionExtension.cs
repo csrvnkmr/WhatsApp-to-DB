@@ -85,12 +85,12 @@ namespace WhatsAppToDB.Services
 
             services.AddDistributedMemoryCache();
             services.AddScoped<IQueryService, QueryService>();
+            services.AddSingleton<LlmCancellationService>();
             
             var dbProviderPath = defaultFolders?.DatabaseProviderFolder ?? config.GetValue<string>("DatabasePluginsFolder") ?? "Plugins/DB";
             services.RegisterDatabaseProviders(dbProviderPath);
 
             services.AddScoped<IIdentityContextEnricher, IdentityContextEnricher>();
-            services.AddScoped<ExecutionContextService>();
 
             services.AddSingleton<VectorSyncStatusStore>();
             services.AddSingleton<VectorSyncJobService>();

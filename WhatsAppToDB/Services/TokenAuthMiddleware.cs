@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -28,7 +28,7 @@ namespace WhatsAppToDB.Services
             JsonConfigService jsonConfigService)
         {
 
-            var path = context.Request.Path.Value?.ToLower();
+            var path = context.Request.Path.Value?.ToLower() ?? string.Empty;
             var method = context.Request.Method.ToUpperInvariant();
             // --------------------------------------------------
             // Always allow OPTIONS
@@ -48,6 +48,12 @@ namespace WhatsAppToDB.Services
                 return;
             }
 
+            // Check if it's a client-side route under /admin (not an API/action route)
+            bool isAdminUiRoute = path != null &&
+                                  path.StartsWith("/admin") &&
+                                  !path.StartsWith("/admin/api") &&
+                                  !path.StartsWith("/admin/actions");
+
             // public routes
             if (
                 path.StartsWith("/swagger") ||
@@ -60,7 +66,9 @@ namespace WhatsAppToDB.Services
                 path == "/index.html" ||
                 path.StartsWith("/assets") ||
                 path.StartsWith("/images") ||
-                path.StartsWith("/fonts")
+                path.StartsWith("/fonts") ||
+                path.StartsWith("/stream") ||
+                isAdminUiRoute
             )
             {
                 await _next(context);

@@ -1,0 +1,18 @@
+[
+  {
+    "CacheFolder": "ChatData\\chinook-sqlite",
+    "EmbeddingServiceSettings": {
+      "Type": "local",
+      "ApiKey": "",
+      "Model": "sentence-transformers/all-MiniLM-L6-v2",
+      "Url": ""
+    },
+    "VectorProviderSettings": {
+      "Type": "sqlite",
+      "VectorDBFolder": "ChatData\\chinook-sqlite"
+    },
+    "SqliteSettings": {
+      "VectorDBFolder": "ChatData\\chinook-sqlite"
+    }
+  }
+]
