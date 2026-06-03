@@ -15,6 +15,7 @@ using System.Threading;
 using WhatsAppToDB.Abstractions;
 using WhatsAppToDB.Audit;
 using WhatsAppToDB.Data;
+using WhatsAppToDB.Eval;
 using WhatsAppToDB.Database;
 using WhatsAppToDB.LlmProviders;
 using WhatsAppToDB.Models;
@@ -35,6 +36,7 @@ namespace WhatsAppToDB.Controllers
         private readonly JsonConfigService _jsonConfigService;
         private readonly DatabaseContextService _databaseContextService;
         private readonly LlmCancellationService _cancellationService;
+        private readonly EvalRunRepository _evalRepo;
 
 
         public ChatController(
@@ -42,7 +44,8 @@ namespace WhatsAppToDB.Controllers
             ILogger waLogger, ChatDbRepository repo, JsonConfigService jsonConfigService,
             IQueryService queryService, IIdentityContextEnricher identityContextEnricher, 
             DatabaseContextService databaseContextService,
-            LlmCancellationService cancellationService)
+            LlmCancellationService cancellationService,
+            EvalRunRepository evalRepo)
         {
             _scopeFactory = scopeFactory;
             _waLogger = waLogger;
@@ -58,6 +61,7 @@ namespace WhatsAppToDB.Controllers
             _queryService = queryService;
             _databaseContextService = databaseContextService;
             _cancellationService = cancellationService;
+            _evalRepo = evalRepo;
         }
        
 
@@ -178,17 +182,20 @@ namespace WhatsAppToDB.Controllers
             }
             else
             {
-                sessionId =
-                    await _repo.CreateSessionAsync(
-                        userName,
-                        request.Question);
+
+                if (request.isEval)
+                {
+                    sessionId = await _repo.GetEvaluationSessionIdAsync(userName);
+                }
+                else 
+                {
+                    sessionId = await _repo.CreateSessionAsync(
+                        userName, request.Question);
+                }
             }
 
-            var identity =
-                result.identity;
-            _identityContextEnricher.EnrichFromHttpContext(
-                identity,
-                HttpContext);
+            var identity = result.identity;
+            _identityContextEnricher.EnrichFromHttpContext( identity, HttpContext);
             if (request.isEval)
             {
                 identity.IsEvalRequest = true;
@@ -198,16 +205,48 @@ namespace WhatsAppToDB.Controllers
             _cancellationService.Register(userName, cts);
             try
             {
+                PromptExecutionSettings? executionSettings = _promptSettings;
+                if (request.isEval)
+                {
+                    executionSettings = new OpenAIPromptExecutionSettings
+                    {
+                        FunctionChoiceBehavior = FunctionChoiceBehavior.Auto(),
+                        MaxTokens = 4096,
+                        Temperature = 0.0
+                    };
+                }
+
                 var response =
                     await _queryService.ExecuteQuery(
                         _scopeFactory,
                         identity,
                         request.Question,
-                        _promptSettings,
+                        executionSettings,
                         _waLogger,
                         _repo,
                         sessionId,
                         cts.Token);
+
+                if (request.isEval && response != null)
+                {
+                    // Attempt to update the corresponding eval_case_inference row
+                    var res = new Eval.EvalInferenceResult
+                    {
+                        GeneratedSql = null,
+                        InferenceResultJson = null,
+                        LatencyMs = null,
+                        PromptTokens = null,
+                        CompletionTokens = null,
+                        Verdict = null
+                    };
+
+                    // Update using assistant message id (response.Id)
+                    try
+                    {
+                        await _evalRepo.UpdateInferenceFromAssistantMessageAsync(identity.UserName, identity.Database, response.Id, res);
+                    }
+                    catch { }
+                }
 
                 return Ok(response);
             }

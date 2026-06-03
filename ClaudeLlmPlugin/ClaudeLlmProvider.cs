@@ -97,6 +97,9 @@ namespace ClaudeLlmPlugin
                 .Where(m => m.Role == AuthorRole.System)
                 .Select(m => m.Content));
 
+            var identity = kernel?.Data.ContainsKey("UserIdentity") == true ? kernel.Data["UserIdentity"] as IdentityContext : null;
+            var isEval = identity?.IsEvalRequest == true;
+
             // 3. Agentic loop
             while (true)
             {
@@ -106,7 +109,7 @@ namespace ClaudeLlmPlugin
                     Model      = model ?? _model,
                     MaxTokens  = 4096,
                     Stream     = false,
-                    Temperature = 1.0m,
+                    Temperature = isEval ? 0.0m : 1.0m,
                     System     = string.IsNullOrEmpty(systemPrompt)
                                     ? null
                                     : new List<SystemMessage> { new SystemMessage(systemPrompt) },

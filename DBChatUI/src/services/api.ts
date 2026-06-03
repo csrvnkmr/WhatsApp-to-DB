@@ -396,6 +396,7 @@ export async function compareResults(database: string, payload: {
   questiontext: string;
   llmresult: string;
   databaseresult: string;
+  provider: string;
   modelname: string;
   starttime: Date;
   endtime: Date;
@@ -423,4 +424,149 @@ export async function stopEvaluation() {
   }
   return await res.json();
 }
+
+export async function startEvalRun(payload: {
+  Database: string;
+  Questions: string[];
+  Models: { Provider: string; Model: string }[];
+}) {
+  const res = await fetch(`${BASE_URL}/eval/api/start`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: authHeader(),
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to start evaluation run: ${res.statusText}`);
+  }
+  return await res.json();
+}
+
+export async function endEvalRun() {
+  const res = await fetch(`${BASE_URL}/eval/api/end`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: authHeader()
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to end evaluation run: ${res.statusText}`);
+  }
+  return await res.json();
+}
+
+export async function getDashboardRuns(database?: string, status?: string) {
+  const params = new URLSearchParams();
+  if (database) params.append("database", database);
+  if (status) params.append("status", status);
+
+  const res = await fetch(`${BASE_URL}/eval/api/dashboard/runs?${params.toString()}`, {
+    method: 'GET',
+    credentials: 'include',
+    headers: authHeader()
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch dashboard runs: ${res.statusText}`);
+  }
+  return await res.json();
+}
+
+export async function getDashboardRunDetails(runId: number) {
+  const res = await fetch(`${BASE_URL}/eval/api/dashboard/run/${runId}`, {
+    method: 'GET',
+    credentials: 'include',
+    headers: authHeader()
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch dashboard run details: ${res.statusText}`);
+  }
+  return await res.json();
+}
+
+export async function getRunVsRun(runId1: number, runId2: number) {
+  const res = await fetch(`${BASE_URL}/eval/api/dashboard/runvsrun?runId1=${runId1}&runId2=${runId2}`, {
+    method: 'GET',
+    credentials: 'include',
+    headers: authHeader()
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch run comparison: ${res.statusText}`);
+  }
+  return await res.json();
+}
+
+export async function getModulePerformance(runIds: number[]) {
+  const params = new URLSearchParams();
+  runIds.forEach(id => params.append("runIds", id.toString()));
+
+  const res = await fetch(`${BASE_URL}/eval/api/dashboard/moduleperformance?${params.toString()}`, {
+    method: 'GET',
+    credentials: 'include',
+    headers: authHeader()
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch module performance: ${res.statusText}`);
+  }
+  return await res.json();
+}
+
+export async function getLlmPerformance(runIds: number[]) {
+  const params = new URLSearchParams();
+  runIds.forEach(id => params.append("runIds", id.toString()));
+
+  const res = await fetch(`${BASE_URL}/eval/api/dashboard/llmperformance?${params.toString()}`, {
+    method: 'GET',
+    credentials: 'include',
+    headers: authHeader()
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch LLM performance: ${res.statusText}`);
+  }
+  return await res.json();
+}
+
+export async function getCaseDetails(runIds: number[]) {
+  const params = new URLSearchParams();
+  runIds.forEach(id => params.append("runIds", id.toString()));
+
+  const res = await fetch(`${BASE_URL}/eval/api/dashboard/casedetails?${params.toString()}`, {
+    method: 'GET',
+    credentials: 'include',
+    headers: authHeader()
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch case details: ${res.statusText}`);
+  }
+  return await res.json();
+}
+
+export async function getFailureAnalysis(runIds: number[]) {
+  const params = new URLSearchParams();
+  runIds.forEach(id => params.append("runIds", id.toString()));
+
+  const res = await fetch(`${BASE_URL}/eval/api/dashboard/failureanalysis?${params.toString()}`, {
+    method: 'GET',
+    credentials: 'include',
+    headers: authHeader()
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch failure analysis details: ${res.statusText}`);
+  }
+  return await res.json();
+}
+
+export async function getPassTrend(runIds: number[]) {
+  const params = new URLSearchParams();
+  runIds.forEach(id => params.append("runIds", id.toString()));
+
+  const res = await fetch(`${BASE_URL}/eval/api/dashboard/passtrend?${params.toString()}`, {
+    method: 'GET',
+    credentials: 'include',
+    headers: authHeader()
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch pass trend details: ${res.statusText}`);
+  }
+  return await res.json();
+}
+
 

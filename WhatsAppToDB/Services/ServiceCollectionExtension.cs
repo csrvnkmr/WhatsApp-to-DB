@@ -1,4 +1,4 @@
-﻿//using Betalgo.Ranul.OpenAI.ObjectModels;
+//using Betalgo.Ranul.OpenAI.ObjectModels;
 //using Microsoft.AI.Foundry.Local;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,6 +24,7 @@ using WhatsAppToDB.Settings;
 using WhatsAppToDB.VectorStore;
 using VectorDBSync.EmbeddingService;
 using VectorDBSync.VectorDBService;
+using WhatsAppToDB.Eval;
 
 namespace WhatsAppToDB.Services
 {
@@ -86,6 +87,8 @@ namespace WhatsAppToDB.Services
             services.AddDistributedMemoryCache();
             services.AddScoped<IQueryService, QueryService>();
             services.AddSingleton<LlmCancellationService>();
+            services.AddScoped<EvalRunRepository>();
+            services.AddScoped<EvalReportRepository>();
             
             var dbProviderPath = defaultFolders?.DatabaseProviderFolder ?? config.GetValue<string>("DatabasePluginsFolder") ?? "Plugins/DB";
             services.RegisterDatabaseProviders(dbProviderPath);

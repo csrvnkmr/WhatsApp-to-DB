@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using WhatsAppToDB.Abstractions;
+using WhatsAppToDB.Admin;
 using WhatsAppToDB.Database;
 using WhatsAppToDB.DbProviders.SchemaModels;
 using WhatsAppToDB.LlmProviders;
@@ -335,6 +336,11 @@ namespace WhatsAppToDB.Services
         public List<Role> GetRoles(string database)
         {
             return LoadDatabaseConfigAndDecrypt<List<Role>>(database, Constants.ConfigFiles.Roles);
+        }
+
+        public List<TestSuiteQueryItem> GetTestSuiteQueries(string database)
+        {
+            return LoadDatabaseConfigAndDecrypt<List<TestSuiteQueryItem>>(database, Constants.ConfigFiles.TestSuiteQueries);
         }
 
         public DefaultSettings GetDefaultSettings()

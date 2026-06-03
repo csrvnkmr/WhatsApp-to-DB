@@ -3,12 +3,16 @@ import EntityPage from '../pages/EntityPage.vue'
 import DatabaseSectionPage from '../pages/DatabaseSectionPage.vue'
 
 export default [
-
   {
     path: '/admin',
     component: AdminLayout,
 
     children: [
+      {
+        path: 'database/:database/testdashboard',
+        component: () => import('../TestSuite/TestSuiteDashboard.vue'),
+        props: true
+      },
 
       {
         path: 'databases',

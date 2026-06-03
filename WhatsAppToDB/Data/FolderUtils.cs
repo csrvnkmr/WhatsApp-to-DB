@@ -31,7 +31,7 @@ namespace WhatsAppToDB.Data
             return Path.Combine(AppContext.BaseDirectory, _dataFolder);
         }
 
-        public string GetSqliteDBPath()
+        public string GetChatHistoryDBPath()
         {
             var dbpath = GetDataFolder();
             dbpath = Path.Combine(dbpath, "chathistory.db");

@@ -24,7 +24,7 @@ namespace WhatsAppToDB.Audit
             if (!Directory.Exists(folder))
                 Directory.CreateDirectory(folder);
 
-            var dbPath = _folderUtils.GetSqliteDBPath();
+            var dbPath = _folderUtils.GetChatHistoryDBPath();
             if (!string.IsNullOrWhiteSpace(filename))
             {
                 dbPath = Path.Combine(folder, filename);

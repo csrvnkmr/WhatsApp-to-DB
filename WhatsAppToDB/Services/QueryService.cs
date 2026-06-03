@@ -9,6 +9,7 @@ using Microsoft.SemanticKernel.ChatCompletion;
 using WhatsAppToDB.Abstractions;
 using WhatsAppToDB.Data;
 using WhatsAppToDB.Database;
+using WhatsAppToDB.Eval;
 using WhatsAppToDB.LlmProviders;
 using WhatsAppToDB.Models;
 using WhatsAppToDB.Settings;
@@ -28,15 +29,17 @@ namespace WhatsAppToDB.Services
         private readonly IHttpContextAccessor _http;
         private readonly LlmContextService _llmContext;
         private readonly JsonConfigService _jsonConfigService;
+        private readonly EvalRunRepository _evalRepo;
 
         public QueryService(DatabaseRegistry dbRegistry, DbProviderFactory dbFactory,
-                IHttpContextAccessor http, LlmContextService llmContext, JsonConfigService jsonConfigService)
+                IHttpContextAccessor http, LlmContextService llmContext, JsonConfigService jsonConfigService, EvalRunRepository evalRepo)
         {
             _dbRegistry = dbRegistry;
             _dbFactory = dbFactory;
             _http = http;
             _llmContext = llmContext;
             _jsonConfigService = jsonConfigService;
+            _evalRepo = evalRepo;
         }
 
         public async Task<ChatMessageDto> ExecuteQuery(IServiceScopeFactory scopeFactory,
@@ -101,8 +104,8 @@ namespace WhatsAppToDB.Services
                     }
 
                     kernel.Data["UserIdentity"] = identity;
-                    kernel.Data[Constants.ContextItems.WhatsAppNumber] = identity.WhatsAppNumber;
-                    kernel.Data[Constants.ContextItems.UserName] = identity.WhatsAppNumber;
+                    kernel.Data[Constants.ContextItems.WhatsAppNumber] = identity!.WhatsAppNumber;
+                    kernel.Data[Constants.ContextItems.UserName] = identity!.WhatsAppNumber;
                     kernel.Data["UserQuestion"] = messageText;
 
                     var history = new ChatHistory();
@@ -130,6 +133,7 @@ namespace WhatsAppToDB.Services
                                 systemPrompt += "\n\n" + specialPrompts.EvalPrompt;
                             }
                         }
+                        
                     }
 
                     history.AddSystemMessage(systemPrompt);
@@ -140,7 +144,17 @@ namespace WhatsAppToDB.Services
                     var model = _llmContext.GetModel();
                     await repo.InsertMessageAsync(sessionid, "User", messageText, "", "", 
                         dbName, provider.Name,model, ctx.ModuleName);
-                    
+
+                    if (identity != null && identity.IsEvalRequest)
+                    {
+                        await _evalRepo.UpdateEvalCaseInferenceStartedAsync(
+                            identity.UserName,
+                            identity.Database,
+                            messageText,
+                            provider.Name,
+                            model);
+                    }
+
                     kernel.FunctionInvocationFilters.Clear();
                     kernel.PromptRenderFilters.Clear();
                     var requestId = progressChannel != null ? Guid.NewGuid().ToString() : null;
@@ -157,11 +171,14 @@ namespace WhatsAppToDB.Services
                     }
                     _ = Task.Run(async () =>
                     {
+                        long? assistantMessageId = null;
+                        object? chatResponse = null;
                     try
                         {
 
                         if (provider.SupportsKernel)
                         {
+                            var chatService = kernel.GetRequiredService<IChatCompletionService>();
 
                             if (progressChannel != null) 
                             {
@@ -172,12 +189,12 @@ namespace WhatsAppToDB.Services
                                 });
                             }
 
-                            var chatService = kernel.GetRequiredService<IChatCompletionService>();
                             var aiResponse = await chatService.GetChatMessageContentAsync(history,
                                         executionSettings: pes, //openAIPromptExecutionSettings,
                                         kernel: kernel,
                                         cancellationToken: CancellationToken.None
                                         );
+                            chatResponse = aiResponse;
                             aiContent = aiResponse.Content ?? "";
                             
                             if (progressChannel != null)
@@ -203,7 +220,7 @@ namespace WhatsAppToDB.Services
                             CancellationToken.None);
                         }
 
-                        Console.WriteLine($"[QUERY] [{identity.UserName}] AI Response received for {messageText}");
+                        Console.WriteLine($"[QUERY] [{identity!.UserName}] AI Response received for {messageText}");
                         var whatsAppReplyText = aiContent;
                         var isWhatsAppRequest = identity != null && identity.IsWhatsAppRequest;
                         if (!string.IsNullOrEmpty(aiContent)    )
@@ -241,7 +258,8 @@ namespace WhatsAppToDB.Services
                         var datafilepath = ctx.DataFileName;
                         var msgid = await repo.InsertMessageAsync(sessionid, "Assistant", aiContent, sql, datafilepath, dbName, 
                             provider.Name, model, moduleName);
-                        await waLogger.LogAsync(identity.UserName, $"Sending response to {identity.UserName} {aiContent}");
+                        assistantMessageId = msgid;
+                        await waLogger.LogAsync(identity!.UserName, $"Sending response to {identity.UserName} {aiContent}");
                         var response = new ChatMessageDto
                         {
                             Id = msgid,
@@ -251,6 +269,20 @@ namespace WhatsAppToDB.Services
                             CanShowChart = ctx.ShowChart,
                             SessionId = ctx.SessionId
                         };
+
+                        if (identity != null && identity.IsEvalRequest)
+                        {
+                            ExtractTokenUsage(chatResponse, out var promptTokens, out var completionTokens);
+                            await _evalRepo.UpdateInferenceFromAssistantMessageAsync(
+                                identity.UserName,
+                                identity.Database,
+                                msgid,
+                                new Eval.EvalInferenceResult
+                                {
+                                    PromptTokens = promptTokens,
+                                    CompletionTokens = completionTokens
+                                });
+                        }
                         
                         if (progressChannel != null)
                         {
@@ -266,6 +298,17 @@ namespace WhatsAppToDB.Services
                     catch (OperationCanceledException ex)
                     {
                         waLogger.LogError($"Error in QueryService.ExecuteQuery {ex} ");
+                        if (identity != null && identity.IsEvalRequest && assistantMessageId.HasValue)
+                        {
+                            await _evalRepo.UpdateInferenceFromAssistantMessageAsync(
+                                identity.UserName,
+                                identity.Database,
+                                assistantMessageId.Value,
+                                new Eval.EvalInferenceResult
+                                {
+                                    Verdict = "Error"
+                                });
+                        }
                         if (progressChannel != null)
                         {
                             await progressChannel.Writer.WriteAsync(new ProgressEvent
@@ -278,7 +321,21 @@ namespace WhatsAppToDB.Services
                     }
                     catch (Exception ex) 
                     {
-                        await waLogger.LogAsync(identity.UserName, "Exception when querying and sending message (2)" + ex.ToString());
+                        await waLogger.LogAsync(identity!.UserName, "Exception when querying and sending message (2)" + ex.ToString());
+                        if (identity != null && identity.IsEvalRequest && assistantMessageId.HasValue)
+                        {
+                            ExtractTokenUsage(chatResponse, out var promptTokens, out var completionTokens);
+                            await _evalRepo.UpdateInferenceFromAssistantMessageAsync(
+                                identity.UserName,
+                                identity.Database,
+                                assistantMessageId.Value,
+                                new Eval.EvalInferenceResult
+                                {
+                                    PromptTokens = promptTokens,
+                                    CompletionTokens = completionTokens,
+                                    Verdict = "Error"
+                                });
+                        }
                         if (progressChannel != null)
                         {
                             await progressChannel.Writer.WriteAsync(new ProgressEvent
@@ -294,7 +351,7 @@ namespace WhatsAppToDB.Services
                     return new ChatMessageDto
                     {
                         SessionId = sessionid,
-                        RequestId = requestId   // Vue uses this to open SSE
+                        RequestId = requestId ?? string.Empty   // Vue uses this to open SSE
                     };
 
                 }
@@ -321,6 +378,99 @@ namespace WhatsAppToDB.Services
                 }
                 return response;
             }
+        }
+
+        private static void ExtractTokenUsage(object? result, out int? promptTokens, out int? completionTokens)
+        {
+            promptTokens = null;
+            completionTokens = null;
+            if (result == null)
+            {
+                return;
+            }
+
+            static int? GetInt(object? value)
+            {
+                if (value is int i)
+                    return i;
+                if (value is long l)
+                    return (int)l;
+                if (value is int ni)
+                    return ni;
+                if (value is long nl)
+                    return (int)nl;
+                return null;
+            }
+
+            if (result is ChatMessageContent msgContent)
+            {
+                if (msgContent.Metadata != null && msgContent.Metadata.TryGetValue("Usage", out var usageValue) && usageValue != null)
+                {
+                    ExtractUsageObject(usageValue, out promptTokens, out completionTokens);
+                    return;
+                }
+            }
+
+            var type = result.GetType();
+            var promptProp = type.GetProperty("PromptTokens") ?? type.GetProperty("PromptTokenCount") ?? type.GetProperty("TotalPromptTokens");
+            if (promptProp != null)
+            {
+                promptTokens = GetInt(promptProp.GetValue(result));
+            }
+
+            var completionProp = type.GetProperty("CompletionTokens") ?? type.GetProperty("CompletionTokenCount") ?? type.GetProperty("TotalCompletionTokens");
+            if (completionProp != null)
+            {
+                completionTokens = GetInt(completionProp.GetValue(result));
+            }
+
+            if (promptTokens.HasValue || completionTokens.HasValue)
+            {
+                return;
+            }
+
+            var usageProp = type.GetProperty("Usage");
+            if (usageProp == null)
+            {
+                return;
+            }
+
+            var usage = usageProp.GetValue(result);
+            if (usage == null)
+            {
+                return;
+            }
+
+            ExtractUsageObject(usage, out promptTokens, out completionTokens);
+        }
+
+        private static void ExtractUsageObject(object usage, out int? promptTokens, out int? completionTokens)
+        {
+            promptTokens = null;
+            completionTokens = null;
+
+            static int? GetInt(object? value)
+            {
+                if (value is int i)
+                    return i;
+                if (value is long l)
+                    return (int)l;
+                if (value is int ni)
+                    return ni;
+                if (value is long nl)
+                    return (int)nl;
+                return null;
+            }
+
+            var usageType = usage.GetType();
+            promptTokens = GetInt(usageType.GetProperty("InputTokenCount")?.GetValue(usage)
+                ?? usageType.GetProperty("PromptTokens")?.GetValue(usage)
+                ?? usageType.GetProperty("TotalPromptTokens")?.GetValue(usage)
+                ?? usageType.GetProperty("PromptTokenCount")?.GetValue(usage));
+            completionTokens = GetInt(usageType.GetProperty("OutputTokenCount")?.GetValue(usage)
+                ?? usageType.GetProperty("CompletionTokens")?.GetValue(usage)
+                ?? usageType.GetProperty("TotalCompletionTokens")?.GetValue(usage)
+                ?? usageType.GetProperty("CompletionTokenCount")?.GetValue(usage));
         }
 
         public async Task<EvalComparisonResult> CompareWithLlm(

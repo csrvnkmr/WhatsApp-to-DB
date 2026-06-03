@@ -308,7 +308,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-import { getLlmsList, selectActiveLlm, selectActiveDatabase, evalQuestion, executeDatabaseQuery, compareResults, stopEvaluation, BASE_URL } from '@/services/api'
+import { getLlmsList, selectActiveLlm, selectActiveDatabase, evalQuestion, executeDatabaseQuery, compareResults, stopEvaluation, startEvalRun, getMessageData, endEvalRun, BASE_URL } from '@/services/api'
 
 interface TestSuiteQuery {
     Question: string;
@@ -323,6 +323,7 @@ interface ModelOption {
 }
 
 interface RunResult {
+    provider: string;
     modelName: string;
     llmResult: string;
     startTime: Date;
@@ -513,6 +514,24 @@ async function runEvaluation() {
     progressPercent.value = 0
     comparisonStats.value = { Pass: 0, Failed: 0 }
 
+    // Initialize eval run on the backend
+    try {
+        const startPayload = {
+            Database: props.database,
+            Questions: props.selectedQueries.map(q => q.Question),
+            Models: selectedModels.value.map(m => ({
+                Provider: m.provider,
+                Model: m.model
+            }))
+        }
+        await startEvalRun(startPayload)
+    } catch (err: any) {
+        console.error("Failed to call startEvalRun:", err)
+        alert(`Failed to initialize evaluation run on the server: ${err.message}`)
+        isRunning.value = false
+        return
+    }
+
     // Set initial Pending state
     const results: Record<string, QuestionState> = {}
     props.selectedQueries.forEach(q => {
@@ -551,6 +570,7 @@ async function runEvaluation() {
             statusMessage.value = `Executing ${i + 1} of ${totalQuestions} (${Math.round((completedSteps / totalSteps) * 100)}% complete)`
 
             const runInfo: RunResult = {
+                provider: modelOpt.provider,
                 modelName: modelOpt.model,
                 llmResult: "",
                 startTime: new Date(),
@@ -599,16 +619,37 @@ async function runEvaluation() {
                             if (phase === "done") {
                                 const detail = evt.Detail || evt.detail || ""
                                 let finalMsgText = detail
+                                let messageId: number | null = null
+                                let canShowData = false
                                 try {
                                     const msgDto = JSON.parse(detail)
                                     finalMsgText = msgDto.messageText || msgDto.MessageText || detail
+                                    messageId = msgDto.id || msgDto.Id || null
+                                    canShowData = msgDto.canShowData || msgDto.CanShowData || false
                                 } catch {}
 
-                                runInfo.llmResult = finalMsgText
-                                runInfo.endTime = new Date()
-                                runInfo.isLoading = false
-                                sse.close()
-                                resolve()
+                                if (canShowData && messageId) {
+                                    getMessageData(messageId).then(data => {
+                                        runInfo.llmResult = typeof data === 'string' ? data : JSON.stringify(data, null, 2)
+                                        runInfo.endTime = new Date()
+                                        runInfo.isLoading = false
+                                        sse.close()
+                                        resolve()
+                                    }).catch(err => {
+                                        console.error("Failed to fetch message data:", err)
+                                        runInfo.llmResult = finalMsgText
+                                        runInfo.endTime = new Date()
+                                        runInfo.isLoading = false
+                                        sse.close()
+                                        resolve()
+                                    })
+                                } else {
+                                    runInfo.llmResult = finalMsgText
+                                    runInfo.endTime = new Date()
+                                    runInfo.isLoading = false
+                                    sse.close()
+                                    resolve()
+                                }
                                 return
                             }
 
@@ -683,6 +724,7 @@ async function runEvaluation() {
                     questiontext: q.Question,
                     llmresult: runInfo.llmResult,
                     databaseresult: dbResult,
+                    provider: runInfo.provider,
                     modelname: runInfo.modelName,
                     starttime: runInfo.startTime,
                     endtime: runInfo.endTime || new Date()
@@ -713,6 +755,15 @@ async function runEvaluation() {
         // 4. Update the row's final status
         const cleanSummary = questionComparisonSummary.replace(/ \| $/, "")
         qState.status = `Completed: ${cleanSummary}`
+    }
+
+    // Call endEvalRun to persist completion stats on the server
+    console.log("[TestSuiteExecution] Calling endEvalRun()...");
+    try {
+        const res = await endEvalRun()
+        console.log("[TestSuiteExecution] endEvalRun() response received:", res)
+    } catch (err) {
+        console.error("[TestSuiteExecution] Failed to call endEvalRun:", err)
     }
 
     // Finished

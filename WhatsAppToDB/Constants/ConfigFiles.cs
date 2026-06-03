@@ -49,18 +49,15 @@
         public const string VectordbSettings =
             "vectordbsettings.json";
         
-        public const string VectorConfigurations =
-            "vectorconfigurations.json";
+        public const string VectorConfigurations = "vectorconfigurations.json";
 
-        public const string MailSettings =
-            "mailsettings.json";
+        public const string MailSettings = "mailsettings.json";
 
-        public const string SystemPrompt =
-            "systemprompt.json";
-        public const string SpecialPrompts =
-            "specialprompts.json";
+        public const string SystemPrompt = "systemprompt.json";
+        public const string SpecialPrompts = "specialprompts.json";
             
-        public const string FewShotQueries =
-            "fewshotqueries.json";
+        public const string FewShotQueries = "fewshotqueries.json";
+
+        public const string TestSuiteQueries = "testsuitequeries.json";
     }
 }

@@ -211,6 +211,13 @@
                     <span>🧪</span> Test Runner
                 </RouterLink>
 
+                <RouterLink
+                    :to="`/admin/database/${db.Name}/testdashboard`"
+                    @click="emit('closeMobile')"
+                    class="submenu-item flex items-center gap-2 text-xs py-1">
+                    <span>📊</span> Test Suite Dashboard
+                </RouterLink>
+
             </div>
 
         </div>

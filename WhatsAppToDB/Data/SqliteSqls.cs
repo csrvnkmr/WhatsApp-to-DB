@@ -68,7 +68,7 @@ VALUES
 SELECT last_insert_rowid();
 ";
 
-        public const string GetWhatsAppSessionId = @"
+        public const string GetSessionIdForTitle = @"
         SELECT Id
         FROM ChatSession
         WHERE UserName = @UserName

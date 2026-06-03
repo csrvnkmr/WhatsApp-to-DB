@@ -73,7 +73,7 @@ namespace WhatsAppToDB.Data
             if (!Directory.Exists(folder))
                 Directory.CreateDirectory(folder);
 
-            var dbPath = _folderUtils.GetSqliteDBPath(); 
+            var dbPath = _folderUtils.GetChatHistoryDBPath(); 
             if (!string.IsNullOrWhiteSpace( filename))
             {
                 dbPath = Path.Combine(folder, filename);
@@ -146,22 +146,22 @@ namespace WhatsAppToDB.Data
             return id;
         }
 
-        public async Task<long> GetWhatsAppSessionIdAsync(
-            string userName)
+        
+         
+         public async Task<long> GetSessionIdForTitleAsync(
+            string userName, string title)
         {
             using var conn = GetConnection();
             await conn.OpenAsync();
 
-            var title = "WhatsApp Session";
-
-            var sql = SqliteSqls.GetWhatsAppSessionId;
+            var sql = SqliteSqls.GetSessionIdForTitle;
             var existingId = await conn.QueryFirstOrDefaultAsync<long?>(sql, 
                 new { UserName = userName, Title = title });
 
             var now = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
             if (existingId.HasValue)
             {
-                await logger.LogInfoAsync($"Existing WhatsApp session found for user {userName}, Id: {existingId.Value}");
+                await logger.LogInfoAsync($"Existing {title} session found for user {userName}, Id: {existingId.Value}");
                 return existingId.Value;
             }
 
@@ -176,6 +176,18 @@ namespace WhatsAppToDB.Data
                 });
 
             return id;
+        }
+
+        public async Task<long> GetWhatsAppSessionIdAsync(
+            string userName)
+        {
+            return await GetSessionIdForTitleAsync(userName, "WhatsApp Session"); 
+        }
+
+        public async Task<long> GetEvaluationSessionIdAsync(
+            string userName)
+        {
+            return await GetSessionIdForTitleAsync(userName, "Evaluation Session"); 
         }
 
         // ======================================================
