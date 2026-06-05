@@ -95,6 +95,8 @@ namespace WhatsAppToDB.Services
 
             services.AddScoped<IIdentityContextEnricher, IdentityContextEnricher>();
 
+            services.AddScoped<UserInstructionRepository>();            
+
             services.AddSingleton<VectorSyncStatusStore>();
             services.AddSingleton<VectorSyncJobService>();
             services.AddScoped<PluginLoaderService>();

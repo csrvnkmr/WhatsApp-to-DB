@@ -49,6 +49,38 @@ and m.DatabaseName IN @Databases
 ORDER BY UpdatedOn DESC;
 ";
 
+        public const string GetChatHistoryForLlm = """
+                WITH ForwardLookedMessages AS (
+                    SELECT 
+                        Id, 
+                        Role, 
+                        MessageText,
+                        -- Look FORWARD exactly 1 row to see what comes NEXT
+                        LEAD(Role) OVER (PARTITION BY SessionId ORDER BY Id) as NextRole,
+                        -- Get the ID of the message that comes NEXT
+                        LEAD(Id) OVER (PARTITION BY SessionId ORDER BY Id) as NextId
+                    FROM ChatMessage
+                    WHERE SessionId = @SessionId
+                ),
+                ExcludedAssistantIds AS (
+                    -- Collect the IDs of assistant responses that immediately follow a command
+                    SELECT NextId
+                    FROM ForwardLookedMessages
+                    WHERE MessageText LIKE '!%' 
+                    AND LOWER(NextRole) = 'assistant' -- Case-insensitive protection
+                    AND NextId IS NOT NULL
+                )
+                SELECT Id, Role, MessageText
+                FROM ChatMessage
+                WHERE SessionId = @SessionId
+                -- 1. Exclude the user instructions
+                AND MessageText NOT LIKE '!%'
+                -- 2. Exclude the assistant responses to those instructions
+                AND Id NOT IN (SELECT NextId FROM ExcludedAssistantIds)
+                ORDER BY Id DESC
+                LIMIT @Limit
+            """;
+
         public const string InsertChatMessage = @"
 INSERT INTO ChatMessage
 (SessionId, Role, MessageText, CreatedOn, SqlText, DataFileName, ChartFileName, CanShowSql, CanShowData, CanShowChart, 

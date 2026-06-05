@@ -38,6 +38,14 @@ UPDATED:
                 ⚙️ Admin
             </router-link>
 
+            <!-- User Instructions Button -->
+            <button
+                @click="openInstructionsModal"
+                class="w-9 h-9 flex items-center justify-center rounded-xl border border-soft hover:bg-hover transition bg-panel text-base shrink-0"
+                title="User Instructions">
+                ⚙️
+            </button>
+
             <!-- Theme Toggle -->
             <div class="flex items-center gap-1 bg-panel rounded-xl p-1">
 
@@ -514,6 +522,10 @@ UPDATED:
 
     </div>
 
+    <div v-if="chat.viewMode === 'chat'" class="text-center text-xs opacity-60 mt-2 select-none">
+        Type !set &lt;instruction&gt; to teach me your preferences  ·  !instructions to view  ·  !clear to reset
+    </div>
+
 </div>
 
 
@@ -882,6 +894,129 @@ CHART MODAL
 
 </div>
 
+<!-- =============================================
+USER INSTRUCTIONS MODAL
+============================================= -->
+<div v-if="showInstructionsModal" class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+    <div class="bg-base rounded-2xl shadow-xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden border border-soft">
+        
+        <!-- Header -->
+        <div class="p-4 border-b border-soft flex items-center justify-between bg-panel">
+            <div class="font-semibold text-lg flex items-center gap-2">
+                <span>⚙️</span>
+                <span>User Instructions</span>
+            </div>
+            <button @click="showInstructionsModal = false" class="text-gray-500 hover:text-black dark:hover:text-white text-xl">
+                &times;
+            </button>
+        </div>
+
+        <!-- Body -->
+        <div class="p-5 overflow-y-auto flex-1 space-y-4">
+            
+            <!-- Actions when listing instructions -->
+            <div v-if="!isEditingInstruction" class="flex justify-between items-center pb-2 border-b border-soft">
+                <button @click="isEditingInstruction = true; editingInstructionId = null; instructionFormText = ''; instructionFormScope = 'current';" 
+                    class="px-3 py-1.5 bg-user text-white text-xs font-semibold rounded-xl hover:opacity-90 transition flex items-center gap-1">
+                    <span>+ Add Instruction</span>
+                </button>
+                <button @click="handleClearAllInstructions" 
+                    class="px-3 py-1.5 border border-red-500 text-red-500 hover:bg-red-500/10 text-xs font-semibold rounded-xl transition flex items-center gap-1">
+                    <span>🗑️ Clear All</span>
+                </button>
+            </div>
+
+            <!-- Edit/Add Form -->
+            <div v-if="isEditingInstruction" class="space-y-4 border border-soft p-4 rounded-xl bg-panel">
+                <div class="font-medium text-sm">
+                    {{ editingInstructionId === null ? 'Add New Instruction' : 'Edit Instruction' }}
+                </div>
+                
+                <div>
+                    <label class="block text-xs text-gray-500 mb-1">Instruction Text</label>
+                    <textarea v-model="instructionFormText" rows="4" 
+                        class="w-full border border-soft rounded-xl px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-black bg-base resize-none"
+                        placeholder="Enter your instruction here..."></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-gray-500 mb-2">Scope</label>
+                    <div class="flex items-center gap-4">
+                        <label class="flex items-center gap-2 text-sm cursor-pointer select-none">
+                            <input type="radio" v-model="instructionFormScope" value="current" class="accent-black" />
+                            <span>This Database ({{ activeDbName }})</span>
+                        </label>
+                        <label class="flex items-center gap-2 text-sm cursor-pointer select-none">
+                            <input type="radio" v-model="instructionFormScope" value="all" class="accent-black" />
+                            <span>All Databases</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button @click="isEditingInstruction = false" 
+                        class="px-4 py-2 rounded-xl border border-soft text-sm text-gray-600 dark:text-gray-300 hover:bg-hover transition">
+                        Cancel
+                    </button>
+                    <button @click="handleSaveInstruction" 
+                        class="px-4 py-2 rounded-xl bg-user text-white text-sm font-medium hover:opacity-90 transition">
+                        Save
+                    </button>
+                </div>
+            </div>
+
+            <!-- Instructions List -->
+            <div v-else class="space-y-3">
+                <div v-if="instructionsList.length === 0" class="text-center py-6 text-sm text-gray-400">
+                    No instructions found. Click "Add Instruction" to create one.
+                </div>
+                
+                <div v-for="inst in instructionsList" :key="inst.Id !== undefined ? inst.Id : inst.id" 
+                    class="border border-soft rounded-xl p-3 bg-panel hover:bg-hover/30 transition flex flex-col gap-2 relative group">
+                    <div class="flex justify-between items-start gap-4">
+                        <div class="text-sm whitespace-pre-wrap flex-1 break-words">
+                            {{ inst.InstructionText !== undefined ? inst.InstructionText : inst.instructionText }}
+                        </div>
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            <!-- Edit Button -->
+                            <button @click="handleEditInstruction(inst)" 
+                                class="p-1 hover:bg-hover rounded transition text-xs opacity-70 hover:opacity-100" 
+                                title="Edit instruction">
+                                ✏️
+                            </button>
+                            <!-- Delete Button -->
+                            <button @click="handleDeleteInstruction(inst.Id !== undefined ? inst.Id : inst.id)" 
+                                class="p-1 hover:bg-hover rounded transition text-xs opacity-70 hover:opacity-100" 
+                                title="Delete instruction">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Scope Badge -->
+                    <div class="flex items-center">
+                        <span :class="[
+                            'text-[9px] font-semibold px-2 py-0.5 rounded-full uppercase tracking-wider',
+                            (inst.Database !== undefined ? inst.Database : inst.database) ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300'
+                        ]">
+                            {{ (inst.Database !== undefined ? inst.Database : inst.database) ? (inst.Database !== undefined ? inst.Database : inst.database) : 'All Databases' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div class="p-4 border-t border-soft flex justify-end bg-panel">
+            <button @click="showInstructionsModal = false" class="px-4 py-2 rounded-xl bg-user text-white text-sm font-semibold hover:opacity-90 transition">
+                Close
+            </button>
+        </div>
+
+    </div>
+</div>
+
 </template>
 
 <script setup lang="ts">
@@ -905,6 +1040,14 @@ import {
     askQuestion,
     BASE_URL
 } from "@/services/api";
+import {
+    getUserInstructions,
+    deleteUserInstruction,
+    updateUserInstruction,
+    addUserInstruction,
+    clearUserInstructions,
+    type UserInstruction
+} from "@/services/instructionsapi";
 
 const chat = useChatStore();
 const theme = useThemeStore();
@@ -937,6 +1080,13 @@ const {
 const aiChartRef = ref<any>(null);
 const chartIsMaximized = ref(false);
 const chartModalRef = ref<HTMLElement | null>(null);
+
+const showInstructionsModal = ref(false);
+const instructionsList = ref<UserInstruction[]>([]);
+const isEditingInstruction = ref(false);
+const editingInstructionId = ref<any>(null);
+const instructionFormText = ref("");
+const instructionFormScope = ref("current");
 
 function parseMessage(msg: any) {
     if (msg._parsed) return msg._parsed;
@@ -1298,9 +1448,9 @@ async function sendQuestion() {
         
         let requestId = "";
         let sessionId: number | null = null;
-        
+        let json: any = null;
         try {
-            const json = JSON.parse(raw);
+            json = JSON.parse(raw);
             requestId = json.requestId || json.RequestId || "";
             sessionId = json.sessionId || json.SessionId || null;
         } catch (err) {
@@ -1313,6 +1463,29 @@ async function sendQuestion() {
             if (wasNewSession) {
                 await chat.loadSessions();
             }
+        }
+
+        const messageText = json ? (json.messageText || json.MessageText || "") : "";
+        if (!requestId && messageText) {
+            const msgid = json.id || json.Id || (Date.now() + 1);
+            const canShowSql = json.canShowSql || json.CanShowSql || false;
+            const canShowData = json.canShowData || json.CanShowData || false;
+            const canShowChart = json.canShowChart || json.CanShowChart || false;
+
+            chat.messages.push({
+                id: msgid,
+                sessionId: chat.selectedSessionId,
+                role: "assistant",
+                messageText: messageText,
+                createdOn: new Date().toLocaleString(),
+                canShowSql,
+                canShowData,
+                canShowChart
+            });
+
+            loading.value = false;
+            await scrollToBottom();
+            return;
         }
 
         if (!requestId) {
@@ -1470,6 +1643,87 @@ const databases = ref<any[]>([]);
 const activeDbName = ref('');
 const activeDbDescription = ref('');
 const showDbMenu = ref(false);
+
+async function loadInstructions() {
+    if (!activeDbName.value) return;
+    try {
+        instructionsList.value = await getUserInstructions(activeDbName.value);
+    } catch (err) {
+        console.error("Failed to load user instructions:", err);
+    }
+}
+
+async function openInstructionsModal() {
+    showInstructionsModal.value = true;
+    isEditingInstruction.value = false;
+    instructionFormText.value = "";
+    instructionFormScope.value = "current";
+    editingInstructionId.value = null;
+    await loadInstructions();
+}
+
+async function handleDeleteInstruction(id: any) {
+    if (!confirm("Are you sure you want to delete this instruction?")) return;
+    try {
+        await deleteUserInstruction(id);
+        await loadInstructions();
+    } catch (err) {
+        console.error("Failed to delete instruction:", err);
+        alert("Failed to delete instruction");
+    }
+}
+
+function handleEditInstruction(inst: UserInstruction) {
+    editingInstructionId.value = inst.Id !== undefined ? inst.Id : inst.id;
+    instructionFormText.value = (inst.InstructionText !== undefined ? inst.InstructionText : inst.instructionText) || "";
+    const dbVal = inst.Database !== undefined ? inst.Database : inst.database;
+    instructionFormScope.value = dbVal ? "current" : "all";
+    isEditingInstruction.value = true;
+}
+
+async function handleSaveInstruction() {
+    if (!instructionFormText.value.trim()) {
+        alert("Please enter instruction text");
+        return;
+    }
+    const dbParam = instructionFormScope.value === "all" ? "" : activeDbName.value;
+    try {
+        if (editingInstructionId.value === null) {
+            await addUserInstruction({
+                InstructionText: instructionFormText.value,
+                Database: dbParam
+            });
+        } else {
+            await updateUserInstruction({
+                Id: editingInstructionId.value,
+                InstructionText: instructionFormText.value,
+                Database: dbParam
+            });
+        }
+        isEditingInstruction.value = false;
+        await loadInstructions();
+    } catch (err) {
+        console.error("Failed to save instruction:", err);
+        alert("Failed to save instruction");
+    }
+}
+
+async function handleClearAllInstructions() {
+    if (!confirm(`Are you sure you want to clear all instructions for database "${activeDbName.value}"?`)) return;
+    try {
+        await clearUserInstructions(activeDbName.value);
+        await loadInstructions();
+    } catch (err) {
+        console.error("Failed to clear instructions:", err);
+        alert("Failed to clear instructions");
+    }
+}
+
+watch(activeDbName, () => {
+    if (showInstructionsModal.value) {
+        loadInstructions();
+    }
+});
 
 onMounted(() => {
     loadDatabases();

@@ -10,5 +10,7 @@
         public string DefaultRole { get; set; }
         public string PromptFile { get; set; }
         public string SchemaFile { get; set; }
+
+        public bool AddChart { get; set; } = false;
     }
 }

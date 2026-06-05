@@ -353,5 +353,20 @@ namespace WhatsAppToDB.Data
 
             return result.ToList();
         }
+
+        public async Task<List<ChatMessageDto>> GetRecentHistoryAsync(
+            long sessionId, int maxTurns = 5)
+        {
+            // maxTurns = number of user+assistant pairs to load
+            var limit = maxTurns * 2;
+            using var conn = GetConnection();
+            const string sql = SqliteSqls.GetChatHistoryForLlm;
+
+            var rows = await conn.QueryAsync<ChatMessageDto>(
+                sql, new { SessionId = sessionId, Limit = limit });
+
+            // Reverse so oldest-first for chat history order
+            return rows.Reverse().ToList();
+        }
     }
 }

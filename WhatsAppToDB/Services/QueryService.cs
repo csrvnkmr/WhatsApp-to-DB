@@ -30,9 +30,11 @@ namespace WhatsAppToDB.Services
         private readonly LlmContextService _llmContext;
         private readonly JsonConfigService _jsonConfigService;
         private readonly EvalRunRepository _evalRepo;
+        private readonly UserInstructionRepository _userInstructionRepo;
 
         public QueryService(DatabaseRegistry dbRegistry, DbProviderFactory dbFactory,
-                IHttpContextAccessor http, LlmContextService llmContext, JsonConfigService jsonConfigService, EvalRunRepository evalRepo)
+                IHttpContextAccessor http, LlmContextService llmContext, JsonConfigService 
+                jsonConfigService, EvalRunRepository evalRepo, UserInstructionRepository userInstructionRepo)
         {
             _dbRegistry = dbRegistry;
             _dbFactory = dbFactory;
@@ -40,6 +42,7 @@ namespace WhatsAppToDB.Services
             _llmContext = llmContext;
             _jsonConfigService = jsonConfigService;
             _evalRepo = evalRepo;
+            _userInstructionRepo = userInstructionRepo;
         }
 
         public async Task<ChatMessageDto> ExecuteQuery(IServiceScopeFactory scopeFactory,
@@ -52,9 +55,6 @@ namespace WhatsAppToDB.Services
             {
                 using (var scope = scopeFactory.CreateScope())
                 {
-                    //var dbName = _http.HttpContext?.Session?.GetString(Constants.SessionKeys.ActiveDb) ?? "chinook-sqlite";
-
-                    //var dbName = httpContext.Session.GetString(Constants.SessionKeys.ActiveDb);
                     var dbName = identity.Database;
 
                     if (string.IsNullOrWhiteSpace(dbName))
@@ -66,6 +66,7 @@ namespace WhatsAppToDB.Services
 
                     Console.WriteLine($"[QUERY] DB={dbName}");
                     var sp = scope.ServiceProvider;
+
 
                     var identityService = sp.GetRequiredService<IIdentityService>();
                     var kernel = sp.GetRequiredService<Kernel>();
@@ -86,6 +87,15 @@ namespace WhatsAppToDB.Services
                     {
                         ctx.UserQuestion = messageText;
                     }
+                    
+                    var isInstructionHandled = UserInstructionHelper.CheckForUserInstruction(
+                        messageText, sessionid, identity.UserName, dbName, ctx.ModuleName,
+                        _userInstructionRepo, repo).Result;
+                    if (isInstructionHandled.isHandled)                    
+                    {
+                        return isInstructionHandled.message!;
+                    }
+
                     ctx.SessionId = sessionid;
                     var modules = ctx.ModuleName;
                     var modulePrompt = "";
@@ -118,25 +128,69 @@ namespace WhatsAppToDB.Services
 
                     
 
+                    var specialPrompts = _jsonConfigService.GetSpecialPrompts();
                     if (identity != null)
                     {
                         //systemPrompt = $"Context {identity.SessionContextKey}, ID {identity.InternalUserId} \n\n" + systemPrompt;
                         systemPrompt += $"\n[ACTIVE CONTEXT]";
                         systemPrompt += $"\nUserRole: {identity.Role}";
-                        systemPrompt += $"\nYourID: {identity.InternalUserId}";
-                        systemPrompt += $"\nContextKey: {identity.SessionContextKey}";
+                        if (!string.IsNullOrWhiteSpace(identity.InternalUserId) && 
+                            !string.IsNullOrWhiteSpace(identity.SessionContextKey))
+                        {
+                            systemPrompt += $"\nYourID: {identity.InternalUserId}";
+                            systemPrompt += $"\nContextKey: {identity.SessionContextKey}";                            
+                        }
                         if (identity.IsEvalRequest)
                         {
-                            var specialPrompts = _jsonConfigService.GetSpecialPrompts();
                             if (!string.IsNullOrWhiteSpace(specialPrompts.EvalPrompt))
                             {
                                 systemPrompt += "\n\n" + specialPrompts.EvalPrompt;
-                            }
+                            }                            
+                        }                          
+                    }
+                    if (identity == null || !identity.IsEvalRequest)
+                    {
+                        if (!string.IsNullOrWhiteSpace(specialPrompts.ChartPrompt) && dbConfig.AddChart)
+                        {
+                            systemPrompt += "\n\n" + specialPrompts.ChartPrompt;
                         }
-                        
+                    }
+
+                    var activeInstructions = await _userInstructionRepo.GetAllActiveAsync(
+                        sessionid, identity.UserName, dbName);
+
+                    if (activeInstructions.Count > 0)
+                    {
+                        systemPrompt += "\n\n[USER INSTRUCTIONS]\n";
+                        systemPrompt += "The user has provided the following personal instructions. " +
+                                        "Apply them to every query:\n";
+                        systemPrompt += string.Join("\n", activeInstructions.Select(i => $"- {i}"));
                     }
 
                     history.AddSystemMessage(systemPrompt);
+
+                    // Add history for conversation - we take recent history to give the model some context, 
+                    // but we compress assistant messages to avoid hitting token limits on long data/chart responses
+                    if (!identity.IsEvalRequest && sessionid > 0)
+                    {
+                        var maxTurns = _jsonConfigService.GetDefaultSettings().MaxTurns;
+                        if (maxTurns <= 0) maxTurns = 5; // default to 5 if not set or invalid
+                        var previousMessages = await repo.GetRecentHistoryAsync(sessionid, maxTurns);
+
+                        foreach (var msg in previousMessages)
+                        {
+                            if (msg.Role == "User")
+                            {
+                                history.AddUserMessage(msg.MessageText);
+                            }
+                            else if (msg.Role == "Assistant")
+                            {
+                                // Compress to avoid consuming too many tokens on data payloads
+                                var compressed = HistoryCompressor.CompressAssistantMessage(msg.MessageText);
+                                history.AddAssistantMessage(compressed);
+                            }
+                        }
+                    }
 
                     history.AddUserMessage(messageText);
                     var provider = _llmContext.GetProvider();
@@ -244,9 +298,6 @@ namespace WhatsAppToDB.Services
                                     chart_config = chartConfigJson,
                                     chart_data = chartDataJson
                                 };           
-                                // aiContent = parsedResponse.AnalysisText; // Use the analysis text as the main content
-                                // aiContent += $"\n\n[CHART_CONFIG]{chartConfigJson}[/CHART_CONFIG]";
-                                // aiContent += $"\n\n[CHART_DATA]{chartDataJson}[/CHART_DATA]";
                                 aiContent = System.Text.Json.JsonSerializer.Serialize(finalContent); // Serialize the entire content as JSON
                                 
                             }

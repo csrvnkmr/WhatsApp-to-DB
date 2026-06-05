@@ -7,7 +7,6 @@ namespace WhatsAppToDB.Services
 {
     public class TemplateService
     {
-        private readonly string _dbName;
         private readonly ILogger _logger;
         private readonly DatabaseContextService _dbContextService;
 

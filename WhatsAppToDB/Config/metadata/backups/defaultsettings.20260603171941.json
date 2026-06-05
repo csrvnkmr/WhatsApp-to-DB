@@ -37,7 +37,7 @@
       "label": "Maximum Turns ",
       "type": "number",
       "showinheader": true,
-      "fulllength": false,
+      "fulllength": true,
       "description": "Maximum number of previous conversion history to be sent to LLM for context"
     }
   ]
