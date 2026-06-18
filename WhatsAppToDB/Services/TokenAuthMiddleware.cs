@@ -58,6 +58,7 @@ namespace WhatsAppToDB.Services
             if (
                 path.StartsWith("/swagger") ||
                 path == "/login" ||
+                path == "/addtempuser" ||
                 path.StartsWith("/css") ||
                 path.StartsWith("/debug") ||
                 path.StartsWith("/api/schema") ||
@@ -134,12 +135,19 @@ namespace WhatsAppToDB.Services
             // Replace with your real validation method
             // ----------------------------------------------
             var (isValid,session) =
-                UserService.ValidateToken(token);
+                UserService.ValidateToken(token, jsonConfigService);
 
             if (!isValid || session == null)
             {
                 context.Response.StatusCode = 401;
                 await context.Response.WriteAsync("Invalid token");
+                return;
+            }
+
+            if (path.StartsWith("/admin") && session.UserName.ToLower() != "admin" )
+            {
+                context.Response.StatusCode = 403;
+                await context.Response.WriteAsync("Permission denied");
                 return;
             }
 

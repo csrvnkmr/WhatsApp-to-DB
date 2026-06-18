@@ -1,0 +1,9 @@
+[
+  {
+    "LlmProviderFolder": "Config/Plugins/Llm/",
+    "DatabaseProviderFolder": "Config/Plugins/Database/",
+    "ChatHistoryFolder": "Config/Data/sqlite/",
+    "EmbeddingProviderFolder": "Config/Plugins/Embedding/",
+    "VectorDBProviderFolder": "Config/Plugins/VectorDB/"
+  }
+]

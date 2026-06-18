@@ -16,6 +16,7 @@ namespace WhatsAppToDB.Services
     public class JsonConfigService
     {
         private readonly string _configRoot;
+        private readonly IConfiguration _configuration;
         private readonly ILogger _logger;
         private readonly FieldEncryptionService _encryption;
 
@@ -28,6 +29,7 @@ namespace WhatsAppToDB.Services
         public JsonConfigService(
             IConfiguration config, ILogger logger)
         {
+            _configuration = config;
             _configRoot = config.GetValue<string>("ConfigRootFolder")!;
             if (string.IsNullOrWhiteSpace(_configRoot))
             {
@@ -38,6 +40,15 @@ namespace WhatsAppToDB.Services
 
             _logger = logger;
               _encryption = new FieldEncryptionService();
+        }
+
+        /// <summary>
+        /// Creates a ChatDbRepository configured using this JsonConfigService and stored IConfiguration.
+        /// </summary>
+        public Data.ChatDbRepository GetChatDbRepository()
+        {
+            var folderUtils = new Data.FolderUtils(_configuration, this, _logger);
+            return new Data.ChatDbRepository(folderUtils, _logger);
         }
         
 
@@ -238,6 +249,24 @@ namespace WhatsAppToDB.Services
                 )));
         }
 
+        public void SaveGlobalConfig<T>(string fileName, T value)
+        {
+            var filePath = Path.Combine(_configRoot, fileName);
+            var entity = Path.GetFileNameWithoutExtension(fileName);
+            var sensitiveFields = GetSensitiveFields(entity);
+            var rawJson = JsonSerializer.Serialize(value, _options);
+            EncryptAndSave(filePath, rawJson, sensitiveFields, _options);
+        }
+
+        public void SaveDatabaseConfig<T>(string database, string fileName, T value)
+        {
+            var filePath = Path.Combine(_configRoot, "databases", database, fileName);
+            var entity = Path.GetFileNameWithoutExtension(fileName);
+            var sensitiveFields = GetSensitiveFields(entity);
+            var rawJson = JsonSerializer.Serialize(value, _options);
+            EncryptAndSave(filePath, rawJson, sensitiveFields, _options);
+        }
+
         public List<WhatsAppProfile>? GetWhatsAppProfiles()
         {
             return LoadAndDecryptGlobal<List<WhatsAppProfile>>(Constants.ConfigFiles.WhatsAppProfiles);
@@ -332,6 +361,13 @@ namespace WhatsAppToDB.Services
             }
             return finalQueries;
         }
+        
+        public List<ModuleQuery> GetModuleQueries(string database)
+        {
+            var lstQueries = LoadDatabaseConfigAndDecrypt<List<ModuleQuery>>(database, Constants.ConfigFiles.FewShotQueries);
+            return lstQueries ?? new List<ModuleQuery>();
+        }
+    
     
         public List<Role> GetRoles(string database)
         {

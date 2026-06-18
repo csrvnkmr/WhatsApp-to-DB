@@ -51,7 +51,57 @@ export async function login(username: string, password: string) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ Username: username, Password: password })
   })
+  if (!res.ok) {
+    let errMsg = `Login failed: Server returned status ${res.status}`;
+    const contentType = res.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+      try {
+        const errorData = await res.json();
+        if (errorData && (errorData.message || errorData.Message)) {
+          errMsg = errorData.message || errorData.Message;
+        }
+      } catch {}
+    } else {
+      try {
+        const text = await res.text();
+        if (text) {
+          errMsg = text.replace(/^"|"$/g, '');
+        }
+      } catch {}
+    }
+    throw new Error(errMsg);
+  }
   return await res.json()
+}
+
+export async function addTempUser(username: string, password: string) {
+  const res = await fetch(`${BASE_URL}/addtempuser`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ Username: username, Password: password })
+  });
+  if (!res.ok) {
+    let errMsg = `Failed to add temporary user: Server returned status ${res.status}`;
+    const contentType = res.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+      try {
+        const errorData = await res.json();
+        if (errorData && (errorData.message || errorData.Message)) {
+          errMsg = errorData.message || errorData.Message;
+        }
+      } catch {}
+    } else {
+      try {
+        const text = await res.text();
+        if (text) {
+          errMsg = text.replace(/^"|"$/g, '');
+        }
+      } catch {}
+    }
+    throw new Error(errMsg);
+  }
+  return await res.json();
 }
 
 export async function ask(token: string, question: string) {

@@ -160,7 +160,7 @@ UPDATED:
                   @click="showLlmMenu = !showLlmMenu"
                   class="px-3 py-2 rounded-xl bg-panel hover:bg-hover text-sm">
 
-                  {{ activeModel }}
+                  {{ activeLlmDisplayName }}
                   <span>▾</span>
               </button>
 
@@ -174,13 +174,13 @@ UPDATED:
                       class="p-2 border-b border-soft">
 
                       <div class="font-semibold text-sm mb-2">
-                          {{ llm.provider }}
+                          {{ llm.name || llm.Name || llm.provider || llm.Provider }}
                       </div>
 
                       <div
                           v-for="model in llm.models"
                           :key="model"
-                          @click="selectLlm(llm.provider, model)"
+                          @click="selectLlm(llm.name || llm.Name || llm.provider || llm.Provider, model)"
                           class="px-2 py-1 rounded cursor-pointer hover:bg-hover text-sm">
 
                           {{ model }}
@@ -1055,7 +1055,8 @@ const auth = useAuthStore();
 
 const isAdmin = computed(() => {
     const role = auth.role || localStorage.getItem('role') || '';
-    return role.toLowerCase() === 'admin';
+    const username = auth.userName || localStorage.getItem('username') || '';
+    return role.toLowerCase() === 'admin' || username.toLowerCase() === 'admin';
 });
 
 // Composable for message visual actions (SQL / Data view modals)
@@ -1776,6 +1777,16 @@ async function selectDb(db: any) {
 const llms = ref<any[]>([]);
 const activeProvider = ref('');
 const activeModel = ref('');
+const activeLlmDisplayName = computed(() => {
+    if (!activeModel.value) return 'Select LLM';
+    const activeLlm = llms.value.find(
+        (x: any) =>
+            (x.name || x.Name || '').toLowerCase() === activeProvider.value.toLowerCase() ||
+            (x.provider || x.Provider || '').toLowerCase() === activeProvider.value.toLowerCase()
+    );
+    const displayName = activeLlm ? (activeLlm.name || activeLlm.Name) : activeProvider.value;
+    return displayName ? `${displayName}: ${activeModel.value}` : activeModel.value;
+});
 const showLlmMenu = ref(false);
 
 async function loadLlms() {

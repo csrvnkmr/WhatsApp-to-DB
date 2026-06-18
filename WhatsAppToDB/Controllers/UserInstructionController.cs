@@ -9,11 +9,13 @@ namespace WhatsAppToDB.Controllers
     public class UserInstructionController : ControllerBase
     {
         private readonly UserInstructionRepository _repository;
+            private readonly JsonConfigService _jsonConfigService;
 
-        public UserInstructionController(UserInstructionRepository repository)
-        {
-            _repository = repository;
-        }
+            public UserInstructionController(UserInstructionRepository repository, JsonConfigService jsonConfigService)
+            {
+                _repository = repository;
+                _jsonConfigService = jsonConfigService;
+            }
 
         private string GetCurrentUserName()
         {
@@ -22,7 +24,7 @@ namespace WhatsAppToDB.Controllers
 
         private IActionResult ValidateUserName(string userName)
         {
-            var result = UserService.ValidateUserName(userName);
+            var result = UserService.ValidateUserName(userName, _jsonConfigService);
             if (!result.isSuccess)
             {
                 return Unauthorized();
@@ -39,7 +41,7 @@ namespace WhatsAppToDB.Controllers
                 return Unauthorized();
             }
 
-            var validationResult = UserService.ValidateUserName(userName);
+            var validationResult = UserService.ValidateUserName(userName, _jsonConfigService);
             if (!validationResult.isSuccess)
             {
                 return Unauthorized();
@@ -61,7 +63,7 @@ namespace WhatsAppToDB.Controllers
                 return BadRequest(new { error = "username and databaseId are required" });
             }
 
-            var validationResult = UserService.ValidateUserName(userName);
+            var validationResult = UserService.ValidateUserName(userName, _jsonConfigService);
             if (!validationResult.isSuccess)
             {
                 return Unauthorized();
@@ -81,7 +83,7 @@ namespace WhatsAppToDB.Controllers
                 return BadRequest(new { error = "username and databaseId are required" });
             }
 
-            var validationResult = UserService.ValidateUserName(userName);
+            var validationResult = UserService.ValidateUserName(userName, _jsonConfigService);
             if (!validationResult.isSuccess)
             {
                 return Unauthorized();
@@ -100,7 +102,7 @@ namespace WhatsAppToDB.Controllers
                 return Unauthorized();
             }
 
-            var validationResult = UserService.ValidateUserName(userName);
+            var validationResult = UserService.ValidateUserName(userName, _jsonConfigService);
             if (!validationResult.isSuccess)
             {
                 return Unauthorized();
@@ -124,7 +126,7 @@ namespace WhatsAppToDB.Controllers
                 return Unauthorized();
             }
 
-            var validationResult = UserService.ValidateUserName(userName);
+            var validationResult = UserService.ValidateUserName(userName, _jsonConfigService);
             if (!validationResult.isSuccess)
             {
                 return Unauthorized();
@@ -149,7 +151,7 @@ namespace WhatsAppToDB.Controllers
                 return Unauthorized();
             }
 
-            var validationResult = UserService.ValidateUserName(userName);
+            var validationResult = UserService.ValidateUserName(userName, _jsonConfigService);
             if (!validationResult.isSuccess)
             {
                 return Unauthorized();
@@ -177,7 +179,7 @@ namespace WhatsAppToDB.Controllers
                 return BadRequest(new { error = "username and databaseId are required" });
             }
 
-            var validationResult = UserService.ValidateUserName(userName);
+            var validationResult = UserService.ValidateUserName(userName, _jsonConfigService);
             if (!validationResult.isSuccess)
             {
                 return Unauthorized();

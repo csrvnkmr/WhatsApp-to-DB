@@ -1,6 +1,6 @@
 [
   {
-    "CacheFolder": "ChatData\\chinook-sqlite",
+    "CacheFolder": "Config\\ChatData\\chinook-sqlite",
     "EmbeddingServiceSettings": {
       "Type": "local",
       "ApiKey": "",
@@ -9,10 +9,15 @@
     },
     "VectorProviderSettings": {
       "Type": "sqlite",
-      "VectorDBFolder": "ChatData\\chinook-sqlite"
+      "VectorDBFolder": "Config\\ChatData\\chinook-sqlite"
     },
     "SqliteSettings": {
-      "VectorDBFolder": "ChatData\\chinook-sqlite"
+      "VectorDBFolder": "Config\\ChatData\\chinook-sqlite"
+    },
+    "JinaAiSettings": {
+      "ApiModel": "jina-embeddings-v3",
+      "URL": "https://api.jina.ai/v1/embeddings",
+      "ApiKey": "jina_8e969d4237c44a0993aff2f85eb03e03xF_-9r79RR33yjaUsqtyOrUKD--0"
     }
   }
 ]

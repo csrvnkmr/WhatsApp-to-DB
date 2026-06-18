@@ -23,18 +23,20 @@ namespace WhatsAppToDB.Plugin
         private readonly string dbName;
         private readonly DatabaseConfig _dbConfig;
                 private readonly PluginLoaderService _pluginLoaderService;
-
+        private readonly FewShotMemoryHelper _fewShotMemoryHelper;
 
         public SchemaPlugin(JsonConfigService jsonConfigService,
-           ILogger? logger = null, DatabaseContextService databaseContextService = null, PluginLoaderService pluginLoaderService = null)           
+           ILogger? logger = null, DatabaseContextService databaseContextService = null, 
+           PluginLoaderService pluginLoaderService = null, FewShotMemoryHelper fewShotMemoryHelper = null)           
         {
             _logger = logger ?? new AppLogger();
             _databaseContextService = databaseContextService;
             _pluginLoaderService = pluginLoaderService;
+            _fewShotMemoryHelper = fewShotMemoryHelper;
             dbName = _databaseContextService.GetCurrentDatabaseName();
             _dbConfig = _databaseContextService.GetCurrentConfig();
             _jsonConfigService = jsonConfigService;
-            _schemaService = new SchemaService(_jsonConfigService);
+            _schemaService = new SchemaService(_jsonConfigService, _logger);
         }
 
         [KernelFunction]
@@ -72,6 +74,8 @@ namespace WhatsAppToDB.Plugin
             //    connString = identity.ConnectionString;
             //}
             var dbName = _databaseContextService.GetCurrentDatabaseName();
+            var fewshotQuery = 
+                await _fewShotMemoryHelper.SearchFewShotsInMemoryAsync(dbName, modulename, userQuestion);
             var moduleConfigs = _jsonConfigService.GetModules(dbName);
             var templService = new TemplateService(_databaseContextService, this._logger);    
                             
@@ -146,6 +150,10 @@ namespace WhatsAppToDB.Plugin
                     {
                         _logger.LogError($"Error in Module Prompt Extension execution: {ex}"); 
                     }
+                }
+                if (!string.IsNullOrWhiteSpace(fewshotQuery))
+                {
+                    moduleSchema = $"--- {module} SQL Templates ---\n{fewshotQuery}\n\n--- {module} Schema ---\n{moduleSchema}";                        
                 }
                 if (sqlTemplateExtension != null)
                 {

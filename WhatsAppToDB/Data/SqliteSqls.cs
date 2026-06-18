@@ -232,5 +232,34 @@ WHERE s.UserName = $UserName and m.Role= 'User'
   )
 ORDER BY s.UpdatedOn DESC, m.Id;
 ";
+        public const string CreateUserTokensSql = @"
+            CREATE TABLE IF NOT EXISTS UserTokens (
+                Token TEXT PRIMARY KEY,
+                Username TEXT NOT NULL,
+                Role TEXT,
+                InternalUserId TEXT,
+                SessionContextKey TEXT,
+                DefaultDatabase TEXT
+            );
+
+        ";
+
+        public const string InsertUserToken = @"
+            INSERT INTO UserTokens
+            (Token, Username, Role, InternalUserId, SessionContextKey, DefaultDatabase)
+            VALUES
+            ($Token, $Username, $Role, $InternalUserId, $SessionContextKey, $DefaultDatabase);            
+            ";
+
+        public const string GetUserToken = @"
+            SELECT * FROM UserTokens
+            WHERE Token = $Token;
+            ";
+        
+        public const string GetUserTokenByUsername = @"
+            SELECT * FROM UserTokens
+            WHERE Username = $Username
+            LIMIT 1;
+            ";
     }
 }

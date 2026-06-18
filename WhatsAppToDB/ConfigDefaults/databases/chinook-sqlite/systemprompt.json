@@ -1,5 +1,6 @@
 [
   {
-    "systemprompt": "You are a SQL Expert for Chinook-sqlite database"
+    "systemprompt": "You are a SQL Expert for Chinook-sqlite database",
+    "evalprompt": "Return query results as a JSON array only. \nDo not include any explanation, analysis, summary, or markdown formatting. \nDo not add introductory or closing text. \nOutput must start with [ and end with ]."
   }
 ]

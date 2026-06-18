@@ -7,7 +7,6 @@ using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
-using Microsoft.Win32;
 using System.Net;
 using System.Net.Mail;
 using System.Text.Json;
@@ -37,7 +36,7 @@ namespace WhatsAppToDB.Controllers
         private readonly DatabaseContextService _databaseContextService;
         private readonly LlmCancellationService _cancellationService;
         private readonly EvalRunRepository _evalRepo;
-
+        private readonly FewShotMemoryHelper _syncFSToMemory;
 
         public ChatController(
             IServiceScopeFactory scopeFactory,
@@ -45,7 +44,8 @@ namespace WhatsAppToDB.Controllers
             IQueryService queryService, IIdentityContextEnricher identityContextEnricher, 
             DatabaseContextService databaseContextService,
             LlmCancellationService cancellationService,
-            EvalRunRepository evalRepo)
+            EvalRunRepository evalRepo,
+            FewShotMemoryHelper syncFSToMemory)
         {
             _scopeFactory = scopeFactory;
             _waLogger = waLogger;
@@ -62,6 +62,7 @@ namespace WhatsAppToDB.Controllers
             _databaseContextService = databaseContextService;
             _cancellationService = cancellationService;
             _evalRepo = evalRepo;
+            _syncFSToMemory = syncFSToMemory;
         }
        
 
@@ -92,7 +93,7 @@ namespace WhatsAppToDB.Controllers
         public async Task<IActionResult> Asknew([FromBody] AskRequest request)
         {
             var userName = HttpContext.Items[Constants.ContextItems.UserName]?.ToString() ?? "";
-            var result = UserService.ValidateUserName(userName);
+            var result = UserService.ValidateUserName(userName, _jsonConfigService);
 
             if (!result.isSuccess)
                 return Unauthorized();
@@ -167,7 +168,7 @@ namespace WhatsAppToDB.Controllers
             var userName =
                 HttpContext.Items[Constants.ContextItems.UserName]?.ToString() ?? "";
             var result =
-                UserService.ValidateUserName(userName);
+                UserService.ValidateUserName(userName, _jsonConfigService);
 
             if (!result.isSuccess)
                 return Unauthorized();
@@ -182,7 +183,6 @@ namespace WhatsAppToDB.Controllers
             }
             else
             {
-
                 if (request.isEval)
                 {
                     sessionId = await _repo.GetEvaluationSessionIdAsync(userName);
@@ -215,7 +215,7 @@ namespace WhatsAppToDB.Controllers
                         Temperature = 0.0
                     };
                 }
-
+                await _syncFSToMemory.EnsureSyncDoneAsync(identity.Database);
                 var response =
                     await _queryService.ExecuteQuery(
                         _scopeFactory,

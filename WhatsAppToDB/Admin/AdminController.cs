@@ -2,6 +2,7 @@
 // Admin/AdminController.cs
 // ==========================================================
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using WhatsAppToDB.Services;
@@ -35,6 +36,7 @@ namespace WhatsAppToDB.Admin
         private readonly IWebHostEnvironment _env;
         private readonly string ConfigRoot;
         private readonly JsonConfigService _configService;
+        private readonly FewShotMemoryHelper _syncFSToMemory;
         private readonly JsonSerializerOptions _jsonOptions =
             new JsonSerializerOptions
             {
@@ -43,7 +45,7 @@ namespace WhatsAppToDB.Admin
 
         public AdminController(
             IWebHostEnvironment env, IConfiguration config,
-            JsonConfigService configService, ILogger logger)
+            JsonConfigService configService, ILogger logger, FewShotMemoryHelper syncFSToMemory)
         {
             _logger = logger;
             ConfigRoot = config.GetValue<string>("ConfigRootFolder");
@@ -55,6 +57,7 @@ namespace WhatsAppToDB.Admin
             }
             _env = env;
             _configService = configService;
+            _syncFSToMemory = syncFSToMemory;
         }
 
         // ======================================================
@@ -125,6 +128,7 @@ namespace WhatsAppToDB.Admin
                 System.IO.File.WriteAllText(filePath, "[]");
 
             */                
+                _logger.LogInfo($"Data file {filePath} not found for '{entity}' (database: '{database}'). Returning empty array.");
                 return Content("[]", "application/json");
             }
  
@@ -181,7 +185,12 @@ namespace WhatsAppToDB.Admin
             var sensitiveFields = _configService.GetSensitiveFields(entity);            
             _configService.EncryptAndSave(filePath, body, sensitiveFields, _jsonOptions);
 
-            
+            if (Constants.ConfigFiles.FewShotQueries.Equals(entity, StringComparison.OrdinalIgnoreCase))
+            {
+                await _syncFSToMemory.EnsureSyncDoneAsync(database, true);          
+             
+            }
+
             //var parsed =JsonSerializer.Deserialize<object>(body);
             //var pretty =JsonSerializer.Serialize(parsed, _jsonOptions);
             //await System.IO.File.WriteAllTextAsync(filePath, pretty);

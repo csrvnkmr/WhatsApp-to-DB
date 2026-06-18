@@ -112,19 +112,77 @@
           ]
         },
         "mysql": [
-          { "key": "Server", "label": "Hostname / IP Address", "type": "text", "isRequired": true, "defaultValue": "localhost" },
-          { "key": "Port", "label": "Port", "type": "number", "isRequired": true, "defaultValue": "3306" },
-          { "key": "Database", "label": "Database Name", "type": "text", "isRequired": true },
-          { "key": "User ID", "label": "User ID", "type": "text", "isRequired": true },
-          { "key": "Password", "label": "Password", "type": "password", "isRequired": true },
-          { "key": "AllowUserVariables", "label": "Allow User Variables (@)", "type": "boolean", "defaultValue": "true" },
-          { "key": "AllowPublicKeyRetrieval", "label": "Allow Public Key Retrieval", "type": "boolean", "defaultValue": "true" }
+          {
+            "key": "Server",
+            "label": "Hostname / IP Address",
+            "type": "text",
+            "isRequired": true,
+            "defaultValue": "localhost"
+          },
+          {
+            "key": "Port",
+            "label": "Port",
+            "type": "number",
+            "isRequired": true,
+            "defaultValue": "3306"
+          },
+          {
+            "key": "Database",
+            "label": "Database Name",
+            "type": "text",
+            "isRequired": true
+          },
+          {
+            "key": "User ID",
+            "label": "User ID",
+            "type": "text",
+            "isRequired": true
+          },
+          {
+            "key": "Password",
+            "label": "Password",
+            "type": "password",
+            "isRequired": true
+          },
+          {
+            "key": "AllowUserVariables",
+            "label": "Allow User Variables (@)",
+            "type": "boolean",
+            "defaultValue": "true"
+          },
+          {
+            "key": "AllowPublicKeyRetrieval",
+            "label": "Allow Public Key Retrieval",
+            "type": "boolean",
+            "defaultValue": "true"
+          }
         ],
         "oracle": [
-          { "key": "Data Source", "label": "Data Source (Host:Port/ServiceName or TNS Alias)", "type": "text", "isRequired": true, "description": "E.g., localhost:1521/ORCL or your TNS endpoint name" },
-          { "key": "User ID", "label": "User ID", "type": "text", "isRequired": true },
-          { "key": "Password", "label": "Password", "type": "password", "isRequired": true },
-          { "key": "Pooling", "label": "Enable Connection Pooling", "type": "boolean", "defaultValue": "true" }
+          {
+            "key": "Data Source",
+            "label": "Data Source (Host:Port/ServiceName or TNS Alias)",
+            "type": "text",
+            "isRequired": true,
+            "description": "E.g., localhost:1521/ORCL or your TNS endpoint name"
+          },
+          {
+            "key": "User ID",
+            "label": "User ID",
+            "type": "text",
+            "isRequired": true
+          },
+          {
+            "key": "Password",
+            "label": "Password",
+            "type": "password",
+            "isRequired": true
+          },
+          {
+            "key": "Pooling",
+            "label": "Enable Connection Pooling",
+            "type": "boolean",
+            "defaultValue": "true"
+          }
         ]
       },
       "required": true
@@ -138,6 +196,13 @@
       "required": false,
       "references": "",
       "sourceScope": ""
+    },
+    {
+      "name": "AddChart",
+      "label": "Add Chart option",
+      "type": "boolean",
+      "showinheader": true,
+      "description": "Select this if the chart needs to be shown for the database"
     }
   ]
 }

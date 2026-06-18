@@ -23,42 +23,55 @@ export const useAuthStore = defineStore('auth', () => {
         username: string,
         password: string
     ) {
-        const result =
-            await login(username, password)
+        message.value = ''
+        try {
+            const result =
+                await login(username, password)
 
-        token.value =
-            result.token || ''
+            token.value =
+                result.token || result.Token || ''
 
-        message.value =
-            result.message || ''
+            message.value =
+                result.message || result.Message || ''
 
-        isLoggedIn.value =
-            !!token.value
+            isLoggedIn.value =
+                !!token.value
 
-        userName.value =
-            isLoggedIn.value
-                ? username
-                : ''
+            userName.value =
+                isLoggedIn.value
+                    ? username
+                    : ''
 
-        role.value =
-            isLoggedIn.value
-                ? (result.role || result.Role || '')
-                : ''
+            role.value =
+                isLoggedIn.value
+                    ? (result.role || result.Role || '')
+                    : ''
 
-        localStorage.setItem(
-            'token',
-            token.value
-        )
+            localStorage.setItem(
+                'token',
+                token.value
+            )
 
-        localStorage.setItem(
-            'username',
-            userName.value
-        )
+            localStorage.setItem(
+                'username',
+                userName.value
+            )
 
-        localStorage.setItem(
-            'role',
-            role.value
-        )
+            localStorage.setItem(
+                'role',
+                role.value
+            )
+        } catch (err: any) {
+            token.value = ''
+            message.value = err.message || 'An unexpected error occurred.'
+            isLoggedIn.value = false
+            userName.value = ''
+            role.value = ''
+
+            localStorage.removeItem('token')
+            localStorage.removeItem('username')
+            localStorage.removeItem('role')
+        }
     }
 
     function logout() {

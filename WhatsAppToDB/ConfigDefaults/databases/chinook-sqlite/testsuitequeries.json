@@ -1,0 +1,12 @@
+[
+  {
+    "Question": "top 10 Playlist with most number of tracks",
+    "Module": "Playlist",
+    "Query": "select b.Name, count(*) as TrackCount from PlaylistTrack a join Playlist b on a.PlaylistId =b.PlaylistId group by b.PlaylistId, b.Name order by TrackCount DESC LIMIT 10"
+  },
+  {
+    "Question": "top 50 Invoice value with track count along with the customer name details",
+    "Module": "Sales",
+    "Query": "\tSELECT a.InvoiceId, d.FirstName, d.LastName, a.Total, Count(*) as NumberOfTracks FROM Invoice a join InvoiceLine b on a.InvoiceId=b.InvoiceId join Track c on c.TrackId=b.TrackId \n\tjoin Customer d on a.CustomerId=d.CustomerId group by a.InvoiceId, d.FirstName, d.LastName, a.Total order by a.Total desc limit 50"
+  }
+]

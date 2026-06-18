@@ -468,13 +468,14 @@ async function loadModels() {
                 const isEnabled = prov.Enabled !== undefined ? prov.Enabled : prov.enabled;
                 const modelsList = prov.Models || prov.models;
                 const providerName = prov.Provider || prov.provider || '';
+                const displayName = prov.Name || prov.name || providerName;
 
                 if (isEnabled && Array.isArray(modelsList)) {
                     modelsList.forEach((mod: string) => {
                         options.push({
-                            provider: providerName,
+                            provider: displayName,
                             model: mod,
-                            label: `${providerName}: ${mod}`
+                            label: `${displayName}: ${mod}`
                         })
                     })
                 }

@@ -1,7 +1,6 @@
 {
   "entity": "defaultsettings",
   "title": "Default Settings",
-
   "targetFile": "defaultsettings.json",
   "maxrecords": 1,
   "fields": [
@@ -32,6 +31,14 @@
         "targetField": "llms.Provider"
       },
       "references": "llms.Models"
+    },
+    {
+      "name": "MaxTurns",
+      "label": "Maximum Turns ",
+      "type": "number",
+      "showinheader": true,
+      "fulllength": false,
+      "description": "Maximum number of previous conversion history to be sent to LLM for context"
     }
   ]
 }

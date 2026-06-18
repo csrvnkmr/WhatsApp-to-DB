@@ -11,6 +11,7 @@ namespace WhatsAppToDB.LlmProviders
     {
         private readonly IHttpContextAccessor _http;
         private readonly LlmProviderFactory _factory;
+        private readonly LlmRegistry _llmRegistry;
         private readonly DefaultSettings _defaultSettings;
         private readonly IUserAuditService _userAuditService;
         private readonly AiRequestContext _requestContext;
@@ -18,12 +19,14 @@ namespace WhatsAppToDB.LlmProviders
         public LlmContextService(
             IHttpContextAccessor http,
             LlmProviderFactory factory,
+            LlmRegistry llmRegistry,
             JsonConfigService jsonConfigService,
             IUserAuditService userAuditService,
             AiRequestContext requestContext)
         {
             _http = http;
             _factory = factory;
+            _llmRegistry = llmRegistry;
             _defaultSettings = jsonConfigService.GetDefaultSettings();
             _userAuditService = userAuditService;
             _requestContext = requestContext;
@@ -49,7 +52,9 @@ namespace WhatsAppToDB.LlmProviders
 
         public ILlmProvider GetProvider()
         {
-            return _factory.Get(GetProviderName());
+            var selectedName = GetProviderName();
+            var selectedConfig = _llmRegistry.GetByName(selectedName);
+            return _factory.Get(selectedConfig.Provider);
         }
     }
 }

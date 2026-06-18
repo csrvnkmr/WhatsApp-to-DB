@@ -2,10 +2,12 @@
 using Microsoft.Extensions.Options;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
+using NPOI.SS.Formula.Functions;
 using WhatsAppToDB.Abstractions;
 using WhatsAppToDB.Audit;
 using WhatsAppToDB.Data;
 using WhatsAppToDB.LlmProviders;
+using WhatsAppToDB.Models;
 using WhatsAppToDB.Services;
 using WhatsAppToDB.Settings;
 
@@ -39,14 +41,73 @@ namespace WhatsAppToDB.Controllers
             return Ok(new { Message = "Logout Successful" });
         }
 
+        [HttpPost("/addtempuser")]
+        public async Task<IActionResult> AddTempUser([FromBody] Models.TempUserRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
+            {
+                return BadRequest("Username and password are required.");
+            }
+
+            var user = _jsonConfigService.GetUser(request.Username);
+            if (user != null)
+            {
+                return BadRequest("User already exists");
+            }
+
+            var allUsers = _jsonConfigService.GetUsers() ?? new List<LoginUser>();
+            var newUser = new LoginUser
+            {
+                Username = request.Username,
+                Password = request.Password,
+                Role = "temp",
+                Fullname = request.Username,
+                InternalUserId = string.Empty,
+                SessionContextKey = string.Empty,
+                DefaultDatabase = string.Empty,
+                WhatsAppNumber = string.Empty
+            };
+
+            allUsers.Add(newUser);
+            _jsonConfigService.SaveGlobalConfig(Constants.ConfigFiles.Users, allUsers);
+
+            var roles = _jsonConfigService.GetRoles("chinook-sqlite") ?? new List<Role>();
+            var tempRole = roles.FirstOrDefault(r => r.Name.Equals("temp", StringComparison.OrdinalIgnoreCase));
+            if (tempRole == null)
+            {
+                tempRole = new Role
+                {
+                    Name = "temp",
+                    Description = "Temporary Users",
+                    ConnectionString = string.Empty,
+                    Modules = Array.Empty<string>(),
+                    Users = new[] { request.Username }
+                };
+                roles.Add(tempRole);
+            }
+            else
+            {
+                var users = tempRole.Users?.ToList() ?? new List<string>();
+                if (!users.Contains(request.Username, StringComparer.OrdinalIgnoreCase))
+                {
+                    users.Add(request.Username);
+                    tempRole.Users = users.ToArray();
+                }
+            }
+
+            _jsonConfigService.SaveDatabaseConfig("chinook-sqlite", Constants.ConfigFiles.Roles, roles);
+
+            return Ok(new { success = true, message = "Temporary user added." });
+        }
 
         [HttpPost("/login")]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
-            var result = UserService.ValidateLogin(_jsonConfigService, request.Username, request.Password);
+            var validation = await UserService.ValidateLogin(_jsonConfigService, request.Username, request.Password);
+            var result = validation;
             if (!result.isSuccess)
             {
-                return Unauthorized();
+                return Unauthorized("Invalid username or password");
             }
             HttpContext.Session.Clear();
 

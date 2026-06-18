@@ -3,6 +3,7 @@
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Microsoft.KernelMemory.AI;
 using Microsoft.OpenApi;
 using Microsoft.OpenApi.MicrosoftExtensions;
 using Microsoft.SemanticKernel;
@@ -18,6 +19,7 @@ using WhatsAppToDB.Data;
 using WhatsAppToDB.Database;
 using WhatsAppToDB.DbProviders;
 using WhatsAppToDB.LlmProviders;
+using WhatsAppToDB.MemoryService;
 using WhatsAppToDB.Models;
 using WhatsAppToDB.Plugins;
 using WhatsAppToDB.Settings;
@@ -49,9 +51,9 @@ namespace WhatsAppToDB.Services
                 });
             });
 
+            services.AddSingleton<ILogger, AppLogger>();
             services.AddScoped<AiRequestContext>();
 
-            services.AddSingleton<ILogger, AppLogger>();
             services.AddSingleton<JsonConfigService>();
             //services.AddSingleton(provider => new FolderUtils(provider.GetRequiredService<IConfiguration>()));
             services.AddSingleton<FolderUtils>();
@@ -102,7 +104,13 @@ namespace WhatsAppToDB.Services
             services.AddScoped<PluginLoaderService>();
             services.AddScoped<VectorKernelFunctionFactory>();
             services.AddScoped<KernelTestService>();
+
+            services.AddScoped<FewShotMemoryHelper>();
+
             services.AddKernel();
+
+            // Register ITextGenerator for Kernel Memory integration (minimal implementation)
+            services.AddScoped<ITextGenerator>(sp => new MinimalTextGenerator());
 
             services.AddHttpContextAccessor();
             services.AddSession();
@@ -159,8 +167,8 @@ namespace WhatsAppToDB.Services
             services.AddSingleton<IDbProvider, Database.SqliteDbProvider>();
             services.AddSingleton<ISchemaProvider, MsSqlSchemaProvider>();
             services.AddSingleton<ISchemaProvider, SqliteSchemaProvider>();
-            services.LoadProviders<IDbProvider>(folderName, "*dbplugin.dll", ServiceLifetime.Singleton);            
-            services.LoadProviders<ISchemaProvider>(folderName, "*dbplugin.dll", ServiceLifetime.Singleton);            
+            services.LoadProviders<IDbProvider>(folderName, "*DBPlugin.dll", ServiceLifetime.Singleton);            
+            services.LoadProviders<ISchemaProvider>(folderName, "*DBPlugin.dll", ServiceLifetime.Singleton);            
             services.AddSingleton<Database.DbProviderFactory>();  // Changed from AddScoped to AddSingleton
         }        
 
@@ -170,7 +178,7 @@ namespace WhatsAppToDB.Services
             services.AddScoped<ILlmProvider, OpenAiProvider>();
             services.AddScoped<ILlmProvider, LocalAiProvider>();
             //LoadLlmPlugins(services);
-            services.LoadProviders<ILlmProvider>(configPath, "*llmplugin.dll");
+            services.LoadProviders<ILlmProvider>(configPath, "*LlmPlugin.dll");
 
             services.AddSingleton<LlmRegistry>();
             services.AddScoped<LlmProviderFactory>();
@@ -190,7 +198,7 @@ namespace WhatsAppToDB.Services
                 EmbeddingServiceFactory.Register(provider);
             }
 
-            LoadEmbeddingProviders(services, folderName, "*embeddingprovider.dll");
+            LoadEmbeddingProviders(services, folderName, "*EmbeddingProvider.dll");
         }
 
         public static void RegisterVectorDBProviders(this IServiceCollection services, string folderName)
@@ -206,22 +214,25 @@ namespace WhatsAppToDB.Services
                 VectorDBServiceFactory.Register(provider);
             }
 
-            LoadVectorDBProviders(services, folderName, "*vectordbprovider.dll");
+            LoadVectorDBProviders(services, folderName, "*VectorDBProvider.dll");
         }
 
         static void LoadProviders<TInterface>(this IServiceCollection services, string pluginFolder, string filefilter,
             ServiceLifetime lifetime = ServiceLifetime.Scoped)
         {
-            
+            _logger.LogInfo($"Checking for plugins {filefilter} in {pluginFolder}");
             if (!Directory.Exists(pluginFolder))
+            {
+                _logger.LogInfo($"Directory does not exist {pluginFolder}");
                 return;
-
+            }
             var dlls = Directory.GetFiles(pluginFolder, filefilter);
 
             foreach (var file in dlls)
             {
                 try
                 {
+                    _logger.LogInfo($"Loading plugins {file} from {pluginFolder}");
                     var asm = Assembly.LoadFrom(file);
 
                     var types = asm.GetTypes()
@@ -244,10 +255,10 @@ namespace WhatsAppToDB.Services
                 }
             }
         }
-
-        static void LoadEmbeddingProviders(this IServiceCollection services, string pluginFolder, string filefilter)
+        
+        static void LoadEmbeddingProviders(IServiceCollection services, string pluginFolder, string filefilter)
         {
-            if (string.IsNullOrWhiteSpace(pluginFolder) || !Directory.Exists(pluginFolder))
+            if (!Directory.Exists(pluginFolder))
                 return;
 
             var dlls = Directory.GetFiles(pluginFolder, filefilter);
@@ -266,26 +277,21 @@ namespace WhatsAppToDB.Services
 
                     foreach (var type in types)
                     {
-                        if (Activator.CreateInstance(type) is not IEmbeddingServiceProvider provider)
-                            continue;
-
-                        services.AddSingleton<IEmbeddingServiceProvider>(provider);
-                        EmbeddingServiceFactory.Register(provider);
-
-                        _logger.LogInfo($"[EmbeddingProvider] Loaded: {type.Name} ({provider.Type})");
+                        services.Add(new ServiceDescriptor(typeof(IEmbeddingServiceProvider), type, ServiceLifetime.Singleton));
+                        _logger.LogInfo($"[Plugin:EmbeddingServiceProvider] Loaded: {type.Name}");
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError($"[EmbeddingProvider] Failed: {file}");
+                    _logger.LogError($"[Plugin:EmbeddingServiceProvider] Failed: {file}");
                     _logger.LogError(ex.Message);
                 }
             }
         }
 
-        static void LoadVectorDBProviders(this IServiceCollection services, string pluginFolder, string filefilter)
+        static void LoadVectorDBProviders(IServiceCollection services, string pluginFolder, string filefilter)
         {
-            if (string.IsNullOrWhiteSpace(pluginFolder) || !Directory.Exists(pluginFolder))
+            if (!Directory.Exists(pluginFolder))
                 return;
 
             var dlls = Directory.GetFiles(pluginFolder, filefilter);
@@ -304,130 +310,17 @@ namespace WhatsAppToDB.Services
 
                     foreach (var type in types)
                     {
-                        if (Activator.CreateInstance(type) is not IVectorDBServiceProvider provider)
-                            continue;
-
-                        services.AddSingleton<IVectorDBServiceProvider>(provider);
-                        VectorDBServiceFactory.Register(provider);
-
-                        _logger.LogInfo($"[VectorDBProvider] Loaded: {type.Name} ({provider.Type})");
+                        services.Add(new ServiceDescriptor(typeof(IVectorDBServiceProvider), type, ServiceLifetime.Singleton));
+                        _logger.LogInfo($"[Plugin:VectorDBServiceProvider] Loaded: {type.Name}");
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError($"[VectorDBProvider] Failed: {file}");
+                    _logger.LogError($"[Plugin:VectorDBServiceProvider] Failed: {file}");
                     _logger.LogError(ex.Message);
                 }
             }
         }
-
-/*      public static void AddKernelOLD(this IServiceCollection services, PluginMetadata metadata)
-        {
-            services.AddScoped(sp =>
-            {
-                // Use a unique ID to track this specific resolution in the console
-                var requestId = Guid.NewGuid().ToString().Substring(0, 4);
-                Console.WriteLine($"[WhatsAppToDB] [{requestId}] Building Kernel...");
-
-
-                var kernelBuilder = Kernel.CreateBuilder();
-                var llmContext = sp.GetRequiredService<LlmContextService>();
-
-                var provider = llmContext.GetProvider();
-
-                var model = llmContext.GetModel();
-
-                provider.Register(kernelBuilder, sp, model);
-
-                //var aiSettings = sp.GetRequiredService<IOptions<CommonAiSettings>>().Value;
-                //var llmfactory = sp.GetRequiredService<LlmProviderFactory>();
-                //var provider = llmfactory.Get(aiSettings.Provider);
-                //provider.Register(kernelBuilder, sp, aiSettings.Model);
-
-                var dbPlugin = sp.GetRequiredService<Plugin.DatabaseQueryPlugin>();
-                var schemaPlugin = sp.GetRequiredService<Plugin.SchemaPlugin>();
-                kernelBuilder.Plugins.AddFromObject(dbPlugin);
-                kernelBuilder.Plugins.AddFromObject(schemaPlugin);
-
-
-                // Add all dynamic plugins loaded from DLLs
-                foreach (var pluginType in metadata.PluginTypes)
-                {
-                    var pluginInstance = sp.GetRequiredService(pluginType);
-                    kernelBuilder.Plugins.AddFromObject(pluginInstance);
-                    Console.WriteLine($"[Kernel] Registered Plugin: {pluginType.Name}");
-                }
-
-                return kernelBuilder.Build();
-            });
-        }
- */
-
-/*      public static void AddPlugin(this IServiceCollection services, IConfiguration config, PluginMetadata metadata)
-        {
-            using var tempProvider = services.BuildServiceProvider();
-            var logger = tempProvider.GetService<ILogger>();
-            logger.WriteToConsole = true;
-
-            var lstpluginSettings = config.GetSection("PluginSettings").Get<List<PluginSettings>>();
-            if (lstpluginSettings != null)
-            {
-                foreach (var pluginSettings in lstpluginSettings)
-                {
-                    logger.LogAsync($"[AddPlugin] Attempting to load plugin from {pluginSettings.AssemblyPath} with class {pluginSettings.PluginClassName}");
-                    var assembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(Path.GetFullPath(pluginSettings.AssemblyPath));
-
-                    var pluginDir = Path.GetDirectoryName(pluginSettings.AssemblyPath);
-                    AssemblyLoadContext.Default.Resolving += (context, assemblyName) =>
-                    {
-                        // 1. Check if already loaded in the AppDomain
-                        var alreadyLoaded = AppDomain.CurrentDomain.GetAssemblies()
-                            .FirstOrDefault(a => a.GetName().Name == assemblyName.Name);
-                        if (alreadyLoaded != null) return alreadyLoaded;
-
-                        // 2. SEARCH STRATEGY: Look in the EXE folder AND the Plugins folder
-                        string[] searchPaths = {
-                            AppDomain.CurrentDomain.BaseDirectory, // Current EXE folder
-                            pluginDir!                             // Your Plugins folder
-                        };
-
-                        foreach (var dir in searchPaths)
-                        {
-                            string path = Path.Combine(dir, $"{assemblyName.Name}.dll");
-                            if (File.Exists(path))
-                            {
-                                // IMPORTANT: Using LoadFromAssemblyPath FORCES the runtime 
-                                // to use this file, even if the version isn't an exact match.
-                                return context.LoadFromAssemblyPath(path);
-                            }
-                        }
-
-                        return null;
-                    };
-
-                    var pluginType = assembly.GetType(pluginSettings.PluginClassName);
-
-                    if (pluginType != null)
-                    {
-                        if (metadata.PluginTypes == null)
-                        {
-                            metadata.PluginTypes = new List<Type>();
-                        }
-                        if (!metadata.PluginTypes.Contains(pluginType))
-                        {
-                            metadata.PluginTypes.Add(pluginType);
-                            // Register for DI so Kernel can resolve it
-                            services.AddScoped(pluginType);
-                        }
-                        else
-                        {
-                            logger.LogAsync($"[AddPlugin] Failed to register plugin: {pluginSettings.PluginClassName}");
-                        }
-                    }
-                }
-                services.AddSingleton(metadata);
-            }
-        } */
 
         public static void AddKernel(this IServiceCollection services)
         {
@@ -441,8 +334,9 @@ namespace WhatsAppToDB.Services
                 var llmContext = sp.GetRequiredService<LlmContextService>();
                 var llmRegistry = sp.GetRequiredService<LlmRegistry>();
 
+                var selectedName = llmContext.GetProviderName();
+                var llmConfig = llmRegistry.GetByName(selectedName);
                 var provider = llmContext.GetProvider();
-                var llmConfig = llmRegistry.Get(provider.Name);
 
                 var model = llmContext.GetModel();
 

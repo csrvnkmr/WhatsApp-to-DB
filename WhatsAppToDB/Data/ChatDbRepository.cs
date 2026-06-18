@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using WhatsAppToDB.Abstractions;
+using WhatsAppToDB.Services;
 
 namespace WhatsAppToDB.Data
 {
@@ -96,8 +97,56 @@ namespace WhatsAppToDB.Data
             using var conn = GetConnection();
             await conn.OpenAsync();
             await conn.ExecuteAsync(SqliteSqls.CreateTables);
+            await conn.ExecuteAsync(SqliteSqls.CreateUserTokensSql);
             await SqliteMigration.ApplyMigrationsAsync(conn, logger);
 
+        }
+
+        public async Task InsertUserTokensAsync(UserSession session)
+        {
+            using var conn = GetConnection();
+            await conn.OpenAsync();
+            var tokens = await conn.QueryFirstOrDefaultAsync<string>(
+                SqliteSqls.InsertUserToken,
+                new { Token = session.Token, 
+                Username = session.Username, Role = session.Role, 
+                InternalUserId = session.InternalUserId, 
+                SessionContextKey = session.SessionContextKey, 
+                DefaultDatabase = session.DefaultDatabase });
+            logger.LogInfo($"Tokens for user {session.Username  }: {tokens}");
+        }
+
+        public async Task<UserSession> GetUserTokenAsync(string token)
+        {
+            using var conn = GetConnection();
+            await conn.OpenAsync();
+            var session = await conn.QueryFirstOrDefaultAsync<UserSession>(
+                SqliteSqls.GetUserToken, new { Token = token });
+            if (session != null)
+            {
+                logger.LogInfo($"Tokens for user {token}: {session}");
+            } else
+            {
+                logger.LogInfo($"No session found for token {token}");
+            }
+            return session;
+        }
+
+        public async Task<UserSession?> GetUserTokenByUsernameAsync(string username)
+        {
+            using var conn = GetConnection();
+            await conn.OpenAsync();
+            var session = await conn.QueryFirstOrDefaultAsync<UserSession>(
+                SqliteSqls.GetUserTokenByUsername, new { Username = username });
+            if (session != null)
+            {
+                logger.LogInfo($"Found session for user {username}");
+            }
+            else
+            {
+                logger.LogInfo($"No session found for user {username}");
+            }
+            return session;
         }
 
         public async Task<ChatMessageExtraDto?> GetMessageExtrasAsync(long messageId, string userName)

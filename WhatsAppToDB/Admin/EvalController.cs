@@ -143,7 +143,7 @@ namespace WhatsAppToDB.Admin
                 var userName =
                     HttpContext.Items[Constants.ContextItems.UserName]?.ToString() ?? "";
                 var result =
-                    UserService.ValidateUserName(userName);
+                    UserService.ValidateUserName(userName, _jsonConfigService);
 
                 if (!result.isSuccess)
                     return Unauthorized();
@@ -300,7 +300,7 @@ namespace WhatsAppToDB.Admin
             try
             {
                 var userName = HttpContext.Items[Constants.ContextItems.UserName]?.ToString() ?? "";
-                var result = UserService.ValidateUserName(userName);
+                var result = UserService.ValidateUserName(userName, _jsonConfigService);
                 if (!result.isSuccess)
                     return Unauthorized();
 

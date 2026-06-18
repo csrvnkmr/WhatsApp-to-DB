@@ -1,0 +1,12 @@
+[
+  {
+    "Name": "top 10 albums based on tracks",
+    "Module": "Music",
+    "Query": "SELECT al.AlbumId, al.Title AS AlbumTitle, ar.Name AS ArtistName, COUNT(t.TrackId) AS TrackCount\nFROM Album al\nJOIN Artist ar ON al.ArtistId = ar.ArtistId\nJOIN Track t ON t.AlbumId = al.AlbumId\nGROUP BY al.AlbumId, al.Title, ar.Name\nORDER BY TrackCount DESC\nLIMIT 10;"
+  },
+  {
+    "Module": "Playlist",
+    "Name": "top 10 Playlist with most number of tracks",
+    "Query": "select b.Name, count(*) as TrackCount from PlaylistTrack a join Playlist b on a.PlaylistId =b.PlaylistId group by b.PlaylistId, b.Name order by TrackCount DESC LIMIT 10"
+  }
+]

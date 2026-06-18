@@ -44,11 +44,12 @@ app.UseSession();
 
 app.UseSwagger();
 app.UseSwaggerUI();
-app.UseDefaultFiles();
-app.UseStaticFiles();
 
 app.UseMiddleware<TokenAuthMiddleware>();
 app.UseMiddleware<SessionBootstrapMiddleware>();
+
+app.UseDefaultFiles();
+app.UseStaticFiles();
 
 app.MapControllers();
 app.MapFallbackToFile("index.html");
@@ -159,7 +160,7 @@ static void CopyConfigDefaults(string configRoot, string currentFolder, AppLogge
     if (databasesCopied)
     {
         var sqliteSource = Path.Combine(configDefaultsRoot, "Data", "Chinook_Sqlite.sqlite");
-        var sqliteTargetDir = Path.Combine(currentFolder, "data", "sqlite");
+        var sqliteTargetDir = Path.Combine(currentFolder, "Data", "Sqlite");        
         var sqliteTarget = Path.Combine(sqliteTargetDir, "Chinook_Sqlite.sqlite");
 
         if (!File.Exists(sqliteSource))

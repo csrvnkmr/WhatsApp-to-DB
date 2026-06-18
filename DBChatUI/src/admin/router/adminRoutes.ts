@@ -6,6 +6,7 @@ export default [
   {
     path: '/admin',
     component: AdminLayout,
+    meta: { requiresAdmin: true },
 
     children: [
       {

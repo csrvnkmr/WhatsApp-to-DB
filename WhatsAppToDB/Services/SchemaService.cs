@@ -7,11 +7,14 @@ namespace WhatsAppToDB.Services
     public class SchemaService
     {
         private readonly JsonConfigService _json;
+        private readonly ILogger _logger;
 
         public SchemaService(
-            JsonConfigService json)
+            JsonConfigService json,
+            ILogger logger)
         {
             _json = json;
+            _logger = logger;
         }
 
         // ==================================================
@@ -38,7 +41,7 @@ namespace WhatsAppToDB.Services
                     .ToList();
 
             var finalResult = "";
-
+            _logger.LogInfo($"Schema for module requested {database} - {moduleNames}");
             // ============================================
             // EACH MODULE
             // ============================================
@@ -123,12 +126,12 @@ namespace WhatsAppToDB.Services
         public string GetAvailableModules(
             string database)
         {
+            _logger.LogInfo($"module list requested {database}");
             var modules =
                 _json.GetModules(database);
-
-            return string.Join(
-                ", ",
-                modules.Select(m => m.Name));
+            var modulelist = string.Join(
+                ", ", modules.Select(m => m.Name));
+            return modulelist;
         }
     }
 }

@@ -18,6 +18,14 @@ namespace WhatsAppToDB.LlmProviders
             return _configs.Where(x => x.Enabled).ToList();
         }
 
+        public LlmConfig GetByName(string name)
+        {
+            List<LlmConfig> _configs = GetAll();
+            return _configs.First(x =>
+                x.Enabled &&
+                x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+        }
+
         public LlmConfig Get(string provider)
         {
             List<LlmConfig> _configs = GetAll();
